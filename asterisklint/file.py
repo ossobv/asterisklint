@@ -3,7 +3,7 @@ from .defines import ErrorDef, WarningDef
 from .where import Where
 
 
-if True:  # cheat to trick flake8 into letting me do single blank lines
+if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_ENC_NOT_UTF8(ErrorDef):
         message = 'expected UTF-8 encoding, got something else'
 

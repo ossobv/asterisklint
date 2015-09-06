@@ -3,7 +3,7 @@ from .config import ConfigAggregator, Context, Varset
 from .defines import ErrorDef, WarningDef
 
 
-if True:
+if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_DP_BAD_VALUE(ErrorDef):
         message = 'unexpected varset (not exten/same/include)'
 

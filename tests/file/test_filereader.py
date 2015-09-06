@@ -1,6 +1,7 @@
 from io import BytesIO
 from unittest import TestCase
 
+from asterisklint.defines import MessageDefManager
 from asterisklint.file import FileReader
 
 
@@ -11,6 +12,11 @@ class NamedBytesIO(BytesIO):
 
 
 class FileReaderTestCase(TestCase):
+    @classmethod
+    def setUp(cls):
+        MessageDefManager.reset()
+        MessageDefManager.muted = True
+
     def test_normal(self):
         reader = FileReader(NamedBytesIO('test.conf', b'''\
 [context]
@@ -49,7 +55,6 @@ variable=value
         self.assertEqual(out[0][1], '[c\u00f6ntext]')
 
     def test_cp1252(self):
-        # TODO: add mock so we can check that E_ENC_NOT_UTF8 has been raised
         reader = FileReader(NamedBytesIO('cp1252.conf', b'''\
 [cont\x80xt]
 variable=value
@@ -57,3 +62,18 @@ variable=value
         out = [i for i in reader]
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0][1], '[cont\u20acxt]')
+        self.assertEqual(
+            dict((k, len(v)) for k, v in MessageDefManager.raised.items()),
+            {'E_ENC_NOT_UTF8': 1})
+
+    def test_utf8_and_cp1252(self):
+        reader = FileReader(NamedBytesIO('encodingmess.conf', b'''\
+[c\xc3\xb6nt\x80xt]
+variable=value
+'''))
+        out = [i for i in reader]
+        self.assertEqual(len(out), 2)
+        self.assertEqual(out[0][1], '[c\u00c3\u00b6nt\u20acxt]')
+        self.assertEqual(
+            dict((k, len(v)) for k, v in MessageDefManager.raised.items()),
+            {'E_ENC_NOT_UTF8': 1})

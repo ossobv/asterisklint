@@ -12,6 +12,8 @@ class DuplicateMessageDef(MessageDefException):
 
 class MessageDefManager(type):
     types = set()
+    muted = False
+
     raised = defaultdict(list)
 
     # The metaclass invocation. (No need for __prepare__ at this
@@ -23,8 +25,16 @@ class MessageDefManager(type):
         return type.__new__(cls, name, bases, classdict)
 
     @classmethod
+    def reset(cls):
+        cls.raised = defaultdict(list)
+
+    @classmethod
     def on_message(cls, msg):
         cls.raised[msg.__class__.__name__].append(msg)
+
+        if cls.muted:
+            return
+
         print('( raised:', dict((k, len(v)) for k, v in cls.raised.items()),
               ')')
 

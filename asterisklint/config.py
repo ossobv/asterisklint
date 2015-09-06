@@ -4,7 +4,7 @@ import re
 from .defines import ErrorDef, WarningDef
 
 
-if True:
+if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class I_NOTIMPL_TEMPLATES(ErrorDef):
         message = 'asterisklint does not implement template use yet'
 
