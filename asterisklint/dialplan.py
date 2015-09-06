@@ -1,9 +1,13 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
 from .config import ConfigAggregator, Context, Varset
+from .config import E_CONF_MISSING_CTX
 from .defines import ErrorDef, WarningDef
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
+    class I_NOTIMPL_INCLUDES(ErrorDef):
+        message = 'the dialplan include directive has not been implemented yet'
+
     class E_DP_BAD_VALUE(ErrorDef):
         message = 'unexpected varset (not exten/same/include)'
 
@@ -136,7 +140,9 @@ class DialplanVarset(object):
 
 class Include(object):
     # FIXME
-    pass
+    def __init__(self, value, where):
+        self.where = where
+        pass
 
 
 class Pattern(object):
@@ -228,13 +234,17 @@ class DialplanAggregator(ConfigAggregator):
             self._curcontext = context
         else:
             dialplan_context = DialplanContext.from_context(context)
-            self.on_dialplancontext(dialplan_context)
+            if dialplan_context:
+                self.on_dialplancontext(dialplan_context)
 
     def on_varset(self, varset):
-        if isinstance(self._curcontext, DialplanContext):
+        if not self._curcontext:
+            E_CONF_MISSING_CTX(varset.where)
+        elif isinstance(self._curcontext, DialplanContext):
             dialplanvarset = DialplanVarset.from_varset(
                 varset, self._curcontext)
-            self.on_dialplanvarset(dialplanvarset)
+            if dialplanvarset:
+                self.on_dialplanvarset(dialplanvarset)
         else:
             self._curcontext.add(varset)
 
@@ -246,5 +256,7 @@ class DialplanAggregator(ConfigAggregator):
         assert isinstance(self._curcontext, DialplanContext)
         if isinstance(dialplanvarset, Extension):
             self._curcontext.add(dialplanvarset)
+        elif isinstance(dialplanvarset, Include):
+            I_NOTIMPL_INCLUDES(dialplanvarset.where)
         else:
             raise NotImplementedError()
