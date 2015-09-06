@@ -30,6 +30,10 @@ class MessageDefManager(type):
 
         print('{} {}: {}'.format(
             msg.where, msg.__class__.__name__, msg.message))
+
+        if msg.previous:
+            print('  see previous: {}'.format(msg.previous))
+
         line_repr = repr(msg.where.line)
         if len(line_repr) > 64:
             line_repr = line_repr[1:64] + '...'  # drop "b", trim to 63
@@ -39,8 +43,9 @@ class MessageDefManager(type):
 
 
 class MessageDef(object, metaclass=MessageDefManager):
-    def __init__(self, where):
+    def __init__(self, where, previous=None):
         self.where = where
+        self.previous = previous
         MessageDefManager.on_message(self)
 
 
