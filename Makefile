@@ -1,2 +1,2 @@
 test:
-	python3 ./asterisklint/__init__.py ./tests/extensions.conf
+	python3 ./test1.py ./tests/extensions.conf
