@@ -7,6 +7,8 @@ from .config import ConfigAggregator
 from .dialplan import DialplanAggregator
 
 
+# TODO: example modules.conf parser where load/noload/preload/autoload
+#       are the only valid variables
 # TODO: asterisk config lint
 # TODO: asterisk dialplan lint
 # TODO: delegate globals lintage to Config lint
