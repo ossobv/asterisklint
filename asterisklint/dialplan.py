@@ -45,22 +45,24 @@ class Dialplan(object):
     def format_as_dialplan_show(self):
         # If we have this, we can compare to the asterisk output :)
         ret = []
-        for context in self.contexts:
+        for context in reversed(self.contexts):
             ret.append("[ Context {!r} created by 'pbx_config' ]".format(
                 context.name))
             # TODO: context.by_pattern? print the "=>" notation for the
             # first of every pattern. note that the show-dialplan is
             # ordered by pattern..
-            for extension in context.varsets:
-                if extension.prio == 1:  # <-- broken, test only
-                    ret.append('  %-17s %-45s [pbx_config]' % (
-                        "'%s' =>" % (extension.pattern_with_label,),
-                        ('%d. %s' % (extension.prio,
-                                     extension.app_with_parens))))
-                else:
+            last_pattern = None
+            for extension in context.by_pattern():
+                if extension.pattern == last_pattern:
                     ret.append('     %-14s %-45s [pbx_config]' % (
                         (extension.label and '[{}]'.format(extension.label) or
                             ''),
+                        ('%d. %s' % (extension.prio,
+                                     extension.app_with_parens))))
+                else:
+                    last_pattern = extension.pattern
+                    ret.append('  %-17s %-45s [pbx_config]' % (
+                        "'%s' =>" % (extension.pattern_with_label,),
                         ('%d. %s' % (extension.prio,
                                      extension.app_with_parens))))
             ret.append('')
@@ -68,6 +70,16 @@ class Dialplan(object):
 
 
 class DialplanContext(Context):
+    def by_pattern(self):
+        """
+        Used by format_as_dialplan_show().
+        """
+        patterns = list(set(i.pattern for i in self.varsets))  # TODO: order
+        ret = []
+        for pattern in patterns:
+            ret.extend(i for i in self.varsets if i.pattern == pattern)
+        return ret
+
     def add(self, extension):
         # - If extension.pattern is None ("same") then take previous.
         #   Error if there is none.
@@ -179,12 +191,18 @@ class Extension(Varset):
 
     @property
     def pattern_with_label(self):
+        """
+        Used by format_as_dialplan_show().
+        """
         if self.label is None:
             return self.pattern
         return '%s(%s)' % (self.pattern, self.label)
 
     @property
     def app_with_parens(self):
+        """
+        Used by format_as_dialplan_show().
+        """
         ret = [self.app]
         if '(' not in self.app:
             ret.append('(')
