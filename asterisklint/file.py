@@ -22,25 +22,30 @@ if True:  # cheat to trick flake8 into letting me do single blank lines
 
 class BinFileReader(object):
     """
-    Reads a file from disk.
+    Reads a binary opened file.
     """
-    def __init__(self, filename=None):
-        self.filename = filename
+    def __init__(self, fp=None):
+        if hasattr(fp, 'mode'):
+            assert 'b' in fp.mode, 'expected binary opened file'
+        self.fp = fp
+        self.filename = fp.name
 
     def __iter__(self):
         prev_where, prev_data = None, None
 
-        with open(self.filename, 'rb') as fp:
-            for i, line in enumerate(fp):
-                if prev_where:
-                    yield prev_where, prev_data
+        for i, line in enumerate(self.fp):
+            if prev_where:
+                yield prev_where, prev_data
 
-                prev_where = Where(self.filename, i + 1, line)
-                prev_data = line
+            prev_where = Where(self.filename, i + 1, line)
+            prev_data = line
 
         if prev_where:
             prev_where.last_line = True
             yield prev_where, prev_data
+
+        if hasattr(self.fp, 'close'):
+            self.fp.close()
 
 
 class EncodingReader(object):
