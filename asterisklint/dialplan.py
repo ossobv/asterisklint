@@ -78,10 +78,10 @@ class DialplanContext(Context):
         """
         Used by format_as_dialplan_show().
         """
-        patterns = list(set(i.pattern for i in self.varsets))  # TODO: order
+        patterns = list(set(i.pattern for i in self._varsets))  # TODO: order
         ret = []
         for pattern in patterns:
-            ret.extend(i for i in self.varsets if i.pattern == pattern)
+            ret.extend(i for i in self._varsets if i.pattern == pattern)
         return ret
 
     def add(self, extension):
@@ -89,7 +89,7 @@ class DialplanContext(Context):
         #   Error if there is none.
         # - If prio is N then assert there is a previous prio with same
         #   pattern.
-        self.varsets.append(extension)
+        self._varsets.append(extension)
 
 
 class DialplanVarset(object):
@@ -182,11 +182,11 @@ class Extension(Varset):
         # Als pattern is None, dan pakt Context gewoon de vorige, da's
         # prima.
         if pattern is None:
-            pattern = context.varsets[-1].pattern
+            pattern = context._varsets[-1].pattern
         self.pattern = pattern
 
         if prio is None:
-            prev = context.varsets[-1]
+            prev = context._varsets[-1]
             assert prev.pattern == pattern  # E_PRIO_FUCKUP
             prio = prev.prio + 1
         self.prio = prio
