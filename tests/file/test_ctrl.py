@@ -2,7 +2,7 @@ from asterisklint.alinttest import ALintTestCase, NamedBytesIO
 from asterisklint.file import FileReader
 
 
-class NormalTest(ALintTestCase):
+class CtrlTest(ALintTestCase):
     def test_ctrl(self):
         reader = FileReader(NamedBytesIO('test.conf', b'''\
 [context]\x00

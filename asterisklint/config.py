@@ -68,8 +68,16 @@ class Context(object):
     def add(self, varset):
         self._varsets.append(varset)
 
-    def __iter__(self):
-        return iter(self._varsets)
+    def __bool__(self):
+        # Must(!) define this, now that we use __len__.
+        return True
+
+    def __len__(self):
+        return len(self._varsets)
+
+    def __getitem__(self, key):
+        assert isinstance(key, int)
+        return self._varsets[key]
 
     def __repr__(self):
         return '[{}]({}) => ({} elements)'.format(

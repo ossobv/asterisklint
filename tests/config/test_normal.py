@@ -3,7 +3,7 @@ from asterisklint.alinttest import ALintTestCase, NamedBytesIO
 from asterisklint.config import Context, Varset
 
 
-class FileConfigParserTest(ALintTestCase):
+class NormalTest(ALintTestCase):
     def test_normal(self):
         reader = FileConfigParser(NamedBytesIO('test.conf', b'''\
 [context]
@@ -17,12 +17,12 @@ and_that_is=it
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0].__class__, Context)
         self.assertEqual(out[0].name, 'context')
+        self.assertEqual(len(out[0]), 2)
         self.assertEqual(out[1].__class__, Context)
         self.assertEqual(out[1].name, 'context2')
+        self.assertEqual(len(out[1]), 1)
 
         variables = [i for i in out[0]]
-
-        self.assertEqual(len(variables), 2)
         self.assertEqual(variables[0].__class__, Varset)
         self.assertEqual(variables[0].variable, 'variable')
         self.assertEqual(variables[0].value, 'value')

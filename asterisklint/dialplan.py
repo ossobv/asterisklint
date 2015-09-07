@@ -8,13 +8,25 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class I_NOTIMPL_INCLUDES(ErrorDef):
         message = 'the dialplan include directive has not been implemented yet'
 
-    class E_DP_BAD_VALUE(ErrorDef):
-        message = 'unexpected varset (not exten/same/include)'
+    class E_DP_VAR_INVALID(ErrorDef):
+        message = 'unexpected variable name (not exten/same/include)'
 
-    class E_DP_BAD_PRIO(ErrorDef):
-        message = 'unexpected priority value'
+    class E_DP_PAT_INVALID(ErrorDef):
+        message = 'badly formatted pattern'
 
-    class E_DP_BAD_LABEL(ErrorDef):
+    class E_DP_PAT_MISSING(ErrorDef):
+        message = 'missing pattern'
+
+    class E_DP_PRIO_INVALID(ErrorDef):
+        message = 'invalid priority'
+
+    class E_DP_PRIO_MISSING(ErrorDef):
+        message = 'missing priority'
+
+    class E_DP_PRIO_DUPE(ErrorDef):
+        message = 'duplicate priority'
+
+    class E_DP_LABEL_INVALID(ErrorDef):
         message = 'unexpected label value'
 
     class E_DP_GLOBALS_DUPE(ErrorDef):
@@ -23,28 +35,48 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class W_DP_CONTEXT_DUPE(WarningDef):
         message = 'duplicate context, not an error, but not nice'
 
+    class W_DP_LABEL_DUPE(WarningDef):
+        message = 'duplicate label'
+
+    class W_DP_PRIO_BADORDER(ErrorDef):
+        message = 'bad priority order'
+
 
 class Dialplan(object):
     def __init__(self):
-        self.general = None
-        self.globals = None
+        self._general = None
+        self._globals = None
         self.contexts = []
 
+    @property
+    def general(self):
+        """If it doesn't exist, we return an empty object, so it behaves
+        normally."""
+        return self._general or DialplanContext('general', templates='',
+                                                where=None)
+
+    @property
+    def globals(self):
+        """If it doesn't exist, we return an empty object, so it behaves
+        normally."""
+        return self._globals or DialplanContext('globals', templates='',
+                                                where=None)
+
     def add_general(self, general):
-        if self.general:
-            W_DP_CONTEXT_DUPE(general.where, self.general.where)
+        if self._general:
+            W_DP_CONTEXT_DUPE(general.where, self._general.where)
             # BEWARE: make sure we use a ref to the NEW context, because
             # we may be appending to that object...!!
-            self.general.extend(general)
+            self._general.extend(general)
         else:
-            self.general = general
+            self._general = general
 
     def add_globals(self, globals_):
-        if self.globals:
-            E_DP_GLOBALS_DUPE(globals_.where, self.globals.where)
+        if self._globals:
+            E_DP_GLOBALS_DUPE(globals_.where, self._globals.where)
             # don't save
         else:
-            self.globals = globals_
+            self._globals = globals_
 
     def format_as_dialplan_show(self):
         # If we have this, we can compare to the asterisk output :)
@@ -89,12 +121,60 @@ class DialplanContext(Context):
         #   Error if there is none.
         # - If prio is N then assert there is a previous prio with same
         #   pattern.
-        self._varsets.append(extension)
+        if extension.pattern is None:
+            if not len(self):
+                E_DP_PAT_MISSING(extension.where)
+                return None
+            extension.pattern = self[-1].pattern
+
+        if extension.prio is None:
+            if not len(self):
+                E_DP_PRIO_MISSING(extension.where)
+                return
+            if self[-1].pattern != extension.pattern:
+                W_DP_PRIO_BADORDER(extension.where)
+                prev = [i for i in self if i.pattern == extension.pattern][-1]
+            else:
+                prev = self[-1]
+            assert prev.pattern == extension.pattern  # E_PRIO_FUCKUP
+            extension.prio = prev.prio + 1
+        elif extension.prio < 1:
+            E_DP_PRIO_INVALID(extension.where)
+            return
+        elif extension.prio != 1:
+            # Check that there is a prio with N-1.
+            # TODO: here we have to be careful with pattern matching, we
+            # should check whether a pattern exists with a greater scope
+            # than our pattern.
+            try:
+                prev = [i for i in self if i.pattern == extension.pattern][-1]
+            except IndexError:
+                W_DP_PRIO_BADORDER(extension.where)
+            else:
+                if prev.prio != extension.prio - 1:
+                    # Don't warn if same prio, we do the dupe check
+                    # later on.
+                    if prev.prio != extension.prio:
+                        W_DP_PRIO_BADORDER(extension.where)
+
+        # Check duplicate priorities.
+        extensions = [i for i in self if i.pattern == extension.pattern]
+        if extension.prio in [i.prio for i in extensions]:
+            E_DP_PRIO_DUPE(extension.where)
+            return
+
+        # Check duplicate labels.
+        if (extension.label and
+                extension.label in [i.label for i in extensions]):
+            W_DP_LABEL_DUPE(extension.where)
+            extension.label = ''  # wipe it
+
+        super(DialplanContext, self).add(extension)
 
 
 class DialplanVarset(object):
     @classmethod
-    def from_varset(cls, varset, context):
+    def from_varset(cls, varset):
         """
         Use this on subclasses of Varset.
         """
@@ -115,26 +195,26 @@ class DialplanVarset(object):
             elif prio.isdigit():
                 prio = int(prio)
             else:
-                E_DP_BAD_PRIO(varset.where)
+                E_DP_PRIO_INVALID(varset.where)
                 return None
 
             if label is not None:
                 if not label.endswith(')'):
-                    E_DP_BAD_LABEL(varset.where)
+                    E_DP_LABEL_INVALID(varset.where)
                     return None
                 label = label[0:-1]
                 # TODO: check label validity
             else:
                 label = None
 
-            return Extension(context, pattern, prio, label, app, varset.where)
+            return Extension(pattern, prio, label, app, varset.where)
 
         elif varset.variable == 'include':
             assert varset.arrow  # W_ARROW
             return Include(varset.value, varset.where)
 
         else:
-            E_DP_BAD_VALUE(varset.where)
+            E_DP_VAR_INVALID(varset.where)
             return None
 
 
@@ -175,23 +255,15 @@ class App(object):
 
 
 class Extension(Varset):
-    def __init__(self, context, pattern, prio, label, app, where):
+    def __init__(self, pattern, prio, label, app, where):
         # Check pattern voor mixen van letters en pattern-letters:
         # - "s-zap" == "s-[1-9]ap" en zou als "s-[z]ap" geschreven moeten
         # - "s-abc" == "sabc"
         # Als pattern is None, dan pakt Context gewoon de vorige, da's
         # prima.
-        if pattern is None:
-            pattern = context._varsets[-1].pattern
         self.pattern = pattern
-
-        if prio is None:
-            prev = context._varsets[-1]
-            assert prev.pattern == pattern  # E_PRIO_FUCKUP
-            prio = prev.prio + 1
         self.prio = prio
-
-        self.label = label  # TODO: check labels
+        self.label = label
         self.app = app
         self.where = where
 
@@ -241,8 +313,7 @@ class DialplanAggregator(ConfigAggregator):
         if not self._curcontext:
             E_CONF_MISSING_CTX(varset.where)
         elif isinstance(self._curcontext, DialplanContext):
-            dialplanvarset = DialplanVarset.from_varset(
-                varset, self._curcontext)
+            dialplanvarset = DialplanVarset.from_varset(varset)
             if dialplanvarset:
                 self.on_dialplanvarset(dialplanvarset)
         else:

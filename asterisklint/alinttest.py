@@ -34,8 +34,13 @@ class ALintTestResult(TextTestResult):
         self.print_untested()
 
     def stopTest(self, test):
-        for id_, count in test.linted_counts.items():
-            self.linted_counts[id_] += count
+        if hasattr(test, 'linted_counts'):
+            for id_, count in test.linted_counts.items():
+                self.linted_counts[id_] += count
+        else:
+            # Happens if we get module import errors during test load.
+            assert test.__class__.__name__ == 'ModuleImportFailure', \
+                test.__class__.__mro__
 
         super(ALintTestResult, self).stopTest(test)
 
