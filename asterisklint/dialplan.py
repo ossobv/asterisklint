@@ -5,7 +5,10 @@ from .defines import ErrorDef, WarningDef
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
-    class I_NOTIMPL_INCLUDES(ErrorDef):
+    class I_NOTIMPL_HINT(ErrorDef):
+        message = 'the dialplan hint directive has not been implemented yet'
+
+    class I_NOTIMPL_INCLUDE(ErrorDef):
         message = 'the dialplan include directive has not been implemented yet'
 
     class E_DP_VAR_INVALID(ErrorDef):
@@ -52,15 +55,15 @@ class Dialplan(object):
     def general(self):
         """If it doesn't exist, we return an empty object, so it behaves
         normally."""
-        return self._general or DialplanContext('general', templates='',
-                                                where=None)
+        return self._general or DialplanContext(
+            'general', templates='', comment='', where=None)
 
     @property
     def globals(self):
         """If it doesn't exist, we return an empty object, so it behaves
         normally."""
-        return self._globals or DialplanContext('globals', templates='',
-                                                where=None)
+        return self._globals or DialplanContext(
+            'globals', templates='', comment='', where=None)
 
     def add_general(self, general):
         if self._general:
@@ -98,7 +101,7 @@ class Dialplan(object):
                 else:
                     last_pattern = extension.pattern
                     ret.append('  %-17s %-45s [pbx_config]' % (
-                        "'%s' =>" % (extension.pattern_with_label,),
+                        "'%s' =>" % (extension.pattern,),
                         ('%d. %s' % (extension.prio,
                                      extension.app_with_parens))))
             ret.append('')
@@ -194,6 +197,9 @@ class DialplanVarset(object):
                 prio = None
             elif prio.isdigit():
                 prio = int(prio)
+            elif prio == 'hint':
+                I_NOTIMPL_HINT(varset.where)
+                return None
             else:
                 E_DP_PRIO_INVALID(varset.where)
                 return None
@@ -207,7 +213,8 @@ class DialplanVarset(object):
             else:
                 label = None
 
-            return Extension(pattern, prio, label, app, varset.where)
+            return Extension(pattern, prio, label, app, varset.comment,
+                             varset.where)
 
         elif varset.variable == 'include':
             assert varset.arrow  # W_ARROW
@@ -255,7 +262,7 @@ class App(object):
 
 
 class Extension(Varset):
-    def __init__(self, pattern, prio, label, app, where):
+    def __init__(self, pattern, prio, label, app, comment, where):
         # Check pattern voor mixen van letters en pattern-letters:
         # - "s-zap" == "s-[1-9]ap" en zou als "s-[z]ap" geschreven moeten
         # - "s-abc" == "sabc"
@@ -265,16 +272,8 @@ class Extension(Varset):
         self.prio = prio
         self.label = label
         self.app = app
+        self.comment = comment
         self.where = where
-
-    @property
-    def pattern_with_label(self):
-        """
-        Used by format_as_dialplan_show().
-        """
-        if self.label is None:
-            return self.pattern
-        return '%s(%s)' % (self.pattern, self.label)
 
     @property
     def app_with_parens(self):
@@ -328,6 +327,6 @@ class DialplanAggregator(ConfigAggregator):
         if isinstance(dialplanvarset, Extension):
             self._curcontext.add(dialplanvarset)
         elif isinstance(dialplanvarset, Include):
-            I_NOTIMPL_INCLUDES(dialplanvarset.where)
+            I_NOTIMPL_INCLUDE(dialplanvarset.where)
         else:
             raise NotImplementedError()

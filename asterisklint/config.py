@@ -17,18 +17,6 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_CONF_MISSING_CTX(ErrorDef):
         message = 'expected context before var/object set'
 
-    class W_CONF_LEADING_EMPTY_LINE(WarningDef):
-        message = 'leading empty lines are not pretty'
-
-    class W_CONF_MANY_EMPTY_LINES(WarningDef):
-        message = 'excess blank lines'
-
-    class W_CONF_FEW_EMPTY_LINES(WarningDef):
-        message = 'too few empty lines'
-
-    class W_CONF_AN_EMPTY_LINE(WarningDef):
-        message = 'unexpected empty line'
-
     class W_WSH_BOL(WarningDef):
         message = 'unexpected leading whitespace'
 
@@ -38,9 +26,22 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class W_WSH_VARSET(WarningDef):
         message = 'expected no horizontal whitespace around equals operator'
 
+    class W_WSV_BOF(WarningDef):
+        message = 'unexpected vertical space at beginning of file'
+
+    class W_WSV_EOF(WarningDef):
+        message = 'unexpected vertical space at end of file'
+
+    class W_WSV_CTX_BETWEEN(WarningDef):
+        message = 'expected one or two lines between contexts'
+
+    class W_WSV_VARSET_BETWEEN(WarningDef):
+        message = 'expected zero or one lines between varsets'
+
 
 class EmptyLine(object):
-    def __init__(self, where):
+    def __init__(self, comment, where):
+        self.comment = comment
         self.where = where
 
 
@@ -51,10 +52,12 @@ class Context(object):
         Use this on subclasses of Context.
         """
         assert not context._varsets
-        return cls(context.name, context._templates, context.where)
+        return cls(context.name, context._templates, context.comment,
+                   context.where)
 
-    def __init__(self, name, templates, where):
+    def __init__(self, name, templates, comment, where):
         self.name = name
+        self.comment = comment
         self.where = where
         self._templates = templates
         self._varsets = []
@@ -82,7 +85,7 @@ class Context(object):
 
 
 class Varset(object):
-    def __init__(self, variable, value, separator, where):
+    def __init__(self, variable, value, separator, comment, where):
         clean_separator = separator.strip()
         if clean_separator == '=>':
             if separator != ' => ':
@@ -101,6 +104,7 @@ class Varset(object):
 
         self.variable = variable
         self.value = value
+        self.comment = comment
         self.where = where
 
 
@@ -115,27 +119,28 @@ class ConfigParser(object):
     regexes = (
         # [context](template1,template2)
         (re.compile(r'^\[([^]]*)\]\s*\(([^)\+])\)$'),
-         (lambda where, match: Context(
+         (lambda comment, where, match: Context(
              name=match.groups()[0], templates=match.groups()[1],
-             where=where))),
+             comment=comment, where=where))),
         # [context]
         (re.compile(r'^\[([^]]*)\]$'),
-         (lambda where, match: Context(
+         (lambda comment, where, match: Context(
              name=match.groups()[0], templates='',
-             where=where))),
+             comment=comment, where=where))),
         # object => value
         (re.compile(r'^([^=]*?)(\s*=>\s*)(.*)$'),
-         (lambda where, match: Varset(
+         (lambda comment, where, match: Varset(
              variable=match.groups()[0], value=match.groups()[2],
-             separator=match.groups()[1], where=where))),
+             separator=match.groups()[1], comment=comment, where=where))),
         # variable = value
         (re.compile(r'^([^=]*?)(\s*=\s*)(.*)$'),
-         (lambda where, match: Varset(
+         (lambda comment, where, match: Varset(
              variable=match.groups()[0], value=match.groups()[2],
-             separator=match.groups()[1], where=where))),
+             separator=match.groups()[1], comment=comment, where=where))),
         # (void)
         (re.compile(r'^\s*$'),
-         (lambda where, match: EmptyLine(where=where))),
+         (lambda comment, where, match: EmptyLine(
+             comment=comment, where=where))),
     )
 
     def __iter__(self):
@@ -143,7 +148,7 @@ class ConfigParser(object):
             for regex, func in self.regexes:
                 match = regex.match(data)
                 if match:
-                    value = func(where, match)
+                    value = func(comment, where, match)
                     yield value
                     break
             else:
@@ -156,29 +161,33 @@ class EmptyLinesParser(object):
     between contexts.
     """
     def __iter__(self):
-        last, blanks = None, 0
+        last = None
+        buffer_ = []
         for element in super(EmptyLinesParser, self).__iter__():
-            if isinstance(element, EmptyLine):
-                if not last:
-                    W_CONF_LEADING_EMPTY_LINE(element.where)
-                else:
-                    blanks += 1
-                if blanks == 3:
-                    W_CONF_MANY_EMPTY_LINES(element.where)
-            elif isinstance(element, Context):
-                if last and blanks < 1:
-                    W_CONF_FEW_EMPTY_LINES(element.where)
-                last, blanks = element, 0
-                yield element
-            elif isinstance(element, Varset):
-                if isinstance(last, Context) and blanks > 0:
-                    W_CONF_AN_EMPTY_LINE(element.where)
-                elif isinstance(last, Varset) and blanks > 1:
-                    W_CONF_MANY_EMPTY_LINES(element.where)
-                last, blanks = element, 0
-                yield element
+            if isinstance(element, EmptyLine) and not element.comment:
+                buffer_.append(element)
+
             else:
-                raise NotImplementedError()
+                if not last:
+                    if len(buffer_):
+                        W_WSV_BOF(element.where)
+                elif (isinstance(element, Context) and
+                        len(buffer_) not in (1, 2)):
+                    W_WSV_CTX_BETWEEN(element.where)
+                elif (isinstance(element, Varset) and
+                        len(buffer_) > 1):
+                    W_WSV_VARSET_BETWEEN(element.where)
+
+                for old in buffer_:
+                    yield old
+                buffer_ = []
+                last = element
+                yield element
+
+        if buffer_:
+            W_WSV_EOF(element.where)
+            for old in buffer_:
+                yield old
 
 
 class ConfigAggregator(EmptyLinesParser, ConfigParser):
@@ -190,6 +199,8 @@ class ConfigAggregator(EmptyLinesParser, ConfigParser):
                 self.on_context(element)
             elif isinstance(element, Varset):
                 self.on_varset(element)
+            elif isinstance(element, EmptyLine):
+                self.on_emptyline(element)
             else:
                 raise NotImplementedError()
 
@@ -215,3 +226,7 @@ class ConfigAggregator(EmptyLinesParser, ConfigParser):
             E_CONF_MISSING_CTX(varset.where)
         else:
             self._curcontext.add(varset)
+
+    def on_emptyline(self, emptyline):
+        # We don't want these.
+        pass
