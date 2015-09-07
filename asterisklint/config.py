@@ -148,7 +148,9 @@ class ConfigParser(object):
             for regex, func in self.regexes:
                 match = regex.match(data)
                 if match:
-                    value = func(comment, where, match)
+                    # Cast the comment to a boolean, we're not using the
+                    # contents, ever.
+                    value = func(bool(comment), where, match)
                     yield value
                     break
             else:

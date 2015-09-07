@@ -56,14 +56,14 @@ class Dialplan(object):
         """If it doesn't exist, we return an empty object, so it behaves
         normally."""
         return self._general or DialplanContext(
-            'general', templates='', comment='', where=None)
+            'general', templates='', comment=False, where=None)
 
     @property
     def globals(self):
         """If it doesn't exist, we return an empty object, so it behaves
         normally."""
         return self._globals or DialplanContext(
-            'globals', templates='', comment='', where=None)
+            'globals', templates='', comment=False, where=None)
 
     def add_general(self, general):
         if self._general:
