@@ -110,10 +110,10 @@ class DialplanContext(Context):
         """
         Used by format_as_dialplan_show().
         """
-        patterns = list(set(i.pattern for i in self._varsets))  # TODO: order
+        patterns = list(set(i.pattern for i in self))  # TODO: order
         ret = []
         for pattern in patterns:
-            ret.extend(i for i in self._varsets if i.pattern == pattern)
+            ret.extend(i for i in self if i.pattern == pattern)
         return ret
 
     def add(self, extension):
