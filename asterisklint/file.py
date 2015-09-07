@@ -4,6 +4,9 @@ from .where import Where
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
+    class W_FILE_CTRL_CHAR(WarningDef):
+        message = 'unexpected control character found'
+
     class W_FILE_DOS_EOFCRLF(WarningDef):
         message = 'unexpected trailing CRLF in DOS file format'
 
@@ -62,6 +65,26 @@ class EncodingReader(object):
             yield where, data
 
 
+class NoCtrlReader(object):
+    """
+    Checks for unusual control characters.
+    """
+    # all, except \r (0d), \n (0a), \t (09)
+    illegal = set('\x00\x01\x02\x03\x04\x05\x06\x07'
+                  '\x08'      '\x0b\x0c'  '\x0e\x0f'
+                  '\x10\x11\x12\x13\x14\x15\x16\x17'
+                  '\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f')
+
+    def __iter__(self):
+        for where, data in super(NoCtrlReader, self).__iter__():
+            charset = set(data)
+            union = charset & self.illegal
+            if union:
+                W_FILE_CTRL_CHAR(where)
+
+            yield where, data
+
+
 class FileformatReader(object):
     """
     TODO: allow one to specify legal line endings (unix vs dos)
@@ -104,5 +127,6 @@ class AstCommentReader(object):
     pass
 
 
-class FileReader(FileformatReader, EncodingReader, BinFileReader):
+class FileReader(FileformatReader, NoCtrlReader, EncodingReader,
+                 BinFileReader):
     pass

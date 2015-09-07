@@ -8,10 +8,9 @@ from .defines import MessageDefManager
 
 
 class ALintTestCase(TestCase):
-    all_linted = defaultdict(int)  # global
-
     def setUp(self):
         MessageDefManager.muted = True  # could do this on runner startup..
+        self.linted_counts = defaultdict(int)
 
     def tearDown(self):
         self.assertLinted({})  # also calls MessageDefManager.reset()
@@ -20,18 +19,28 @@ class ALintTestCase(TestCase):
         raised = MessageDefManager.raised
         counts = dict((id_, len(messages)) for id_, messages in raised.items())
         for id_, count in counts.items():
-            ALintTestCase.all_linted[id_] += count
-
-        self.assertEqual(counts, expected_counts)
+            self.linted_counts[id_] += count
         MessageDefManager.reset()
+
+        # Run this last, so we've completed the reset.
+        self.assertEqual(counts, expected_counts)
 
 
 class ALintTestResult(TextTestResult):
+    def startTestRun(self):
+        self.linted_counts = defaultdict(int)
+
     def stopTestRun(self):
         self.print_untested()
 
+    def stopTest(self, test):
+        for id_, count in test.linted_counts.items():
+            self.linted_counts[id_] += count
+
+        super(ALintTestResult, self).stopTest(test)
+
     def print_untested(self):
-        tested = set(ALintTestCase.all_linted.keys())
+        tested = set(self.linted_counts.keys())
         defined = MessageDefManager.types
         untested = defined - tested
 
@@ -49,7 +58,7 @@ class ALintTestRunner(TextTestRunner):
 
 class NamedBytesIO(BytesIO):
     def __init__(self, name, data):
-        super().__init__(data)
+        super(NamedBytesIO, self).__init__(data)
         self.name = name
 
 

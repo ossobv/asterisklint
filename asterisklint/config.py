@@ -29,11 +29,17 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class W_CONF_AN_EMPTY_LINE(WarningDef):
         message = 'unexpected empty line'
 
-    class W_CONF_OBJSET_WS(WarningDef):
-        message = 'expected " => " whitespace around arrow operator'
+    class W_WSH_BOL(WarningDef):
+        message = 'unexpected leading whitespace'
 
-    class W_CONF_VARSET_WS(WarningDef):
-        message = 'expected no whitespace around equals operator'
+    class W_WSH_EOL(WarningDef):
+        message = 'unexpected trailing whitespace'
+
+    class W_WSH_OBJSET(WarningDef):
+        message = 'expected " => " horizontal whitespace around arrow operator'
+
+    class W_WSH_VARSET(WarningDef):
+        message = 'expected no horizontal whitespace around equals operator'
 
 
 class EmptyLine(object):
@@ -47,37 +53,46 @@ class Context(object):
         """
         Use this on subclasses of Context.
         """
-        assert not context.varsets
-        return cls(context.name, context.templates, context.where)
+        assert not context._varsets
+        return cls(context.name, context._templates, context.where)
 
     def __init__(self, name, templates, where):
         self.name = name
-        self.templates = templates
         self.where = where
-        self.varsets = []
+        self._templates = templates
+        self._varsets = []
 
         if templates:
             I_NOTIMPL_TEMPLATES(where)
 
     def add(self, varset):
-        self.varsets.append(varset)
+        self._varsets.append(varset)
+
+    def __iter__(self):
+        return iter(self._varsets)
 
     def __repr__(self):
         return '[{}]({}) => ({} elements)'.format(
-            self.name, self.templates, len(self.varsets))
+            self.name, self._templates, len(self._varsets))
 
 
 class Varset(object):
     def __init__(self, variable, value, separator, where):
         clean_separator = separator.strip()
         if clean_separator == '=>':
-            if separator != '=':
-                W_CONF_OBJSET_WS(where)
+            if separator != ' => ':
+                W_WSH_OBJSET(where)
             self.arrow = True
         elif clean_separator == '=':
             if separator != '=':
-                W_CONF_VARSET_WS(where)
+                W_WSH_VARSET(where)
             self.arrow = False
+
+        if variable.startswith(tuple(' \t')):
+            # QUICK HACK: only allow leading WS for 'same'..
+            variable = variable.lstrip(' \t')
+            if variable != 'same':
+                W_WSH_BOL(where)
 
         self.variable = variable
         self.value = value
@@ -120,7 +135,10 @@ class ConfigParser(object):
 
     def __iter__(self):
         for where, data in super(ConfigParser, self).__iter__():
-            data = data.strip()
+            if data.endswith(tuple(' \t')):
+                W_WSH_EOL(where)
+                data = data.rstrip(' \t')
+
             for regex, func in self.regexes:
                 match = regex.match(data)
                 if match:
