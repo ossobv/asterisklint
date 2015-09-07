@@ -15,7 +15,7 @@ class SamePrioTest(ALintTestCase):
         self.assertEqual(len(context), 3)
         self.assertEqual(set(i.pattern for i in context), set(['pattern']))
         self.assertEqual([i.prio for i in context], [1, 2, 3])
-        self.assertEqual([i.app for i in context],
+        self.assertEqual([i.app.raw for i in context],
                          ['NoOp({})'.format(i) for i in range(1, 4)])
 
     def test_exten_num_prio(self):

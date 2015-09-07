@@ -1,4 +1,7 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
+from functools import total_ordering
+
+from .application import App
 from .config import ConfigAggregator, Context, Varset
 from .config import E_CONF_MISSING_CTX
 from .defines import ErrorDef, WarningDef
@@ -213,6 +216,8 @@ class DialplanVarset(object):
             else:
                 label = None
 
+            pattern = pattern and Pattern(pattern, varset.where) or None
+            app = App(app, varset.where)
             return Extension(pattern, prio, label, app, varset.comment,
                              varset.where)
 
@@ -232,33 +237,38 @@ class Include(object):
         pass
 
 
+@total_ordering  # now we only need 'eq' and 'lt'
 class Pattern(object):
     # Pattern heeft equality tests zodat "s-zap" == "s-[1-9]ap", maar emit
     # wel een warning als je hier iets anders neerzet! (Zelfde verhaal
     # met hoofdletters vs. kleine letters.)
     def __init__(self, pattern, where):
-        pass
+        self.pattern = pattern
+        self.where = where
 
+    def __hash__(self):
+        # FIXME: this needs more work
+        return hash(self.pattern.lower().replace('-', ''))
 
-class App(object):
-    # App heeft weer z'n eigen parsers en subparsers. Hiermee moeten we ook
-    # op kunnen zoeken welke modules er nodig zijn (w00t). Deze komt ook als
-    # eerste in aanmerking voor 1.4 vs. 1.8 differences (ExecIf..., vs
-    # ExecIf...?)
-    # Ook dumpen van alle variabelen (in dat geval moet de subparser aangeven
-    # dat een Var geset wordt (Set() en MSet() doen dat bijv.) en ARRAY() en
-    # HASH().
-    # Parser en subparsers implementeren volgens included modules?
-    # Klinkt wat overkill? Maar maakt het wel mooi extensible. De ExecIf()
-    # kan dan de args weer splitten en teruggeven...
-    #
-    # Per subparser kunnen we de versienummers opgeven:
-    # SPRINTF() voor < 1.2 => None
-    # SPRINTF() voor >= 1.2 < 1.4 => behaviour X
-    # SPRINTF() voor >= 1.4 => behaviour Y
-    #
-    # Hoe pakken we dan app_compat settings voor Set? Hm.
-    pass
+    def __eq__(self, other):
+        if other is None:
+            return False
+        if isinstance(other, str):
+            other = Pattern(other, None)
+        return self.pattern == other.pattern
+
+    def __lt__(self, other):
+        if other is None:
+            return False
+        if isinstance(other, str):
+            other = Pattern(other, None)
+        return self.pattern < other.pattern
+
+    def __repr__(self):
+        return '<Pattern({})>'.format(self.pattern or '')
+
+    def __str__(self):
+        return self.pattern
 
 
 class Extension(Varset):
@@ -280,10 +290,10 @@ class Extension(Varset):
         """
         Used by format_as_dialplan_show().
         """
-        ret = [self.app]
-        if '(' not in self.app:
+        ret = [self.app.raw]
+        if '(' not in self.app.raw:
             ret.append('(')
-        if ')' not in self.app:
+        if ')' not in self.app.raw:
             ret.append(')')
         return ''.join(ret)
 

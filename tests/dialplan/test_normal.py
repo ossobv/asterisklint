@@ -14,8 +14,8 @@ GLOBAL2=Y
 
 [non_empty_context]
 exten => s,1,NoOp
- same => n(label2),n,Verbose(foo)
- same => n,n,Hangup()
+ same => n(label2),Verbose(foo)
+ same => n,Hangup()
 
 [empty_context]
 '''))
