@@ -29,6 +29,12 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class W_CONF_AN_EMPTY_LINE(WarningDef):
         message = 'unexpected empty line'
 
+    class W_CONF_OBJSET_WS(WarningDef):
+        message = 'expected " => " whitespace around arrow operator'
+
+    class W_CONF_VARSET_WS(WarningDef):
+        message = 'expected no whitespace around equals operator'
+
 
 class EmptyLine(object):
     def __init__(self, where):
@@ -62,10 +68,19 @@ class Context(object):
 
 
 class Varset(object):
-    def __init__(self, variable, value, arrow, where):
+    def __init__(self, variable, value, separator, where):
+        clean_separator = separator.strip()
+        if clean_separator == '=>':
+            if separator != '=':
+                W_CONF_OBJSET_WS(where)
+            self.arrow = True
+        elif clean_separator == '=':
+            if separator != '=':
+                W_CONF_VARSET_WS(where)
+            self.arrow = False
+
         self.variable = variable
         self.value = value
-        self.arrow = arrow  # bool
         self.where = where
 
 
@@ -89,15 +104,15 @@ class ConfigParser(object):
              name=match.groups()[0], templates='',
              where=where))),
         # object => value
-        (re.compile(r'([^=]*?)\s*=>\s*(.*)$'),
+        (re.compile(r'^([^=]*?)(\s*=>\s*)(.*)$'),
          (lambda where, match: Varset(
-             variable=match.groups()[0], value=match.groups()[1],
-             arrow=True, where=where))),
+             variable=match.groups()[0], value=match.groups()[2],
+             separator=match.groups()[1], where=where))),
         # variable = value
-        (re.compile(r'([^=]*?)\s*=\s*(.*)$'),
+        (re.compile(r'^([^=]*?)(\s*=\s*)(.*)$'),
          (lambda where, match: Varset(
-             variable=match.groups()[0], value=match.groups()[1],
-             arrow=False, where=where))),
+             variable=match.groups()[0], value=match.groups()[2],
+             separator=match.groups()[1], where=where))),
         # (void)
         (re.compile(r'^\s*$'),
          (lambda where, match: EmptyLine(where=where))),

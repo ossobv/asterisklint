@@ -25,7 +25,8 @@ class MessageDefManager(type):
     def __new__(cls, name, bases, classdict):
         if name in cls.types:
             raise DuplicateMessageDef(name)
-        cls.types.add(name)
+        if not name.endswith('Def'):  # MessageDef, WarningDef, ErrorDef
+            cls.types.add(name)       # W_FOO, E_BAR
         return type.__new__(cls, name, bases, classdict)
 
     @classmethod

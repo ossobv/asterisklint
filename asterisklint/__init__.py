@@ -1,10 +1,7 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
-import re
-
-from .defines import ErrorDef
-from .file import FileReader
 from .config import ConfigAggregator
 from .dialplan import DialplanAggregator
+from .file import FileReader
 
 
 # TODO: example modules.conf parser where load/noload/preload/autoload

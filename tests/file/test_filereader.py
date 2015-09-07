@@ -1,22 +1,8 @@
-from io import BytesIO
-from unittest import TestCase
-
-from asterisklint.defines import MessageDefManager
+from asterisklint.alinttest import ALintTestCase, NamedBytesIO
 from asterisklint.file import FileReader
 
 
-class NamedBytesIO(BytesIO):
-    def __init__(self, name, data):
-        super().__init__(data)
-        self.name = name
-
-
-class FileReaderTestCase(TestCase):
-    @classmethod
-    def setUp(cls):
-        MessageDefManager.reset()
-        MessageDefManager.muted = True
-
+class FileReaderTest(ALintTestCase):
     def test_normal(self):
         reader = FileReader(NamedBytesIO('test.conf', b'''\
 [context]
@@ -62,9 +48,7 @@ variable=value
         out = [i for i in reader]
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0][1], '[cont\u20acxt]')
-        self.assertEqual(
-            dict((k, len(v)) for k, v in MessageDefManager.raised.items()),
-            {'E_ENC_NOT_UTF8': 1})
+        self.assertLinted({'E_FILE_UTF8_BAD': 1})
 
     def test_utf8_and_cp1252(self):
         reader = FileReader(NamedBytesIO('encodingmess.conf', b'''\
@@ -74,6 +58,4 @@ variable=value
         out = [i for i in reader]
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0][1], '[c\u00c3\u00b6nt\u20acxt]')
-        self.assertEqual(
-            dict((k, len(v)) for k, v in MessageDefManager.raised.items()),
-            {'E_ENC_NOT_UTF8': 1})
+        self.assertLinted({'E_FILE_UTF8_BAD': 1})

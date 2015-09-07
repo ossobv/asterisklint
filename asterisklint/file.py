@@ -4,20 +4,20 @@ from .where import Where
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
-    class E_ENC_NOT_UTF8(ErrorDef):
-        message = 'expected UTF-8 encoding, got something else'
-
-    class W_FF_DOS_EOFCRLF(WarningDef):
+    class W_FILE_DOS_EOFCRLF(WarningDef):
         message = 'unexpected trailing CRLF in DOS file format'
 
-    class W_FF_DOS_BARELF(WarningDef):
+    class W_FILE_DOS_BARELF(WarningDef):
         message = 'unexpected bare LF in DOS file format'
 
-    class W_FF_UNIX_CRLF(WarningDef):
+    class W_FILE_UNIX_CRLF(WarningDef):
         message = 'unexpected CRLF in UNIX file format'
 
-    class W_FF_UNIX_NOLF(WarningDef):
+    class W_FILE_UNIX_NOLF(WarningDef):
         message = 'unexpected line without LF in UNIX file format'
+
+    class E_FILE_UTF8_BAD(ErrorDef):
+        message = 'expected UTF-8 encoding, got something else'
 
 
 class BinFileReader(object):
@@ -57,7 +57,7 @@ class EncodingReader(object):
             try:
                 data = data.decode('utf-8')
             except UnicodeDecodeError:
-                E_ENC_NOT_UTF8(where)
+                E_FILE_UTF8_BAD(where)
                 data = data.decode('cp1252')  # or latin1? or 9?
             yield where, data
 
@@ -78,14 +78,14 @@ class FileformatReader(object):
 
             if is_dos:
                 if where.last_line and has_crlf:
-                    W_FF_DOS_EOFCRLF(where)
+                    W_FILE_DOS_EOFCRLF(where)
                 elif has_lf and not has_crlf:
-                    W_FF_DOS_BARELF(where)
+                    W_FILE_DOS_BARELF(where)
             else:
                 if where.last_line and not has_lf:
-                    W_FF_UNIX_NOLF(where)
+                    W_FILE_UNIX_NOLF(where)
                 elif has_crlf:
-                    W_FF_UNIX_CRLF(where)
+                    W_FILE_UNIX_CRLF(where)
 
             if has_crlf:
                 data = data[0:-2]
