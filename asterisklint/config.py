@@ -32,9 +32,6 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class W_WSH_BOL(WarningDef):
         message = 'unexpected leading whitespace'
 
-    class W_WSH_EOL(WarningDef):
-        message = 'unexpected trailing whitespace'
-
     class W_WSH_OBJSET(WarningDef):
         message = 'expected " => " horizontal whitespace around arrow operator'
 
@@ -142,11 +139,7 @@ class ConfigParser(object):
     )
 
     def __iter__(self):
-        for where, data in super(ConfigParser, self).__iter__():
-            if data.endswith(tuple(' \t')):
-                W_WSH_EOL(where)
-                data = data.rstrip(' \t')
-
+        for where, data, comment in super(ConfigParser, self).__iter__():
             for regex, func in self.regexes:
                 match = regex.match(data)
                 if match:

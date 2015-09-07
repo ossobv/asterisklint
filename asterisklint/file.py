@@ -4,6 +4,12 @@ from .where import Where
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
+    class E_FILE_UTF8_BAD(ErrorDef):
+        message = 'expected UTF-8 encoding, got something else'
+
+    class W_FILE_BS_EOL(WarningDef):
+        message = 'backslash at EOL, not supported'  # XXX?
+
     class W_FILE_CTRL_CHAR(WarningDef):
         message = 'unexpected control character found'
 
@@ -19,8 +25,8 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class W_FILE_UNIX_NOLF(WarningDef):
         message = 'unexpected line without LF in UNIX file format'
 
-    class E_FILE_UTF8_BAD(ErrorDef):
-        message = 'expected UTF-8 encoding, got something else'
+    class W_WSH_EOL(WarningDef):
+        message = 'unexpected trailing whitespace'
 
 
 class BinFileReader(object):
@@ -118,15 +124,65 @@ class FileformatReader(object):
             yield where, data
 
 
-class AstCommentReader(object):
-    # Todo.. strip all comments
-    # Todo.. decode the non-comments (backslash remove)
-    # Todo.. multiline?
-    # Remove whitespace..
-    # Todo.. complain about missing whitespace between objects.
-    pass
+class AsteriskCommentReader(object):
+    """
+    Unescapes backslash escapes and splits the data from the comments.
+
+    TODO: also parse multiline asterisk comments
+    """
+    @staticmethod
+    def simple_comment_split(data):
+        try:
+            i = data.index(';')
+        except ValueError:
+            return data, ''
+        while i > 0 and data[i - 1] in ' \t':
+            i -= 1
+        return data[0:i], data[i:]
+
+    def __iter__(self):
+        for where, data in super(AsteriskCommentReader, self).__iter__():
+            # Shortcut if we don't do any escaping.
+            if '\\' not in data:
+                if data.endswith(tuple(' \t')):
+                    W_WSH_EOL(where)
+                    data = data.rstrip(' \t')
+                data, comment = self.simple_comment_split(data)
+                yield where, data, comment
+                continue
+
+            # Unescape the values manually.
+            is_escaped = False
+            out = []
+            for i, ch in enumerate(data):
+                if is_escaped:
+                    is_escaped = False
+                    out.append(ch)
+                    out.append('')  # don't backward remove past this
+                elif ch == '\\':
+                    is_escaped = True
+                elif ch == ';':
+                    rest = list(data[i:])
+                    break
+                else:
+                    out.append(ch)
+            else:
+                if is_escaped:
+                    W_FILE_BS_EOL(where)
+                rest = []
+
+            # Seek backwards from i, because all blanks go with the
+            # comments.
+            while out and out[-1] and out[-1] in ' \t':
+                rest.insert(0, out.pop())
+            if rest and rest[-1] in ' \t':
+                W_WSH_EOL(where)
+                while rest and rest[-1] in ' \t':
+                    rest.pop()
+
+            yield where, ''.join(out), ''.join(rest)
 
 
-class FileReader(FileformatReader, NoCtrlReader, EncodingReader,
-                 BinFileReader):
+class FileReader(AsteriskCommentReader, FileformatReader, NoCtrlReader,
+                 EncodingReader, BinFileReader):
     pass
