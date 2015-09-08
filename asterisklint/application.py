@@ -1,10 +1,22 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
-from .defines import WarningDef
+from .defines import ErrorDef, WarningDef
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
+    class E_APP_WSH(ErrorDef):
+        message = 'whitespace before app will result in unknown app'
+
+    class E_APP_MISSING(ErrorDef):
+        message = 'app does not exist, dialplan will halt here!'
+
     class W_APP_BALANCE(WarningDef):
         message = 'looks like unbalanced parenthesis/quotes/curlies'
+
+    class W_APP_NEED_PARENS(WarningDef):
+        message = 'all applications except NoOp should have parentheses'
+
+    class W_APP_WSH(ErrorDef):
+        message = 'unexpected whitespace after app'
 
 
 class App(object):
@@ -36,15 +48,67 @@ class App(object):
     def parse(self):
         # Fetch the Application. If we don't know specifically, we can
         # call the parse_simple on it.
-        # FIXME: try to find a proper handler first (Set?)
         try:
-            self.parse_simple(self.raw)
+            app, data = self.raw.split('(', 1)
+        except ValueError:
+            # We allow NoOp without parentheses. The others need parens.
+            app = self.raw
+            if self.raw.lower() != 'noop':
+                W_APP_NEED_PARENS(self.where)
+            data = '()'
+        else:
+            data = '(' + data
+
+        # SOURCE: pbx/pbx_config.c: pbx_load_config()
+        if data.startswith('(') and data.endswith(')'):
+            data = data[1:-1]
+        else:
+            W_APP_NEED_PARENS(self.where)
+
+        # Set it and try to find a handler for it.
+        self.app = app
+        self.app_lower = app.lower()
+        self.data = data
+
+        # Leading whitespace is frowned upon but allowed. Trailing
+        # whitespace won't work:
+        if self.app.rstrip() != self.app:
+            E_APP_WSH(self.where)
+            return
+        if self.app.lstrip() != self.app:
+            W_APP_WSH(self.where)
+            self.app = self.app.lstrip()
+            self.app_lower = self.app.lower()
+        # Quick check that the app doesn't exist.
+        if not self.app:
+            E_APP_MISSING(self.where)
+            return
+
+        # Find handler from the registered handlers and use that.  If
+        # there is no registered handler, fall back to a simpler parser
+        # that checks quotes and tries to extract variables names
+        # anyway.
+        handler = self.get_handler()
+        if handler:
+            handler(self)
+        else:
+            self.default_handler()
+
+    def get_handler(self):
+        # load app_set from app_builtin
+        # self.app_lower == 'set':
+        return
+
+    def default_handler(self):
+        try:
+            self.check_balance(self.data)
         except ValueError:
             W_APP_BALANCE(self.where)
+        # TODO: extract variables
 
     @staticmethod
-    def parse_simple(app):
-        # TODO: we don't check backslash escapes here
+    def check_balance(app):
+        # TODO: we don't check backslash escapes here, should we?
         # TODO: write proper tests for this?
         arr = ['X']
         for char in app:

@@ -4,7 +4,7 @@ from asterisklint.file import FileReader
 
 class CommentsTest(ALintTestCase):
     maxDiff = 1024
-        
+
     def test_normal(self):
         reader = FileReader(NamedBytesIO('test.conf', b'''\
 ;; vim: set fenc=utf-8 et:
@@ -80,24 +80,25 @@ this_is_not_a_comment=semi\\;delimited; but this is a comment
              '',
              '; but this is a comment'])
 
-    def test_escaped_space_1(self):
+    def test_escaped_space(self):
+        # Asterisk won't do any magic with the backslash, not even for
+        # the backslash itself. It will only react to escaped semi's.
         reader = FileReader(NamedBytesIO('test.conf', b'''\
 [general]
 value1=\\\x20
-'''))
-        out = [i for i in reader]
-        self.assertEqual([i[1] for i in out],
-                         ['[general]', 'value1= '])
-        self.assertEqual([i[2] for i in out],
-                         ['', ''])
-
-    def test_escaped_space_2(self):
-        reader = FileReader(NamedBytesIO('test.conf', b'''\
-[general]
 value2=\\  ; with comment
+value3=\\; ; with comment
+value4=\\\\;\\;; with comment
 '''))
         out = [i for i in reader]
         self.assertEqual([i[1] for i in out],
-                         ['[general]', 'value2= '])
+                         ['[general]',
+                          'value1=\\',
+                          'value2=\\',
+                          'value3=;',
+                          'value4=\\;;'])
         self.assertEqual([i[2] for i in out],
-                         ['', ' ; with comment'])
+                         ['', '', '  ; with comment', ' ; with comment',
+                          '; with comment'])
+        # value1 with trailing \x20 will trigger a W_WSH_EOL warning.
+        self.assertLinted({'W_WSH_EOL': 1})

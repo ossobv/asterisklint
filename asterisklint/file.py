@@ -128,6 +128,7 @@ class AsteriskCommentReader(object):
     """
     Unescapes backslash escapes and splits the data from the comments.
 
+    TODO: look at: main/config.c: process_text_line()
     TODO: also parse multiline asterisk comments
     """
     @staticmethod
@@ -142,45 +143,50 @@ class AsteriskCommentReader(object):
 
     def __iter__(self):
         for where, data in super(AsteriskCommentReader, self).__iter__():
+            # We cannot escape whitespace, so no need to keep this
+            # around.
+            if data.endswith(tuple(' \t')):
+                W_WSH_EOL(where)
+                data = data.rstrip(' \t')
+
             # Shortcut if we don't do any escaping.
             if '\\' not in data:
-                if data.endswith(tuple(' \t')):
-                    W_WSH_EOL(where)
-                    data = data.rstrip(' \t')
                 data, comment = self.simple_comment_split(data)
                 yield where, data, comment
                 continue
 
-            # Unescape the values manually.
-            is_escaped = False
-            out = []
-            for i, ch in enumerate(data):
-                if is_escaped:
-                    is_escaped = False
-                    out.append(ch)
-                    out.append('')  # don't backward remove past this
-                elif ch == '\\':
-                    is_escaped = True
-                elif ch == ';':
-                    rest = list(data[i:])
+            # Asterisk does really poor backslash escaping in the config
+            # decoder. What it does amounts to a lookback only:
+            # - is it a semi? check previous char for backslash
+            # - if no backslash, break here
+            # - if backslash, replace both with single semi and continue
+            i = 0
+            parts = []
+            while True:
+                try:
+                    i = data.index(';')
+                except ValueError:
+                    parts.append(data)
+                    comment = ''
                     break
                 else:
-                    out.append(ch)
-            else:
-                if is_escaped:
-                    W_FILE_BS_EOL(where)
-                rest = []
+                    if i and data[i - 1] == '\\':
+                        parts.append(data[0:i - 1] + ';')
+                        data = data[i + 1:]
+                    else:
+                        parts.append(data[0:i])
+                        comment = data[i:]
+                        break
+            data = ''.join(parts)
 
-            # Seek backwards from i, because all blanks go with the
-            # comments.
-            while out and out[-1] and out[-1] in ' \t':
-                rest.insert(0, out.pop())
-            if rest and rest[-1] in ' \t':
-                W_WSH_EOL(where)
-                while rest and rest[-1] in ' \t':
-                    rest.pop()
+            # Move all the whitespace at the end of data to comment.
+            i = len(data)
+            while i > 0 and data[i - 1] in ' \t':
+                i -= 1
+            comment = data[i:] + comment
+            data = data[0:i]
 
-            yield where, ''.join(out), ''.join(rest)
+            yield where, data, comment
 
 
 class FileReader(AsteriskCommentReader, FileformatReader, NoCtrlReader,

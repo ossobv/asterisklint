@@ -41,6 +41,12 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class W_DP_CONTEXT_DUPE(WarningDef):
         message = 'duplicate context, not an error, but not nice'
 
+    class W_DP_GENERAL_MISPLACED(ErrorDef):
+        message = 'no general context found'
+
+    class W_DP_GLOBALS_MISPLACED(ErrorDef):
+        message = 'no globals context found'
+
     class W_DP_LABEL_DUPE(WarningDef):
         message = 'duplicate label'
 
@@ -75,6 +81,8 @@ class Dialplan(object):
             # we may be appending to that object...!!
             self._general.extend(general)
         else:
+            if self._globals or self.contexts:
+                W_DP_GENERAL_MISPLACED(general.where)
             self._general = general
 
     def add_globals(self, globals_):
@@ -82,7 +90,15 @@ class Dialplan(object):
             E_DP_GLOBALS_DUPE(globals_.where, self._globals.where)
             # don't save
         else:
+            if not self._general or self.contexts:
+                W_DP_GLOBALS_MISPLACED(globals_.where)
             self._globals = globals_
+
+    def on_complete(self):
+        if not self._general:
+            W_DP_GENERAL_MISPLACED(None)
+        if not self._globals:
+            W_DP_GLOBALS_MISPLACED(None)
 
     def format_as_dialplan_show(self):
         # If we have this, we can compare to the asterisk output :)
@@ -191,7 +207,10 @@ class DialplanVarset(object):
             else:
                 pattern, rest = None, varset.value
 
-            prio, app = rest.split(',', 1)
+            try:
+                prio, app = rest.split(',', 1)
+            except ValueError:
+                prio, app = rest, ''
             try:
                 prio, label = prio.split('(', 1)
             except ValueError:
@@ -304,6 +323,7 @@ class DialplanAggregator(ConfigAggregator):
         self._curcontext = None
 
     def on_yield(self):
+        self._dialplan.on_complete()
         yield self._dialplan
 
     def on_context(self, context):

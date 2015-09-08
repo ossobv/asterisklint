@@ -116,6 +116,10 @@ class ConfigParser(object):
 
     # TODO: compain about too much and/or too little white space!
 
+    # TODO: look at: main/config.c: process_text_line()
+    # it will show odd escaping, and multiline stuff
+    # TODO: include/tryinclude/exec
+
     regexes = (
         # [context](template1,template2)
         (re.compile(r'^\[([^]]*)\]\s*\(([^)\+])\)$'),
