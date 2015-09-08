@@ -5,6 +5,7 @@ from .application import App
 from .config import ConfigAggregator, Context, Varset
 from .config import E_CONF_MISSING_CTX
 from .defines import ErrorDef, WarningDef
+from .where import Where
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
@@ -94,11 +95,19 @@ class Dialplan(object):
                 W_DP_GLOBALS_MISPLACED(globals_.where)
             self._globals = globals_
 
+    def get_where(self):
+        where = None
+        if self.contexts:
+            where = Where(
+                filename=self.contexts[0].where.filename,
+                lineno=0, line='')
+        return where
+
     def on_complete(self):
         if not self._general:
-            W_DP_GENERAL_MISPLACED(None)
+            W_DP_GENERAL_MISPLACED(self.get_where())
         if not self._globals:
-            W_DP_GLOBALS_MISPLACED(None)
+            W_DP_GLOBALS_MISPLACED(self.get_where())
 
     def format_as_dialplan_show(self):
         # If we have this, we can compare to the asterisk output :)

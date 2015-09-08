@@ -42,7 +42,7 @@ class App(object):
         self.raw = app
         self.where = where
 
-        # Attempt to parse the app.
+        # Attempt to parse the app + data.
         self.parse()
 
     def parse(self):
@@ -84,10 +84,15 @@ class App(object):
             E_APP_MISSING(self.where)
             return
 
+        # Pass the data through a handler -- which also handles
+        # functions -- first:
+        # SOURCE: main/pbx.c: pbx_substitute_variables_helper_full
+        # TODO: here..
+
         # Find handler from the registered handlers and use that.  If
         # there is no registered handler, fall back to a simpler parser
         # that checks quotes and tries to extract variables names
-        # anyway.
+        # anyway. (XXX?)
         handler = self.get_handler()
         if handler:
             handler(self)
