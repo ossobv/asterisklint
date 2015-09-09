@@ -117,7 +117,7 @@ foo2=bar2
 bar=baz
 '''))
         self.check_values(reader)
-        self.assertLinted({'W_WSV_CTX_BETWEEN': 1})
+        self.assertLinted({'H_WSV_CTX_BETWEEN': 1})
 
     def test_wsv_ctx_between_toomany(self):
         reader = FileConfigParser(NamedBytesIO(
@@ -132,7 +132,7 @@ foo2=bar2
 bar=baz
 '''))
         self.check_values(reader)
-        self.assertLinted({'W_WSV_CTX_BETWEEN': 1})
+        self.assertLinted({'H_WSV_CTX_BETWEEN': 1})
 
     def test_wsv_ctx_between_ok(self):
         reader = FileConfigParser(NamedBytesIO(
@@ -212,4 +212,4 @@ foo2=bar2
 bar=baz
 '''))
         self.check_values(reader)
-        self.assertLinted({'W_WSV_VARSET_BETWEEN': 2})
+        self.assertLinted({'H_WSV_VARSET_BETWEEN': 2})

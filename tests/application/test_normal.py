@@ -21,8 +21,8 @@ exten => s,1,NoOp()
 exten => h,1,DumpChan()
 '''))
         self.check_values(reader)
-        self.assertLinted({'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+        self.assertLinted({'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_normal_noop_needs_no_parens(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -33,8 +33,8 @@ exten => s,1,NoOp
 exten => h,1,DumpChan()
 '''))
         self.check_values(reader)
-        self.assertLinted({'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+        self.assertLinted({'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_missing_parens(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -46,8 +46,8 @@ exten => h,1,DumpChan
 '''))
         self.check_values(reader)
         self.assertLinted({'W_APP_NEED_PARENS': 2,  # hangup and dumpchan
-                           'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+                           'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_missing_horizontalws_before(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -59,8 +59,8 @@ exten => h,1,DumpChan()
 '''))
         self.check_values(reader)
         self.assertLinted({'W_APP_WSH': 1,  # horizontal whitespace
-                           'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+                           'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_missing_horizontalws_after(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -72,5 +72,5 @@ exten => h,1,DumpChan()
 '''))
         self.check_values(reader)
         self.assertLinted({'E_APP_WSH': 1,  # horizontal whitespace
-                           'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+                           'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})

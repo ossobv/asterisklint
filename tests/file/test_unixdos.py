@@ -30,7 +30,7 @@ class UnixDosTest(ALintTestCase):
             b'[context]\r\nvariable=value\r\nother=value\r\n'))
         self.check_values(reader)
         self.assertLinted({'W_FILE_DOS_EOFCRLF': 1})
-    
+
     def test_unix_without_lf(self):
         reader = FileReader(NamedBytesIO(
             'test.conf',

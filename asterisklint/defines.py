@@ -25,7 +25,7 @@ class MessageDefManager(type):
     def __new__(cls, name, bases, classdict):
         if name in cls.types:
             raise DuplicateMessageDef(name)
-        if not name.endswith('Def'):  # MessageDef, WarningDef, ErrorDef
+        if not name.endswith('Def'):  # MessageDef, ErrorDef, WarningDef, ...
             cls.types.add(name)       # W_FOO, E_BAR
         return type.__new__(cls, name, bases, classdict)
 
@@ -39,9 +39,6 @@ class MessageDefManager(type):
 
         if cls.muted:
             return
-
-        # print('( raised:', dict((k, len(v)) for k, v in cls.raised.items()),
-        #       ')')
 
         print('{} {}: {}'.format(
             msg.where, msg.__class__.__name__, msg.message),
@@ -62,9 +59,10 @@ class MessageDefManager(type):
 
 
 class MessageDef(object, metaclass=MessageDefManager):
-    def __init__(self, where, previous=None):
+    def __init__(self, where, previous=None, notes=None):
         self.where = where
         self.previous = previous
+        self.notes = notes  # TODO: use this for hints
         MessageDefManager.on_message(self)
 
 
@@ -74,3 +72,15 @@ class ErrorDef(MessageDef):
 
 class WarningDef(MessageDef):
     pass
+
+
+class HintDef(MessageDef):
+    pass
+
+
+class DupeDefMixin(object):
+    def __init__(self, where, **kwargs):
+        if not kwargs.get('previous'):
+            raise TypeError("{} requires a ``previous'' argument".format(
+                self.__class__.__name__))
+        super(DupeDefMixin, self).__init__(where, **kwargs)

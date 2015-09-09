@@ -27,4 +27,3 @@ exten => s,1,NoOp
         self.assertEqual(len(contexts), 2)
         self.assertEqual(len(contexts[0]), 3)
         self.assertEqual(len(contexts[1]), 0)
-

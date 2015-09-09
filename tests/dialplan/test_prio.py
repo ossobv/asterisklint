@@ -26,8 +26,8 @@ exten => pattern,2,NoOp(2)
 exten => pattern,3,NoOp(3)
 '''))
         self.check_values(reader)
-        self.assertLinted({'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+        self.assertLinted({'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_exten_n_prio(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -37,8 +37,8 @@ exten => pattern,n,NoOp(2)
 exten => pattern,n,NoOp(3)
 '''))
         self.check_values(reader)
-        self.assertLinted({'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+        self.assertLinted({'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_same_n_prio(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -48,8 +48,8 @@ exten => pattern,1,NoOp(1)
  same => n,NoOp(3)
 '''))
         self.check_values(reader)
-        self.assertLinted({'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+        self.assertLinted({'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
 
 class BadPrioTest(ALintTestCase):
@@ -61,8 +61,8 @@ exten => pattern,0,NoOp(1)
         dialplan = [i for i in reader][0]
         self.assertEqual(len(dialplan.contexts[0]), 0)
         self.assertLinted({'E_DP_PRIO_INVALID': 1,
-                           'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+                           'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_dupe_prio(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -74,8 +74,8 @@ exten => pattern,2,NoOp(3)
         dialplan = [i for i in reader][0]
         self.assertEqual(len(dialplan.contexts[0]), 2)
         self.assertLinted({'E_DP_PRIO_DUPE': 1,
-                           'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+                           'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_missing_prio_1(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -87,8 +87,8 @@ exten => pattern,n,NoOp(3)
         dialplan = [i for i in reader][0]
         self.assertEqual(len(dialplan.contexts[0]), 0)
         self.assertLinted({'E_DP_PRIO_MISSING': 3,
-                           'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+                           'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_prio_bad_start(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -100,8 +100,8 @@ exten => pattern,n,NoOp(3)
         dialplan = [i for i in reader][0]
         self.assertEqual(len(dialplan.contexts[0]), 3)
         self.assertLinted({'W_DP_PRIO_BADORDER': 1,
-                           'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+                           'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_prio_missing(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -113,8 +113,8 @@ exten => pattern,n,NoOp(3)
         dialplan = [i for i in reader][0]
         self.assertEqual(len(dialplan.contexts[0]), 2)
         self.assertLinted({'E_DP_PRIO_INVALID': 1,
-                           'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+                           'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_prio_missing_app(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -127,8 +127,8 @@ exten => pattern,n,NoOp(3)
         self.assertEqual(len(dialplan.contexts[0]), 3)
         self.assertLinted({'E_APP_MISSING': 1,
                            'W_APP_NEED_PARENS': 1,
-                           'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+                           'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})
 
 
 class UnusualButGoodPrioTest(ALintTestCase):
@@ -144,5 +144,5 @@ exten => _X!,3,NoOp(3)
         dialplan = [i for i in reader][0]
         self.assertEqual(len(dialplan.contexts[0]), 4)
         # Not(!) {'W_DP_PRIO_BADORDER': 3}
-        self.assertLinted({'W_DP_GENERAL_MISPLACED': 1,
-                           'W_DP_GLOBALS_MISPLACED': 1})
+        self.assertLinted({'H_DP_GENERAL_MISPLACED': 1,
+                           'H_DP_GLOBALS_MISPLACED': 1})

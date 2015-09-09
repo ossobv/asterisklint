@@ -3,8 +3,8 @@ from functools import total_ordering
 
 from .application import App
 from .config import ConfigAggregator, Context, Varset
-from .config import E_CONF_MISSING_CTX
-from .defines import ErrorDef, WarningDef
+from .config import E_CONF_CTX_MISSING, E_CONF_KEY_INVALID, W_CONF_CTX_DUPE
+from .defines import ErrorDef, WarningDef, HintDef, DupeDefMixin
 from .where import Where
 
 
@@ -30,29 +30,26 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_DP_PRIO_MISSING(ErrorDef):
         message = 'missing priority'
 
-    class E_DP_PRIO_DUPE(ErrorDef):
+    class E_DP_PRIO_DUPE(DupeDefMixin, ErrorDef):
         message = 'duplicate priority'
 
     class E_DP_LABEL_INVALID(ErrorDef):
         message = 'unexpected label value'
 
-    class E_DP_GLOBALS_DUPE(ErrorDef):
+    class E_DP_GLOBALS_DUPE(DupeDefMixin, ErrorDef):
         message = 'second globals context, will not be used'
 
-    class W_DP_CONTEXT_DUPE(WarningDef):
-        message = 'duplicate context, not an error, but not nice'
-
-    class W_DP_GENERAL_MISPLACED(ErrorDef):
-        message = 'no general context found'
-
-    class W_DP_GLOBALS_MISPLACED(ErrorDef):
-        message = 'no globals context found'
-
-    class W_DP_LABEL_DUPE(WarningDef):
-        message = 'duplicate label'
+    class E_DP_LABEL_DUPE(WarningDef):
+        message = 'duplicate label, one of them will not be used'
 
     class W_DP_PRIO_BADORDER(ErrorDef):
         message = 'bad priority order'
+
+    class H_DP_GENERAL_MISPLACED(HintDef):
+        message = '[general] context not found or not at top of file'
+
+    class H_DP_GLOBALS_MISPLACED(HintDef):
+        message = '[global] context not found or not at position two'
 
 
 class Dialplan(object):
@@ -77,22 +74,22 @@ class Dialplan(object):
 
     def add_general(self, general):
         if self._general:
-            W_DP_CONTEXT_DUPE(general.where, self._general.where)
+            W_CONF_CTX_DUPE(general.where, previous=self._general.where)
             # BEWARE: make sure we use a ref to the NEW context, because
             # we may be appending to that object...!!
             self._general.extend(general)
         else:
             if self._globals or self.contexts:
-                W_DP_GENERAL_MISPLACED(general.where)
+                H_DP_GENERAL_MISPLACED(general.where)
             self._general = general
 
     def add_globals(self, globals_):
         if self._globals:
-            E_DP_GLOBALS_DUPE(globals_.where, self._globals.where)
+            E_DP_GLOBALS_DUPE(globals_.where, previous=self._globals.where)
             # don't save
         else:
             if not self._general or self.contexts:
-                W_DP_GLOBALS_MISPLACED(globals_.where)
+                H_DP_GLOBALS_MISPLACED(globals_.where)
             self._globals = globals_
 
     def get_where(self):
@@ -105,9 +102,9 @@ class Dialplan(object):
 
     def on_complete(self):
         if not self._general:
-            W_DP_GENERAL_MISPLACED(self.get_where())
+            H_DP_GENERAL_MISPLACED(self.get_where())
         if not self._globals:
-            W_DP_GLOBALS_MISPLACED(self.get_where())
+            H_DP_GLOBALS_MISPLACED(self.get_where())
 
     def format_as_dialplan_show(self):
         # If we have this, we can compare to the asterisk output :)
@@ -190,14 +187,18 @@ class DialplanContext(Context):
 
         # Check duplicate priorities.
         extensions = [i for i in self if i.pattern == extension.pattern]
-        if extension.prio in [i.prio for i in extensions]:
-            E_DP_PRIO_DUPE(extension.where)
+        if any(True for i in extensions if i.prio == extension.prio):
+            previous = [i.where for i in extensions
+                        if i.prio == extension.prio][0]
+            E_DP_PRIO_DUPE(extension.where, previous=previous)
             return
 
         # Check duplicate labels.
         if (extension.label and
-                extension.label in [i.label for i in extensions]):
-            W_DP_LABEL_DUPE(extension.where)
+                any(True for i in extensions if i.label == extension.label)):
+            previous = [i.where for i in extensions
+                        if i.label == extensions.label][0]
+            E_DP_LABEL_DUPE(extension.where, previous=previous)
             extension.label = ''  # wipe it
 
         super(DialplanContext, self).add(extension)
@@ -254,7 +255,7 @@ class DialplanVarset(object):
             return Include(varset.value, varset.where)
 
         else:
-            E_DP_VAR_INVALID(varset.where)
+            E_CONF_KEY_INVALID(varset.where)
             return None
 
 
@@ -349,7 +350,7 @@ class DialplanAggregator(ConfigAggregator):
 
     def on_varset(self, varset):
         if not self._curcontext:
-            E_CONF_MISSING_CTX(varset.where)
+            E_CONF_CTX_MISSING(varset.where)
         elif isinstance(self._curcontext, DialplanContext):
             dialplanvarset = DialplanVarset.from_varset(varset)
             if dialplanvarset:

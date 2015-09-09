@@ -1,7 +1,7 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
 import re
 
-from .defines import ErrorDef, WarningDef
+from .defines import ErrorDef, WarningDef, HintDef, DupeDefMixin
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
@@ -11,11 +11,18 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_CONF_BAD_LINE(ErrorDef):
         message = 'expected variable = value'
 
-    class E_CONF_NOCTX_NOVAR(ErrorDef):
+    class E_CONF_CTX_MISSING(ErrorDef):
+        message = 'expected context before var/object set'
+
+    class E_CONF_KEY_INVALID(ErrorDef):
         message = 'expected context or var/object set'
 
-    class E_CONF_MISSING_CTX(ErrorDef):
-        message = 'expected context before var/object set'
+    class W_CONF_CTX_DUPE(DupeDefMixin, ErrorDef):
+        # BEWARE: chan_pjsip explicitly takes multiple contexts with the
+        # same name. But generally it is unwanted and sometimes the
+        # values are ignored or the values mask any previously set
+        # values.
+        message = 'duplicate context found, in some cases it is legal'
 
     class W_WSH_BOL(WarningDef):
         message = 'unexpected leading whitespace'
@@ -32,10 +39,10 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class W_WSV_EOF(WarningDef):
         message = 'unexpected vertical space at end of file'
 
-    class W_WSV_CTX_BETWEEN(WarningDef):
+    class H_WSV_CTX_BETWEEN(HintDef):
         message = 'expected one or two lines between contexts'
 
-    class W_WSV_VARSET_BETWEEN(WarningDef):
+    class H_WSV_VARSET_BETWEEN(HintDef):
         message = 'expected zero or one lines between varsets'
 
 
@@ -179,10 +186,10 @@ class EmptyLinesParser(object):
                         W_WSV_BOF(element.where)
                 elif (isinstance(element, Context) and
                         len(buffer_) not in (1, 2)):
-                    W_WSV_CTX_BETWEEN(element.where)
+                    H_WSV_CTX_BETWEEN(element.where)
                 elif (isinstance(element, Varset) and
                         len(buffer_) > 1):
-                    W_WSV_VARSET_BETWEEN(element.where)
+                    H_WSV_VARSET_BETWEEN(element.where)
 
                 for old in buffer_:
                     yield old
@@ -229,7 +236,7 @@ class ConfigAggregator(EmptyLinesParser, ConfigParser):
 
     def on_varset(self, varset):
         if not self._curcontext:
-            E_CONF_MISSING_CTX(varset.where)
+            E_CONF_CTX_MISSING(varset.where)
         else:
             self._curcontext.add(varset)
 

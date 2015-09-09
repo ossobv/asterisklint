@@ -1,6 +1,21 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
 from .defines import ErrorDef, WarningDef
 
+# 1:
+# # SOURCE: main/pbx.c: pbx_substitute_variables_helper_full
+# die zoekt naar ${} of $[] en zoekt daarbinnen naar balanced } of resp. ]
+# (zonder escaping), daarna wordt replacement gedaan:
+# ${} => if endswith () => ast_func_read2, anders ast_str_retrieve_variable
+# $[] =>
+
+
+# 2: run app, bijv, Set, die een split doet, en dan dit:
+# # int pbx_builtin_setvar_helper(struct ast_channel *chan,
+#     const char *name, const char *value)
+# L:                 return ast_func_write(chan, function, value);
+# R:
+#
+
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_APP_WSH(ErrorDef):

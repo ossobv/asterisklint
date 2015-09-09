@@ -7,9 +7,6 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_FILE_UTF8_BAD(ErrorDef):
         message = 'expected UTF-8 encoding, got something else'
 
-    class W_FILE_BS_EOL(WarningDef):
-        message = 'backslash at EOL, not supported'  # XXX?
-
     class W_FILE_CTRL_CHAR(WarningDef):
         message = 'unexpected control character found'
 
