@@ -21,22 +21,23 @@ from .defines import ErrorDef, WarningDef
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_APP_WSH(ErrorDef):
-        message = 'whitespace before app will result in unknown app'
+        message = 'whitespace before app {app!r} will result in unknown app'
 
     class E_APP_MISSING(ErrorDef):
-        message = 'app does not exist, dialplan will halt here!'
+        message = 'app {app!r} does not exist, dialplan will halt here!'
 
     class W_APP_BALANCE(WarningDef):
-        message = 'looks like unbalanced parenthesis/quotes/curlies'
+        message = ('app data {data!r} looks like unbalanced'
+                   'parenthesis/quotes/curlies')
 
     class W_APP_BAD_CASE(WarningDef):
-        message = 'app does not have the proper Case'
+        message = 'app {app!r} does not have the proper Case {proper!r}'
 
     class W_APP_NEED_PARENS(WarningDef):
-        message = 'all applications except NoOp should have parentheses'
+        message = 'app {app!r} should have parentheses (only NoOp is exempt)'
 
     class W_APP_WSH(ErrorDef):
-        message = 'unexpected whitespace after app'
+        message = 'unexpected whitespace after app {app!r}'
 
 
 class Singleton(type):
@@ -145,9 +146,9 @@ class App(object):
         # Check app availability.
         if app.name != self.app:
             if app.name == 'Default':
-                E_APP_MISSING(self.where)
+                E_APP_MISSING(self.where, app=self.app)
             else:
-                W_APP_BAD_CASE(self.where)
+                W_APP_BAD_CASE(self.where, app=self.app, proper=app.name)
 
         # Run data through app.
         app(self.data, where=self.where)
@@ -162,7 +163,7 @@ class App(object):
             # We allow NoOp without parentheses. The others need parens.
             app = self.raw
             if self.raw.lower() != 'noop':
-                W_APP_NEED_PARENS(self.where)
+                W_APP_NEED_PARENS(self.where, app=app)
             data = '()'
         else:
             data = '(' + data

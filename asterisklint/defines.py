@@ -41,7 +41,8 @@ class MessageDefManager(type):
             return
 
         print('{} {}: {}'.format(
-            msg.where, msg.__class__.__name__, msg.message),
+            msg.where, msg.__class__.__name__,
+            msg.message.format(**msg.fmtkwargs)),
             file=sys.stderr)
 
         if cls.show_line:
@@ -59,10 +60,10 @@ class MessageDefManager(type):
 
 
 class MessageDef(object, metaclass=MessageDefManager):
-    def __init__(self, where, previous=None, notes=None):
+    def __init__(self, where, previous=None, **fmtkwargs):
         self.where = where
         self.previous = previous
-        self.notes = notes  # TODO: use this for hints
+        self.fmtkwargs = fmtkwargs
         MessageDefManager.on_message(self)
 
 
