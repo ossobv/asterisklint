@@ -1,10 +1,14 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
 from collections import defaultdict
+from functools import wraps
 from io import BytesIO
 from unittest import (
     TestCase, TextTestResult, TextTestRunner, main as orig_main)
 
 from .defines import MessageDefManager
+
+
+__all__ = ('ALintTestCase', 'NamedBytesIO', 'ignoreLinted')
 
 
 class ALintTestCase(TestCase):
@@ -21,6 +25,16 @@ class ALintTestCase(TestCase):
         for id_, count in counts.items():
             self.linted_counts[id_] += count
         MessageDefManager.reset()
+
+        # Strip messages that we're supposed to ignore.
+        if hasattr(self, '__alinttest_ignore'):
+            # Use getattr instead of self.__alinttest_ignore because of
+            # the mangled name.
+            ignore = getattr(self, '__alinttest_ignore')
+            for key in list(counts.keys()):
+                if ignore(key):
+                    del counts[key]
+                    # print('ignoring {} because of {}'.format(key, ignore))
 
         # Run this last, so we've completed the reset.
         self.assertEqual(counts, expected_counts)
@@ -65,6 +79,69 @@ class NamedBytesIO(BytesIO):
     def __init__(self, name, data):
         super(NamedBytesIO, self).__init__(data)
         self.name = name
+
+
+class _IgnoreLinted(object):
+    def __init__(self, *values):
+        self._equals = []
+        self._startswith = []
+
+        for value in values:
+            if not isinstance(value, str):
+                raise TypeError('value {!r} is not a string'.format(value))
+
+            parts = value.split('*')
+            if len(parts) == 1:
+                self._equals.append(parts[0])
+            elif len(parts) == 2 and parts[0] and not parts[1]:
+                self._startswith.append(parts[0])
+            else:
+                raise ValueError(
+                    'only an optional trailing asterisk is valid in '
+                    'value {!r}'.format(value))
+
+        self._equals = tuple(self._equals)
+        self._startswith = tuple(self._startswith)
+        self._repr = 'ignoreLinted({})'.format(' '.join(values))
+
+    def __call__(self, value):
+        if value in self._equals or value.startswith(self._startswith):
+            return True
+        return False
+
+    def __repr__(self):
+        return self._repr
+
+
+def ignoreLinted(*values):
+    """
+    Ignore linter hints/warnings/errors as supplied. Optionally, a
+    trailing asterisk (*) may be used to match more.
+
+    Example:
+
+        @ignoreLinted('H_DP_*', 'W_SOME_WARNING')
+        class MyTest(ALintTestCase):
+            ...
+    """
+    def decorator(test_item):
+        ignorefunc = _IgnoreLinted(*values)
+
+        # Are we decorating a test_* method?
+        if not isinstance(test_item, type):
+            @wraps(test_item)
+            def ignore_wrapper(self, *args, **kwargs):
+                assert not hasattr(self, '__alinttest_ignore')
+                self.__alinttest_ignore = ignorefunc
+                ret = test_item(self, *args, **kwargs)
+                del self.__alinttest_ignore
+                return ret
+            return ignore_wrapper
+
+        # We're decorating a class.
+        test_item.__alinttest_ignore = ignorefunc
+        return test_item
+    return decorator
 
 
 def main():

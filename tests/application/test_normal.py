@@ -1,7 +1,9 @@
 from asterisklint import FileDialplanParser
-from asterisklint.alinttest import ALintTestCase, NamedBytesIO
+from asterisklint.alinttest import (
+    ALintTestCase, NamedBytesIO, ignoreLinted)
 
 
+@ignoreLinted('H_DP_GENERAL_MISPLACED', 'H_DP_GLOBALS_MISPLACED')
 class NormalTest(ALintTestCase):
     def check_values(self, reader):
         out = [i for i in reader]
@@ -21,8 +23,6 @@ exten => s,1,NoOp()
 exten => h,1,DumpChan()
 '''))
         self.check_values(reader)
-        self.assertLinted({'H_DP_GENERAL_MISPLACED': 1,
-                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_normal_noop_needs_no_parens(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -33,8 +33,6 @@ exten => s,1,NoOp
 exten => h,1,DumpChan()
 '''))
         self.check_values(reader)
-        self.assertLinted({'H_DP_GENERAL_MISPLACED': 1,
-                           'H_DP_GLOBALS_MISPLACED': 1})
 
     def test_missing_parens(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -45,9 +43,7 @@ exten => s,1,NoOp
 exten => h,1,DumpChan
 '''))
         self.check_values(reader)
-        self.assertLinted({'W_APP_NEED_PARENS': 2,  # hangup and dumpchan
-                           'H_DP_GENERAL_MISPLACED': 1,
-                           'H_DP_GLOBALS_MISPLACED': 1})
+        self.assertLinted({'W_APP_NEED_PARENS': 2})  # hangup and dumpchan
 
     def test_missing_horizontalws_before(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -58,9 +54,7 @@ exten => s,1,NoOp
 exten => h,1,DumpChan()
 '''))
         self.check_values(reader)
-        self.assertLinted({'W_APP_WSH': 1,  # horizontal whitespace
-                           'H_DP_GENERAL_MISPLACED': 1,
-                           'H_DP_GLOBALS_MISPLACED': 1})
+        self.assertLinted({'W_APP_WSH': 1})  # horizontal whitespace
 
     def test_missing_horizontalws_after(self):
         reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
@@ -71,6 +65,4 @@ exten => s,1,NoOp
 exten => h,1,DumpChan()
 '''))
         self.check_values(reader)
-        self.assertLinted({'E_APP_WSH': 1,  # horizontal whitespace
-                           'H_DP_GENERAL_MISPLACED': 1,
-                           'H_DP_GLOBALS_MISPLACED': 1})
+        self.assertLinted({'E_APP_WSH': 1})  # horizontal whitespace
