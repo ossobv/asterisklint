@@ -1,4 +1,6 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
+from importlib import import_module
+
 from .defines import ErrorDef, WarningDef
 
 # 1:
@@ -27,11 +29,67 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class W_APP_BALANCE(WarningDef):
         message = 'looks like unbalanced parenthesis/quotes/curlies'
 
+    class W_APP_BAD_CASE(WarningDef):
+        message = 'app does not have the proper Case'
+
     class W_APP_NEED_PARENS(WarningDef):
         message = 'all applications except NoOp should have parentheses'
 
     class W_APP_WSH(ErrorDef):
         message = 'unexpected whitespace after app'
+
+
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class AppLoader(metaclass=Singleton):
+    def __init__(self, version='v11'):
+        self.version = version
+        self._version_dirs = (version, 'vall')
+        self._lower_apps = {}
+
+    def get(self, lower_app):
+        # Attempt to load .version.app.register(). If it doesn't exist,
+        # we attempt to load .version.default.register(). It should
+        # exist.
+        if lower_app not in self._lower_apps:
+            if not self.load(lower_app):
+                self.get('default')  # ensure default exists
+                # The default may have loaded more apps. Check it and
+                # only alias the other app to default if it didn't.
+                if lower_app not in self._lower_apps:
+                    # TODO: we may want to warn here, but we have no
+                    # Where()
+                    self._lower_apps[lower_app] = self._lower_apps['default']
+
+            assert lower_app in self._lower_apps
+        return self._lower_apps[lower_app]
+
+    def load(self, lower_app):
+        for version in self._version_dirs:
+            mod_name = 'asterisklint.app.{}.{}'.format(version, lower_app)
+            try:
+                app_handler = import_module(mod_name)
+            except ImportError as e:
+                if (e.args[0] == "No module named '{}'".format(mod_name) and
+                        mod_name != 'asterisklint.apps.vall.default'):
+                    pass
+                else:
+                    raise
+            else:
+                app_handler.register(self)
+                return True
+        return False
+
+    def register(self, app):
+        lower_app = app.name.lower()
+        self._lower_apps[lower_app] = app
 
 
 class App(object):
@@ -61,8 +119,43 @@ class App(object):
         self.parse()
 
     def parse(self):
+        """
+        Parse self.raw into an App and data. Recursively replaces the
+        app data as far as possible.
+
+        It tries to find a specific handler for the application, but
+        will fall back to a default handler (parse_simple) if it cannot
+        be found.
+        """
         # Fetch the Application. If we don't know specifically, we can
         # call the parse_simple on it.
+        if not self.split_app_data():
+            return
+
+        # Find the handler from the registered handlers. If there is no
+        # custom handler, we may already raise a message here.
+        app = AppLoader().get(self.app_lower)
+
+        # Pass the data through a handler -- which also handles
+        # functions -- first:
+        # SOURCE: main/pbx.c: pbx_substitute_variables_helper_full
+        # TODO: here..
+        self.data = self.data  # this stuff..
+
+        # Check app availability.
+        if app.name != self.app:
+            if app.name == 'Default':
+                E_APP_MISSING(self.where)
+            else:
+                W_APP_BAD_CASE(self.where)
+
+        # Run data through app.
+        app(self.data, where=self.where)
+
+    def split_app_data(self):
+        """
+        Splits self.raw into self.app, self.app_lower, self.data.
+        """
         try:
             app, data = self.raw.split('(', 1)
         except ValueError:
@@ -89,7 +182,7 @@ class App(object):
         # whitespace won't work:
         if self.app.rstrip() != self.app:
             E_APP_WSH(self.where)
-            return
+            return False
         if self.app.lstrip() != self.app:
             W_APP_WSH(self.where)
             self.app = self.app.lstrip()
@@ -97,68 +190,10 @@ class App(object):
         # Quick check that the app doesn't exist.
         if not self.app:
             E_APP_MISSING(self.where)
-            return
+            return False
 
-        # Pass the data through a handler -- which also handles
-        # functions -- first:
-        # SOURCE: main/pbx.c: pbx_substitute_variables_helper_full
-        # TODO: here..
+        return True
 
-        # Find handler from the registered handlers and use that.  If
-        # there is no registered handler, fall back to a simpler parser
-        # that checks quotes and tries to extract variables names
-        # anyway. (XXX?)
-        handler = self.get_handler()
-        if handler:
-            handler(self)
-        else:
-            self.default_handler()
-
-    def get_handler(self):
-        # load app_set from app_builtin
-        # self.app_lower == 'set':
-        return
-
-    def default_handler(self):
-        try:
-            self.check_balance(self.data)
-        except ValueError:
-            W_APP_BALANCE(self.where)
-        # TODO: extract variables
-
-    @staticmethod
-    def check_balance(app):
-        # TODO: we don't check backslash escapes here, should we?
-        # TODO: write proper tests for this?
-        arr = ['X']
-        for char in app:
-            if char == '"':
-                if arr[-1] == '"':
-                    arr.pop()
-                elif arr[-1] == "'":
-                    pass
-                else:
-                    arr.append('"')
-            elif char == "'":
-                if arr[-1] == "'":
-                    arr.pop()
-                elif arr[-1] == '"':
-                    pass
-                else:
-                    arr.append("'")
-            elif char in '({[':
-                if arr[-1] in '\'"':
-                    pass
-                else:
-                    arr.append(char)
-            elif char in ')}]':
-                left = '({['[')}]'.index(char)]
-                if arr[-1] in '\'"':
-                    pass
-                else:
-                    if arr[-1] == left:
-                        arr.pop()
-                    else:
-                        raise ValueError(''.join(arr[1:]))
-        if arr != ['X']:
-            raise ValueError(''.join(arr[1:]))
+    @property
+    def name(self):
+        return self.app
