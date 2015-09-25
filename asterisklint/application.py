@@ -1,4 +1,5 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
+import os
 from importlib import import_module
 
 from .defines import ErrorDef, WarningDef
@@ -52,41 +53,29 @@ class Singleton(type):
 class AppLoader(metaclass=Singleton):
     def __init__(self, version='v11'):
         self.version = version
-        self._version_dirs = (version, 'vall')
         self._lower_apps = {}
 
+        self.load_all()
+
+    def load_all(self):
+        # Load all from our version dir.
+        appsdir = os.path.join(os.path.dirname(__file__),
+                               'app', self.version)
+        appsmods = [i[0:-3] for i in os.listdir(appsdir) if i.endswith('.py')]
+
+        for appsmod in appsmods:
+            mod_name = 'asterisklint.app.{}.{}'.format(self.version, appsmod)
+            mod = import_module(mod_name)
+            if hasattr(mod, 'register'):
+                mod.register(self)
+
     def get(self, lower_app):
-        # Attempt to load .version.app.register(). If it doesn't exist,
-        # we attempt to load .version.default.register(). It should
-        # exist.
+        # Fetch app named lower_app. If it doesn't exist, we alias the
+        # 'Unknown' app to it.
         if lower_app not in self._lower_apps:
-            if not self.load(lower_app):
-                self.get('default')  # ensure default exists
-                # The default may have loaded more apps. Check it and
-                # only alias the other app to default if it didn't.
-                if lower_app not in self._lower_apps:
-                    # TODO: we may want to warn here, but we have no
-                    # Where()
-                    self._lower_apps[lower_app] = self._lower_apps['default']
-
-            assert lower_app in self._lower_apps
+            # TODO: at this point we want an error raised here, right?
+            self._lower_apps[lower_app] = self._lower_apps['unknown']
         return self._lower_apps[lower_app]
-
-    def load(self, lower_app):
-        for version in self._version_dirs:
-            mod_name = 'asterisklint.app.{}.{}'.format(version, lower_app)
-            try:
-                app_handler = import_module(mod_name)
-            except ImportError as e:
-                if (e.args[0] == "No module named '{}'".format(mod_name) and
-                        mod_name != 'asterisklint.apps.vall.default'):
-                    pass
-                else:
-                    raise
-            else:
-                app_handler.register(self)
-                return True
-        return False
 
     def register(self, app):
         lower_app = app.name.lower()
@@ -145,7 +134,7 @@ class App(object):
 
         # Check app availability.
         if app.name != self.app:
-            if app.name == 'Default':
+            if app.name == 'Unknown':
                 E_APP_MISSING(self.where, app=self.app)
             else:
                 W_APP_BAD_CASE(self.where, app=self.app, proper=app.name)

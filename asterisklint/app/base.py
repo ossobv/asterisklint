@@ -1,4 +1,4 @@
-from ...application import W_APP_BALANCE
+from ..application import W_APP_BALANCE
 
 # TODO: instead of where, we should pass a context object that context
 # could include a where, and also a list of classes where we can store
@@ -6,10 +6,14 @@ from ...application import W_APP_BALANCE
 # one.
 
 
-class Default(object):
+class AppBase(object):
     @property
     def name(self):
         return self.__class__.__name__
+
+    @property
+    def module(self):
+        return self.__module__.rsplit('.', 1)[-1]
 
     def __call__(self, data, where):
         try:
@@ -53,23 +57,3 @@ class Default(object):
                         raise ValueError(''.join(arr[1:]))
         if arr != ['X']:
             raise ValueError(''.join(arr[1:]))
-
-
-if True:
-    class DumpChan(Default):
-        pass
-
-    class Hangup(Default):
-        pass
-
-    class NoOp(Default):
-        pass
-
-    class Verbose(Default):
-        pass
-
-
-def register(app_loader):
-    # Called by the app_loader.
-    for app in (Default, DumpChan, Hangup, NoOp, Verbose):
-        app_loader.register(app())
