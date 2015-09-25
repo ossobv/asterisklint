@@ -1,99 +1,105 @@
 from ..base import AppBase
 
 
-class Answer(AppBase):
+class BuiltinAppBase(AppBase):
+    @property
+    def module(self):
+        return '<builtin>'
+
+
+class Answer(BuiltinAppBase):
     pass
 
 
-class BackGround(AppBase):
+class BackGround(BuiltinAppBase):
     pass
 
 
-class Busy(AppBase):
+class Busy(BuiltinAppBase):
     pass
 
 
-class Congestion(AppBase):
+class Congestion(BuiltinAppBase):
     pass
 
 
-class Goto(AppBase):
+class Goto(BuiltinAppBase):
     pass
 
 
-class GotoIf(AppBase):
+class GotoIf(BuiltinAppBase):
     pass
 
 
-class GotoIfTime(AppBase):
+class GotoIfTime(BuiltinAppBase):
     pass
 
 
-class ExecIfTime(AppBase):
+class ExecIfTime(BuiltinAppBase):
     pass
 
 
-class Hangup(AppBase):
+class Hangup(BuiltinAppBase):
     pass
 
 
-class NoOp(AppBase):
+class NoOp(BuiltinAppBase):
     pass
 
 
-class Proceeding(AppBase):
+class Proceeding(BuiltinAppBase):
     pass
 
 
-class Progress(AppBase):
+class Progress(BuiltinAppBase):
     pass
 
 
-class ResetCDR(AppBase):
+class ResetCDR(BuiltinAppBase):
     pass
 
 
-class Ringing(AppBase):
+class Ringing(BuiltinAppBase):
     pass
 
 
-class SayNumber(AppBase):
+class SayNumber(BuiltinAppBase):
     pass
 
 
-class SayDigits(AppBase):
+class SayDigits(BuiltinAppBase):
     pass
 
 
-class SayAlpha(AppBase):
+class SayAlpha(BuiltinAppBase):
     pass
 
 
-class SayPhonetic(AppBase):
+class SayPhonetic(BuiltinAppBase):
     pass
 
 
-class SetAMAFlags(AppBase):
+class SetAMAFlags(BuiltinAppBase):
     pass
 
 
-class SetGlobalVar(AppBase):
+class SetGlobalVar(BuiltinAppBase):
     pass
 
 
-class Set(AppBase):
+class Set(BuiltinAppBase):
     pass
 
 
-class ImportVar(AppBase):
+class ImportVar(BuiltinAppBase):
     pass
 
 
-class Wait(AppBase):
+class Wait(BuiltinAppBase):
     pass
 
 
-class WaitExten(AppBase):
+class WaitExten(BuiltinAppBase):
     pass
 
 

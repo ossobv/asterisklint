@@ -36,13 +36,13 @@ class MessageDefManager(type):
     @classmethod
     def on_message(cls, msg):
         cls.raised[msg.__class__.__name__].append(msg)
+        formatted = msg.message.format(**msg.fmtkwargs)
 
         if cls.muted:
             return
 
         print('{} {}: {}'.format(
-            msg.where, msg.__class__.__name__,
-            msg.message.format(**msg.fmtkwargs)),
+            msg.where, msg.__class__.__name__, formatted),
             file=sys.stderr)
 
         if cls.show_line:

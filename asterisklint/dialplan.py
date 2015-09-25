@@ -16,7 +16,8 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
         message = 'the dialplan include directive has not been implemented yet'
 
     class E_DP_VAR_INVALID(ErrorDef):
-        message = 'unexpected variable name (not exten/same/include)'
+        message = ('unexpected variable name {variable!r} '
+                   '(not exten/same/include)')
 
     class E_DP_PAT_INVALID(ErrorDef):
         message = 'badly formatted pattern'
@@ -25,22 +26,22 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
         message = 'missing pattern'
 
     class E_DP_PRIO_INVALID(ErrorDef):
-        message = 'invalid priority'
+        message = 'invalid priority {prio!r}'
 
     class E_DP_PRIO_MISSING(ErrorDef):
         message = 'missing priority'
 
     class E_DP_PRIO_DUPE(DupeDefMixin, ErrorDef):
-        message = 'duplicate priority'
+        message = 'duplicate priority {prio!r}'
 
     class E_DP_LABEL_INVALID(ErrorDef):
-        message = 'unexpected label value'
+        message = 'unexpected label value {label!r}'
 
     class E_DP_GLOBALS_DUPE(DupeDefMixin, ErrorDef):
         message = 'second globals context, will not be used'
 
     class E_DP_LABEL_DUPE(WarningDef):
-        message = 'duplicate label, one of them will not be used'
+        message = 'duplicate label {label!r}, one of them will not be used'
 
     class W_DP_PRIO_BADORDER(ErrorDef):
         message = 'bad priority order'
@@ -49,7 +50,7 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
         message = '[general] context not found or not at top of file'
 
     class H_DP_GLOBALS_MISPLACED(HintDef):
-        message = '[global] context not found or not at position two'
+        message = '[globals] context not found or not at position two'
 
 
 class Dialplan(object):
@@ -167,7 +168,7 @@ class DialplanContext(Context):
             assert prev.pattern == extension.pattern  # E_PRIO_FUCKUP
             extension.prio = prev.prio + 1
         elif extension.prio < 1:
-            E_DP_PRIO_INVALID(extension.where)
+            E_DP_PRIO_INVALID(extension.where, prio=extension.prio)
             return
         elif extension.prio != 1:
             # Check that there is a prio with N-1.
@@ -190,7 +191,8 @@ class DialplanContext(Context):
         if any(True for i in extensions if i.prio == extension.prio):
             previous = [i.where for i in extensions
                         if i.prio == extension.prio][0]
-            E_DP_PRIO_DUPE(extension.where, previous=previous)
+            E_DP_PRIO_DUPE(extension.where, previous=previous,
+                           prio=extension.prio)
             return
 
         # Check duplicate labels.
@@ -233,7 +235,7 @@ class DialplanVarset(object):
                 I_NOTIMPL_HINT(varset.where)
                 return None
             else:
-                E_DP_PRIO_INVALID(varset.where)
+                E_DP_PRIO_INVALID(varset.where, prio=prio)
                 return None
 
             if label is not None:

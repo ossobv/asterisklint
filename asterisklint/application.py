@@ -54,8 +54,17 @@ class AppLoader(metaclass=Singleton):
     def __init__(self, version='v11'):
         self.version = version
         self._lower_apps = {}
+        self._used_apps = set()
 
         self.load_all()
+
+    @property
+    def used_modules(self):
+        return list(filter(
+            (lambda x: x != 'unknown'),
+            sorted(set(
+                [self._lower_apps[i].module
+                 for i in self._used_apps]))))
 
     def load_all(self):
         # Load all from our version dir.
@@ -75,6 +84,8 @@ class AppLoader(metaclass=Singleton):
         if lower_app not in self._lower_apps:
             # TODO: at this point we want an error raised here, right?
             self._lower_apps[lower_app] = self._lower_apps['unknown']
+
+        self._used_apps.add(lower_app)
         return self._lower_apps[lower_app]
 
     def register(self, app):
@@ -171,15 +182,15 @@ class App(object):
         # Leading whitespace is frowned upon but allowed. Trailing
         # whitespace won't work:
         if self.app.rstrip() != self.app:
-            E_APP_WSH(self.where)
+            E_APP_WSH(self.where, app=self.app)
             return False
         if self.app.lstrip() != self.app:
-            W_APP_WSH(self.where)
+            W_APP_WSH(self.where, app=self.app)
             self.app = self.app.lstrip()
             self.app_lower = self.app.lower()
         # Quick check that the app doesn't exist.
         if not self.app:
-            E_APP_MISSING(self.where)
+            E_APP_MISSING(self.where, app='(none)')
             return False
 
         return True

@@ -21,7 +21,7 @@ class AssertLintedTestCase(ALintTestCase):
 
     def test_single(self):
         class H_MY_HINT(HintDef):
-            pass
+            message = 'irrelevant'
 
         # Raise a hint.
         H_MY_HINT(DummyWhere())
@@ -30,10 +30,10 @@ class AssertLintedTestCase(ALintTestCase):
 
     def test_multiple(self):
         class H_MY_HINT2(HintDef):
-            pass
+            message = 'irrelevant'
 
         class W_MY_WARNING2(WarningDef):
-            pass
+            message = 'irrelevant'
 
         # Raise 2 hints and a warning.
         H_MY_HINT2(DummyWhere())
@@ -45,10 +45,10 @@ class AssertLintedTestCase(ALintTestCase):
     @ignoreLinted('W_WHATEVER', 'H_*')
     def test_ignore_with_asterisk(self):
         class H_MY_HINT3(HintDef):
-            pass
+            message = 'irrelevant'
 
         class W_MY_WARNING3(WarningDef):
-            pass
+            message = 'irrelevant'
 
         # Raise 2 hints and a warning.
         H_MY_HINT3(DummyWhere())
@@ -60,10 +60,10 @@ class AssertLintedTestCase(ALintTestCase):
     @ignoreLinted('H_MY_HINT4', 'W_WHATEVER')
     def test_ignore_without_asterisk(self):
         class H_MY_HINT4(HintDef):
-            pass
+            message = 'irrelevant'
 
         class W_MY_WARNING4(WarningDef):
-            pass
+            message = 'irrelevant'
 
         # Raise 2 hints and a warning.
         H_MY_HINT4(DummyWhere())
@@ -77,10 +77,10 @@ class AssertLintedTestCase(ALintTestCase):
 class IgnoreAssertLintedTestCase(ALintTestCase):
     def test_ignorelinted_on_class(self):
         class H_MY_HINT5(HintDef):
-            pass
+            message = 'irrelevant'
 
         class W_MY_WARNING5(WarningDef):
-            pass
+            message = 'irrelevant'
 
         # Raise 2 hints and a warning.
         H_MY_HINT5(DummyWhere())
