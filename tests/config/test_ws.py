@@ -1,5 +1,5 @@
 from asterisklint import FileConfigParser
-from asterisklint.alinttest import ALintTestCase, NamedBytesIO
+from asterisklint.alinttest import ALintTestCase
 
 
 class HorizontalWhitespaceTest(ALintTestCase):
@@ -15,40 +15,46 @@ class HorizontalWhitespaceTest(ALintTestCase):
 
     def test_wsh_bol_1(self):
         "Leading white space before [context]."
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b' [context]\n'))
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b' [context]\n')
         self.assertEqual(len([i for i in reader]), 0)
         self.assertLinted({'E_CONF_BAD_LINE': 1})
 
     def test_wsh_bol_2(self):
         "Leading white space before variable."
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'[context]\n  foo=bar\n'))
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'[context]\n  foo=bar\n')
         self.check_values(reader)
         self.assertLinted({'W_WSH_BOL': 1})
 
     def test_wsh_bol_3(self):
         "Leading white with tabs space before variable."
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'[context]\n\t foo=bar\n'))
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'[context]\n\t foo=bar\n')
         self.check_values(reader)
         self.assertLinted({'W_WSH_BOL': 1})
 
     def test_wsh_eol(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'[context] \nfoo=bar \n'))
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'[context] \nfoo=bar \n')
         self.check_values(reader)
         self.assertLinted({'W_WSH_EOL': 2})
 
     def test_wsh_varset(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'[context]\nfoo = bar\n'))
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'[context]\nfoo = bar\n')
         self.check_values(reader)
         self.assertLinted({'W_WSH_VARSET': 1})
 
     def test_wsh_objset(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'[context]\nfoo=>bar\n'))
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'[context]\nfoo=>bar\n')
         self.check_values(reader)
         self.assertLinted({'W_WSH_OBJSET': 1})
 
@@ -73,8 +79,9 @@ class VerticalWhitespaceTest(ALintTestCase):
         self.assertEqual(variables[0].value, 'baz')
 
     def test_wsv_bof(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
 
 [context]
 foo=bar
@@ -82,13 +89,14 @@ foo2=bar2
 
 [context2]
 bar=baz
-'''))
+''')
         self.check_values(reader)
         self.assertLinted({'W_WSV_BOF': 1})
 
     def test_wsv_eof(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
 [context]
 foo=bar
 foo2=bar2
@@ -96,32 +104,35 @@ foo2=bar2
 [context2]
 bar=baz
 
-'''))
+''')
         self.check_values(reader)
         self.assertLinted({'W_WSV_EOF': 1})
 
     def test_wsv_bof_eof(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'\n\n\n'))
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'\n\n\n')
         out = [i for i in reader]
         self.assertEqual(len(out), 0)
         self.assertLinted({'W_WSV_EOF': 1})
 
     def test_wsv_ctx_between_toofew(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
 [context]
 foo=bar
 foo2=bar2
 [context2]
 bar=baz
-'''))
+''')
         self.check_values(reader)
         self.assertLinted({'H_WSV_CTX_BETWEEN': 1})
 
     def test_wsv_ctx_between_toomany(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
 [context]
 foo=bar
 foo2=bar2
@@ -130,13 +141,14 @@ foo2=bar2
 
 [context2]
 bar=baz
-'''))
+''')
         self.check_values(reader)
         self.assertLinted({'H_WSV_CTX_BETWEEN': 1})
 
     def test_wsv_ctx_between_ok(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
 [context]
 foo=bar
 foo2=bar2
@@ -144,13 +156,14 @@ foo2=bar2
 
 [context2]
 bar=baz
-'''))
+''')
         self.check_values(reader)
         self.assertLinted({})
 
     def test_wsv_ctx_between_okwithcomment(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
 [context]
 foo=bar
 foo2=bar2
@@ -161,13 +174,14 @@ foo2=bar2
 
 [context2]
 bar=baz
-'''))
+''')
         self.check_values(reader)
         self.assertLinted({})
 
     def test_wsv_varset_between_ok(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
 [context]
 
 foo=bar
@@ -176,13 +190,14 @@ foo2=bar2
 
 [context2]
 bar=baz
-'''))
+''')
         self.check_values(reader)
         self.assertLinted({})
 
     def test_wsv_varset_between_okwithcomment(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
 [context]
 
 foo=bar
@@ -193,13 +208,14 @@ foo2=bar2
 
 [context2]
 bar=baz
-'''))
+''')
         self.check_values(reader)
         self.assertLinted({})
 
     def test_wsv_varset_between_notok(self):
-        reader = FileConfigParser(NamedBytesIO(
-            'test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
 [context]
 
 
@@ -210,6 +226,6 @@ foo2=bar2
 
 [context2]
 bar=baz
-'''))
+''')
         self.check_values(reader)
         self.assertLinted({'H_WSV_VARSET_BETWEEN': 2})

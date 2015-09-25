@@ -1,4 +1,4 @@
-from asterisklint.alinttest import ALintTestCase, NamedBytesIO
+from asterisklint.alinttest import ALintTestCase
 from asterisklint.file import FileReader
 
 
@@ -6,7 +6,8 @@ class CommentsTest(ALintTestCase):
     maxDiff = 1024
 
     def test_normal(self):
-        reader = FileReader(NamedBytesIO('test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileReader, 'test.conf', b'''\
 ;; vim: set fenc=utf-8 et:
 ;; A short explanation about this,
 ;; and that.
@@ -29,7 +30,7 @@ with_actual_values=1 ; these may certainly be duplicate
 with_actual_values=2
 with_actual_values=3
 this_is_not_a_comment=semi\\;delimited; but this is a comment
-'''))
+''')
         out = [i for i in reader]
         self.assertEqual(
             [i[1] for i in out],
@@ -83,13 +84,14 @@ this_is_not_a_comment=semi\\;delimited; but this is a comment
     def test_escaped_space(self):
         # Asterisk won't do any magic with the backslash, not even for
         # the backslash itself. It will only react to escaped semi's.
-        reader = FileReader(NamedBytesIO('test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileReader, 'test.conf', b'''\
 [general]
 value1=\\\x20
 value2=\\  ; with comment
 value3=\\; ; with comment
 value4=\\\\;\\;; with comment
-'''))
+''')
         out = [i for i in reader]
         self.assertEqual([i[1] for i in out],
                          ['[general]',

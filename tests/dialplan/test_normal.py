@@ -1,10 +1,11 @@
 from asterisklint import FileDialplanParser
-from asterisklint.alinttest import ALintTestCase, NamedBytesIO
+from asterisklint.alinttest import ALintTestCase
 
 
 class NormalTest(ALintTestCase):
     def test_normal(self):
-        reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileDialplanParser, 'test.conf', b'''\
 [general]
 writeprotect=yes
 
@@ -18,7 +19,7 @@ exten => s,1,NoOp
  same => n,Hangup()
 
 [empty_context]
-'''))
+''')
         out = [i for i in reader]
         self.assertEqual(len(out), 1)
         dialplan = out[0]

@@ -1,6 +1,5 @@
 from asterisklint import FileDialplanParser
-from asterisklint.alinttest import (
-    ALintTestCase, NamedBytesIO, ignoreLinted)
+from asterisklint.alinttest import ALintTestCase, ignoreLinted
 
 
 @ignoreLinted('H_DP_GENERAL_MISPLACED', 'H_DP_GLOBALS_MISPLACED')
@@ -16,20 +15,22 @@ class SetTest(ALintTestCase):
         return contexts[0][0]
 
     def test_normal(self):
-        reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileDialplanParser, 'test.conf', b'''\
 [context]
 exten => s,1,Set(variable=value)
-'''))
+''')
         exten = self.get_extension(reader)
         self.assertEqual(exten.app.name, 'Set')
         # FIXME: test variable == value stuff?
 
     def test_canonical_case(self):
-        reader = FileDialplanParser(NamedBytesIO('test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileDialplanParser, 'test.conf', b'''\
 [context]
 ; proper case for "set" app is "Set"
 exten => s,1,set(variable=value)
-'''))
+''')
         exten = self.get_extension(reader)
         del exten
         self.assertLinted({'W_APP_BAD_CASE': 1})

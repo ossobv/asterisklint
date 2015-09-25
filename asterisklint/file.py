@@ -28,30 +28,42 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 
 class BinFileReader(object):
     """
-    Reads a binary opened file.
+    Reads the binary opened file fp, but may open more files with the
+    opener if an #include directive is encountered.
     """
-    def __init__(self, fp=None):
+    def __init__(self, opener=(lambda filename: open(filename, 'rb'))):
+        self._generators = []
+        self._filenames = []
+        self._opener = opener
+
+    def include(self, filename):
+        fp = self._opener(filename)
+
         if hasattr(fp, 'mode'):
             assert 'b' in fp.mode, 'expected binary opened file'
-        self.fp = fp
-        self.filename = fp.name
+
+        self._generators.append(enumerate(fp))
+        self._filenames.append(fp.name)
 
     def __iter__(self):
         prev_where, prev_data = None, None
 
-        for i, line in enumerate(self.fp):
+        if self._generators:
+            for i, line in self._generators[-1]:
+                if prev_where:
+                    yield prev_where, prev_data
+
+                prev_where = Where(self._filenames[-1], i + 1, line)
+                prev_data = line
+
             if prev_where:
+                prev_where.last_line = True
                 yield prev_where, prev_data
 
-            prev_where = Where(self.filename, i + 1, line)
-            prev_data = line
-
-        if prev_where:
-            prev_where.last_line = True
-            yield prev_where, prev_data
-
-        if hasattr(self.fp, 'close'):
-            self.fp.close()
+            if hasattr(self._generators[-1], 'close'):
+                self._generators[-1].close()
+            self._generators.pop()
+            self._filenames.pop()
 
 
 class EncodingReader(object):

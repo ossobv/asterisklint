@@ -39,6 +39,24 @@ class ALintTestCase(TestCase):
         # Run this last, so we've completed the reset.
         self.assertEqual(counts, expected_counts)
 
+    def create_instance_and_load_single_file(self, class_, filename, data):
+        """
+        A bit strange to have this here, but our main testing involves
+        create an instance of SomeClass and loading up a sample data
+        file.
+
+        Example::
+
+            filereader = self.create_instance_and_load_single_file(
+                FileReader, 'test.conf', b'''data..''')
+        """
+        def opener(fn):
+            assert fn == filename, (fn, filename)
+            return NamedBytesIO(filename, data)
+        instance = class_(opener=opener)
+        instance.include(filename)
+        return instance
+
 
 class ALintTestResult(TextTestResult):
     def startTestRun(self):

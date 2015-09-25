@@ -1,17 +1,18 @@
-from asterisklint.alinttest import ALintTestCase, NamedBytesIO
+from asterisklint.alinttest import ALintTestCase
 from asterisklint.file import FileReader
 
 
 class NormalTest(ALintTestCase):
     def test_normal(self):
-        reader = FileReader(NamedBytesIO('test.conf', b'''\
+        reader = self.create_instance_and_load_single_file(
+            FileReader, 'test.conf', b'''\
 [context]
 variable=value
 other=value
 
 [context2]
 and_that_is=it
-'''))
+''')
         out = [i for i in reader]
         self.assertEqual(len(out), 6)
 
