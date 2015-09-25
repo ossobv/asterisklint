@@ -19,7 +19,7 @@ class AppBase(object):
         try:
             self.check_balance(data)
         except ValueError:
-            W_APP_BALANCE(where)
+            W_APP_BALANCE(where, data=data)
 
     @staticmethod
     def check_balance(app):

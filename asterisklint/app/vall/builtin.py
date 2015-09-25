@@ -11,7 +11,9 @@ class Answer(BuiltinAppBase):
     pass
 
 
-class BackGround(BuiltinAppBase):
+class Background(BuiltinAppBase):
+    # NOTE: It is called "BackGround" in Asterisk, but that makes my
+    # eyes sore.
     pass
 
 
@@ -105,7 +107,7 @@ class WaitExten(BuiltinAppBase):
 
 def register(app_loader):
     for app in (
-            Answer, BackGround, Busy,
+            Answer, Background, Busy,
             Congestion, Goto, GotoIf,
             GotoIfTime, ExecIfTime,
             Hangup, NoOp, Proceeding,
