@@ -1,6 +1,5 @@
 from asterisklint import FileConfigParser
 from asterisklint.alinttest import ALintTestCase, NamedBytesIO, ignoreLinted
-from asterisklint.config import Context, Varset
 
 
 @ignoreLinted('W_WSH_*')  # temporarily ignore this
@@ -22,6 +21,7 @@ variable4 = value4
         elif filename == 'test3.conf':
             return NamedBytesIO(filename, b'''\
 variable5 = value5
+
 [context2]
 variable6 = value6
 ''')
@@ -31,25 +31,20 @@ variable6 = value6
         reader.include('test.conf')
 
         out = [i for i in reader]
-        self.assertEqual(len(out), 2)
-        self.assertEqual(out[0].__class__, Context)
-        self.assertEqual(out[0].name, 'context1')
-        self.assertEqual(len(out[0]), 2)
-        self.assertEqual(out[1].__class__, Context)
-        self.assertEqual(out[1].name, 'context2')
-        self.assertEqual(len(out[1]), 1)
+        self.assertEqual([i.name for i in out], ['context1', 'context2'])
 
         variables = [i for i in out[0]]
-        self.assertEqual(variables[0].__class__, Varset)
-        self.assertEqual(variables[0].variable, 'variable')
-        self.assertEqual(variables[0].value, 'value')
-        self.assertTrue(variables[0].arrow)
-
-        self.assertEqual(variables[1].__class__, Varset)
-        self.assertEqual(variables[1].variable, 'other')
-        self.assertEqual(variables[1].value, 'value2')
-        self.assertFalse(variables[1].arrow)
+        self.assertEqual(
+            [(i.where.filename, i.where.lineno, i.variable, i.value)
+             for i in variables],
+            [('test.conf', 2, 'variable', 'value'),
+             ('test2.conf', 1, 'variable3', 'value3'),
+             ('test3.conf', 1, 'variable5', 'value5')])
 
         variables = [i for i in out[1]]
-        self.assertEqual([(i.variable, i.value) for i in variables],
-                         [('and_that_is', 'it')])
+        self.assertEqual(
+            [(i.where.filename, i.where.lineno, i.variable, i.value)
+             for i in variables],
+            [('test3.conf', 4, 'variable6', 'value6'),
+             ('test2.conf', 2, 'variable4', 'value4'),
+             ('test.conf', 3, 'variable2', 'value2')])

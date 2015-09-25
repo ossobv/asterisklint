@@ -6,7 +6,6 @@ class Where(object):
         self.filename = filename  # shared constant in CPython, so cheap
         self.lineno = lineno
         self.line = line
-        self.last_line = False
 
     def __str__(self):
         return '%s:%d' % (self.filename, self.lineno)

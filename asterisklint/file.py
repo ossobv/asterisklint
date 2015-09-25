@@ -32,8 +32,10 @@ class BinFileReader(object):
     opener if an #include directive is encountered.
     """
     def __init__(self, opener=(lambda filename: open(filename, 'rb'))):
+        self._files = []
         self._generators = []
         self._filenames = []
+
         self._opener = opener
 
     def include(self, filename):
@@ -42,28 +44,22 @@ class BinFileReader(object):
         if hasattr(fp, 'mode'):
             assert 'b' in fp.mode, 'expected binary opened file'
 
+        self._files.append(fp)
         self._generators.append(enumerate(fp))
         self._filenames.append(fp.name)
 
     def __iter__(self):
-        prev_where, prev_data = None, None
-
-        if self._generators:
-            for i, line in self._generators[-1]:
-                if prev_where:
-                    yield prev_where, prev_data
-
-                prev_where = Where(self._filenames[-1], i + 1, line)
-                prev_data = line
-
-            if prev_where:
-                prev_where.last_line = True
-                yield prev_where, prev_data
-
-            if hasattr(self._generators[-1], 'close'):
-                self._generators[-1].close()
-            self._generators.pop()
-            self._filenames.pop()
+        while self._generators:
+            try:
+                i, line = next(self._generators[-1])
+            except StopIteration:
+                if hasattr(self._files[-1], 'close'):
+                    self._files[-1].close()
+                self._files.pop()
+                self._generators.pop()
+                self._filenames.pop()
+            else:
+                yield Where(self._filenames[-1], i + 1, line), line
 
 
 class EncodingReader(object):
@@ -96,7 +92,6 @@ class NoCtrlReader(object):
             union = charset & self.illegal
             if union:
                 W_FILE_CTRL_CHAR(where)
-
             yield where, data
 
 
@@ -104,25 +99,47 @@ class FileformatReader(object):
     """
     TODO: allow one to specify legal line endings (unix vs dos)
     """
+    def _pop_fileinfo(self, fileinfo, stop_at):
+        while fileinfo and fileinfo[-1][0] != stop_at:
+            fn, is_dos, latest_has_lf, last_where = fileinfo.pop()
+            assert None not in (is_dos, latest_has_lf)
+            if is_dos and latest_has_lf:
+                W_FILE_DOS_EOFCRLF(last_where)
+            elif not is_dos and not latest_has_lf:
+                W_FILE_UNIX_NOLF(last_where)
+
     def __iter__(self):
-        is_dos = None
+        # We store fileinfo in a stack so we can look backwards from
+        # includes, so check file endings.
+        fileinfo = []  # [[filename, is_dos], ...]
 
         for where, data in super(FileformatReader, self).__iter__():
+            # Keep track of includes.
+            if not fileinfo or fileinfo[-1][0] != where.filename:
+                # Where we in here already? Then we're backing out of an
+                # include.
+                if where.filename in [i[0] for i in fileinfo]:
+                    self._pop_fileinfo(fileinfo, where.filename)
+                # We weren't? Then we're moving into an include.
+                else:
+                    fileinfo.append([where.filename, None, None, where])
+                # Re-set values.
+                filename, is_dos, latest_has_lf, where = fileinfo[-1]
+
             has_crlf = data.endswith('\r\n')
             has_lf = data.endswith('\n')
+            fileinfo[-1][2] = has_lf
+            fileinfo[-1][3] = where
 
             if is_dos is None:
                 is_dos = (has_crlf or not has_lf)
+                fileinfo[-1][1] = is_dos
 
             if is_dos:
-                if where.last_line and has_crlf:
-                    W_FILE_DOS_EOFCRLF(where)
-                elif has_lf and not has_crlf:
+                if has_lf and not has_crlf:
                     W_FILE_DOS_BARELF(where)
             else:
-                if where.last_line and not has_lf:
-                    W_FILE_UNIX_NOLF(where)
-                elif has_crlf:
+                if has_crlf:
                     W_FILE_UNIX_CRLF(where)
 
             if has_crlf:
@@ -131,6 +148,8 @@ class FileformatReader(object):
                 data = data[0:-1]
 
             yield where, data
+
+        self._pop_fileinfo(fileinfo, None)
 
 
 class AsteriskCommentReader(object):

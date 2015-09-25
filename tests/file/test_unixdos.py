@@ -22,7 +22,9 @@ class UnixDosTest(ALintTestCase):
             FileReader, 'test.conf',
             b'[context]\r\nvariable=value\r\nother=value\n')
         self.check_values(reader)
-        self.assertLinted({'W_FILE_DOS_BARELF': 1})
+        # We get two warnings here: one for the LF and one for the fact
+        # that we have an LF at EOF at all in a DOS-format file.
+        self.assertLinted({'W_FILE_DOS_BARELF': 1, 'W_FILE_DOS_EOFCRLF': 1})
 
     def test_dos_with_crlf_at_eof(self):
         reader = self.create_instance_and_load_single_file(
