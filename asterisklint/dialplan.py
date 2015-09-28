@@ -12,9 +12,6 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class I_NOTIMPL_HINT(ErrorDef):
         message = 'the dialplan hint directive has not been implemented yet'
 
-    class I_NOTIMPL_INCLUDE(ErrorDef):
-        message = 'the dialplan include directive has not been implemented yet'
-
     class E_DP_VAR_INVALID(ErrorDef):
         message = ('unexpected variable name {variable!r} '
                    '(not exten/same/include)')
@@ -130,11 +127,18 @@ class Dialplan(object):
                         "'%s' =>" % (extension.pattern,),
                         ('%d. %s' % (extension.prio,
                                      extension.app_with_parens))))
+            for include in context.includes:
+                ret.append('  %-17s %-45s [pbx_config]' % (
+                    'Include =>', "'%s'" % (include.context_name,)))
             ret.append('')
         return '\n'.join(ret)
 
 
 class DialplanContext(Context):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.includes = []
+
     def by_pattern(self):
         """
         Used by format_as_dialplan_show().
@@ -205,6 +209,11 @@ class DialplanContext(Context):
 
         super(DialplanContext, self).add(extension)
 
+    def add_include(self, include):
+        assert isinstance(include, Include)
+        # FIXME: check for dupes and other stupidity (circular includes?)
+        self.includes.append(include)
+
 
 class DialplanVarset(object):
     @classmethod
@@ -262,10 +271,10 @@ class DialplanVarset(object):
 
 
 class Include(object):
-    # FIXME
     def __init__(self, value, where):
+        # FIXME: check for value name? contexts existence?
+        self.context_name = value
         self.where = where
-        pass
 
 
 @total_ordering  # now we only need 'eq' and 'lt'
@@ -369,6 +378,6 @@ class DialplanAggregator(ConfigAggregator):
         if isinstance(dialplanvarset, Extension):
             self._curcontext.add(dialplanvarset)
         elif isinstance(dialplanvarset, Include):
-            I_NOTIMPL_INCLUDE(dialplanvarset.where)
+            self._curcontext.add_include(dialplanvarset)
         else:
             raise NotImplementedError()

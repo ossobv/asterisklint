@@ -1,6 +1,5 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
 from collections import defaultdict
-from functools import wraps
 from io import BytesIO
 from unittest import (
     TestCase, TextTestResult, TextTestRunner, main as orig_main)
@@ -26,11 +25,21 @@ class ALintTestCase(TestCase):
             self.linted_counts[id_] += count
         MessageDefManager.reset()
 
-        # Strip messages that we're supposed to ignore.
-        if hasattr(self, '__alinttest_ignore'):
-            # Use getattr instead of self.__alinttest_ignore because of
+        # Strip messages that we're supposed to ignore. It can be tacked
+        # onto the class or onto individual test methods.
+        if hasattr(self, '__alinttest_ignore__'):
+            # Use getattr instead of self.__alinttest_ignore__ because of
             # the mangled name.
-            ignore = getattr(self, '__alinttest_ignore')
+            ignore = getattr(self, '__alinttest_ignore__')
+        else:
+            # Previously, we wrapped the ignorance into the test itself,
+            # but then we'd forget to ignore the test during the
+            # tearDown routine.
+            curtest = getattr(self, self._testMethodName)
+            ignore = getattr(curtest, '__alinttest_ignore__', False)
+
+        # Something to ignore?
+        if ignore:
             for key in list(counts.keys()):
                 if ignore(key):
                     del counts[key]
@@ -111,7 +120,7 @@ class _IgnoreLinted(object):
             parts = value.split('*')
             if len(parts) == 1:
                 self._equals.append(parts[0])
-            elif len(parts) == 2 and parts[0] and not parts[1]:
+            elif len(parts) == 2 and not parts[1]:
                 self._startswith.append(parts[0])
             else:
                 raise ValueError(
@@ -144,20 +153,7 @@ def ignoreLinted(*values):
     """
     def decorator(test_item):
         ignorefunc = _IgnoreLinted(*values)
-
-        # Are we decorating a test_* method?
-        if not isinstance(test_item, type):
-            @wraps(test_item)
-            def ignore_wrapper(self, *args, **kwargs):
-                assert not hasattr(self, '__alinttest_ignore')
-                self.__alinttest_ignore = ignorefunc
-                ret = test_item(self, *args, **kwargs)
-                del self.__alinttest_ignore
-                return ret
-            return ignore_wrapper
-
-        # We're decorating a class.
-        test_item.__alinttest_ignore = ignorefunc
+        test_item.__alinttest_ignore__ = ignorefunc
         return test_item
     return decorator
 

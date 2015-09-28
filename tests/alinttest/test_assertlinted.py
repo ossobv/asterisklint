@@ -72,10 +72,8 @@ class AssertLintedTestCase(ALintTestCase):
 
         self.assertLinted({'W_MY_WARNING4': 1})
 
-
-@ignoreLinted('H_SOMETHING_DIFFERENT', 'W_MY_WARN*')
-class IgnoreAssertLintedTestCase(ALintTestCase):
-    def test_ignorelinted_on_class(self):
+    @ignoreLinted('*')
+    def test_ignore_without_call_to_assertLinted(self):
         class H_MY_HINT5(HintDef):
             message = 'irrelevant'
 
@@ -87,4 +85,19 @@ class IgnoreAssertLintedTestCase(ALintTestCase):
         W_MY_WARNING5(DummyWhere())
         H_MY_HINT5(DummyWhere())
 
-        self.assertLinted({'H_MY_HINT5': 2})
+
+@ignoreLinted('H_SOMETHING_DIFFERENT', 'W_MY_WARN*')
+class IgnoreAssertLintedTestCase(ALintTestCase):
+    def test_ignorelinted_on_class(self):
+        class H_MY_HINT6(HintDef):
+            message = 'irrelevant'
+
+        class W_MY_WARNING6(WarningDef):
+            message = 'irrelevant'
+
+        # Raise 2 hints and a warning.
+        H_MY_HINT6(DummyWhere())
+        W_MY_WARNING6(DummyWhere())
+        H_MY_HINT6(DummyWhere())
+
+        self.assertLinted({'H_MY_HINT6': 2})
