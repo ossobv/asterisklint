@@ -139,11 +139,8 @@ class ConfigParser(object):
     # that to be disabled.
     # Allow templating? Feature v1.1.
 
-    # TODO: compain about too much and/or too little white space!
-
     # TODO: look at: main/config.c: process_text_line()
     # it will show odd escaping, and multiline stuff
-    # TODO: include/tryinclude/exec
 
     regexes = (
         # [context](template1,template2)
@@ -243,42 +240,107 @@ class ConfigParser(object):
                     W_PP_INCLUDE_MISSING(where, filename=rest)
 
 
-class EmptyLinesParser(object):
+class VerticalSpaceWarner(object):
     """
-    Warns when there are fewer than one or more than two empty lines
-    between contexts.
+    Warns about irregular vertical whitespace (WSV).
+
+    Contexts get one or two leading white lines. Varsets get at most one
+    leading white line.
+
+    OBSERVE: This doesn't take preprocessor includes into account now:
+    #included files will not get W_WSV_EOF warnings.
     """
     def __iter__(self):
-        last = None
-        buffer_ = []
-        for element in super(EmptyLinesParser, self).__iter__():
-            if isinstance(element, EmptyLine) and not element.comment:
-                buffer_.append(element)
+        last_non_blank = None
+        blanks = []
+
+        for element in super().__iter__():
+            if isinstance(element, EmptyLine):
+                blanks.append(element)
 
             else:
-                if not last:
-                    if len(buffer_):
-                        W_WSV_BOF(element.where)
-                elif (isinstance(element, Context) and
-                        len(buffer_) not in (1, 2)):
-                    H_WSV_CTX_BETWEEN(element.where)
-                elif (isinstance(element, Varset) and
-                        len(buffer_) > 1):
-                    H_WSV_VARSET_BETWEEN(element.where)
+                if not last_non_blank:
+                    if blanks and not blanks[0].comment:
+                        min_blanks, max_blanks = 0, 2
+                    else:
+                        min_blanks, max_blanks = 0, 0
+                    message = H_WSV_CTX_BETWEEN
+                elif isinstance(element, Context):
+                    min_blanks, max_blanks = 1, 2
+                    message = H_WSV_CTX_BETWEEN
+                elif isinstance(element, Varset):
+                    min_blanks, max_blanks = 0, 1
+                    message = H_WSV_VARSET_BETWEEN
+                else:
+                    raise NotImplementedError('unknown element {!r}'.format(
+                        element))
 
-                for old in buffer_:
-                    yield old
-                buffer_ = []
-                last = element
+                # Check minvalues first.
+                if len(blanks) < min_blanks:
+                    message(element.where)
+                    for blank in blanks:
+                        yield blank
+                elif not blanks:
+                    pass
+                else:
+                    # Group the blanks by comment/non-comment.
+                    grouped = self.group_blanks(blanks)
+                    if not last_non_blank:
+                        if not grouped[0][0]:
+                            W_WSV_BOF(grouped[0][1][0].where)
+                            has_comment, grouped_blanks = grouped.pop(0)
+                            for blank in grouped_blanks:
+                                yield blank
+                    for i, (has_comment, grouped_blanks) in enumerate(grouped):
+                        if (not has_comment and
+                                len(grouped_blanks) > max_blanks):
+                            message(grouped_blanks[-1].where)
+                        # Yield it all.
+                        for blank in grouped_blanks:
+                            yield blank
+
+                blanks = []
+                last_non_blank = element
                 yield element
 
-        if buffer_:
-            W_WSV_EOF(element.where)
-            for old in buffer_:
-                yield old
+        if blanks:
+            # Group any leftover blanks by comment/non-comment.
+            message = H_WSV_CTX_BETWEEN
+            max_blanks = 2
+            grouped = self.group_blanks(blanks)
+
+            # Save the tail for the EOF warning.
+            if not grouped[-1][0]:
+                eof_blanks = grouped.pop()[1]
+            else:
+                eof_blanks = []
+
+            # Process the rest.
+            for has_comment, grouped_blanks in grouped:
+                if (not has_comment and
+                        len(grouped_blanks) > max_blanks):
+                    message(grouped_blanks[-1].where)
+                # Yield it all.
+                for blank in grouped_blanks:
+                    yield blank
+
+            # Check tail whitespace and report on that.
+            if eof_blanks:
+                for blank in eof_blanks:
+                    yield blank
+                W_WSV_EOF(blanks[-1].where)
+
+    def group_blanks(self, blanks):
+        ret = []
+        for blank in blanks:
+            if ret and ret[-1][0] == bool(blank.comment):
+                ret[-1][1].append(blank)
+            else:
+                ret.append((bool(blank.comment), [blank]))
+        return ret
 
 
-class ConfigAggregator(EmptyLinesParser, ConfigParser):
+class ConfigAggregator(VerticalSpaceWarner, ConfigParser):
     def __iter__(self):
         self.on_begin()
 

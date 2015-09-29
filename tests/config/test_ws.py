@@ -145,6 +145,35 @@ bar=baz
         self.check_values(reader)
         self.assertLinted({'H_WSV_CTX_BETWEEN': 1})
 
+    def test_wsv_ctx_between_toomanyatbeginandend(self):
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
+; too many below here (v1)
+
+
+
+[context]
+foo=bar
+foo2=bar2
+
+
+
+[context2] ; too many above this (^2)
+bar=baz
+
+
+
+; too many above above this (^3)
+; (v4)
+
+
+
+; too many above this
+''')
+        self.check_values(reader)
+        self.assertLinted({'H_WSV_CTX_BETWEEN': 4})
+
     def test_wsv_ctx_between_ok(self):
         reader = self.create_instance_and_load_single_file(
             FileConfigParser, 'test.conf',
@@ -172,6 +201,21 @@ foo2=bar2
 ;
 
 
+[context2]
+bar=baz
+''')
+        self.check_values(reader)
+        self.assertLinted({})
+
+    def test_wsv_ctx_between_okwithcommentabove(self):
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
+[context]
+foo=bar
+foo2=bar2
+
+; near comment
 [context2]
 bar=baz
 ''')
