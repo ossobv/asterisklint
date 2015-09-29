@@ -183,7 +183,7 @@ class ConfigParser(object):
                     yield value
                     break
             else:
-                if data.startswith('#'):
+                if data.lstrip().startswith('#'):
                     # Call the preprocessor, it may insert data into our
                     # internal data generator.
                     self.preprocessor(where, data, bool(comment))
@@ -191,17 +191,22 @@ class ConfigParser(object):
                     E_CONF_BAD_LINE(where, startswith=data[0:16])
 
     def preprocessor(self, where, data, comment):
-        if data.startswith('#include'):
-            cmd, rest = data[0:8], data[8:]
-        elif data.startswith('#tryinclude'):
-            cmd, rest = data[0:11], data[11:]
-        elif data.startswith('#exec'):
-            cmd, rest = data[0:5], data[5:]
+        text = data.lstrip()
+        leading = data[0:(len(data) - len(text))]
+        if leading:
+            W_WSH_BOL(where)
+
+        if text.startswith('#include'):
+            cmd, rest = text[0:8], text[8:]
+        elif text.startswith('#tryinclude'):
+            cmd, rest = text[0:11], text[11:]
+        elif text.startswith('#exec'):
+            cmd, rest = text[0:5], text[5:]
         else:
             rest = None
 
         if not rest or ord(rest[0]) > 32:
-            E_CONF_BAD_LINE(where, startswith=data[0:16])
+            E_CONF_BAD_LINE(where, startswith=text[0:16])
             return
 
         for idx, ch in enumerate(rest):
@@ -209,7 +214,7 @@ class ConfigParser(object):
                 break
         else:
             # Nothing after the #include/#tryinclude/#exec.
-            E_CONF_BAD_LINE(where, startswith=data[0:16])
+            E_CONF_BAD_LINE(where, startswith=text[0:16])
             return
 
         if (not all(i == ' ' for i in rest[0:idx]) and

@@ -80,3 +80,39 @@ variable2=value2
              for i in variables],
             [('test2.conf', 1, 'variable2', 'value2'),
              ('test.conf', 3, 'variable', 'value')])
+
+
+class WithBlanksTest(ALintTestCase):
+    def opener(self, filename):
+        if filename == 'test.conf':
+            return NamedBytesIO(filename, b'''\
+  [context1]
+ variable=value
+   #include\x01\x02"test2.conf"
+variable2=value2  ; line 4 (and not line 3, keep this test!)
+''')
+        elif filename == 'test2.conf':
+            return NamedBytesIO(filename, b'''\
+  variable3 = value3
+  ; this is line 2
+ variable4 = value4
+''')
+
+    def test_with_leading_blanks(self):
+        reader = FileConfigParser(opener=self.opener)
+        reader.include('test.conf')
+
+        out = [i for i in reader]
+        self.assertEqual([i.name for i in out], ['context1'])
+
+        variables = [i for i in out[0]]
+        self.assertEqual(
+            [(i.where.filename, i.where.lineno, i.variable, i.value)
+             for i in variables],
+            [('test.conf', 2, 'variable', 'value'),
+             ('test2.conf', 1, 'variable3', 'value3'),
+             ('test2.conf', 3, 'variable4', 'value4'),
+             ('test.conf', 4, 'variable2', 'value2')])
+
+        self.assertLinted({'W_FILE_CTRL_CHAR': 1, 'W_WSH_BOL': 5,
+                           'W_WSH_CTRL': 1, 'W_WSH_VARSET': 2})
