@@ -22,7 +22,7 @@ class VswContext(object):
     """
     def __init__(self, where):
         self.filename = where.filename
-        self.last_non_blank = None
+        self.bof = True
         self.blanks = []
 
     def is_where(self, where):
@@ -36,11 +36,8 @@ class VswContext(object):
                 yield delayed
 
     def handle_nonblank(self, element):
-        if not self.last_non_blank:
-            if self.blanks and not self.blanks[0].comment:
-                min_blanks, max_blanks = 0, 2
-            else:
-                min_blanks, max_blanks = 0, 0
+        if self.bof:
+            min_blanks, max_blanks = 0, 2
             message = H_WSV_CTX_BETWEEN
         elif isinstance(element, Context):
             min_blanks, max_blanks = 1, 2
@@ -56,7 +53,7 @@ class VswContext(object):
                                        max_blanks):
             yield blank
 
-        self.last_non_blank = element
+        self.bof = False  # after flush_blanks..
         yield element
 
     def flush_blanks(self, element, message, min_blanks, max_blanks):
@@ -75,7 +72,7 @@ class VswContext(object):
         # Group the blanks by comment/non-comment. From the
         # non-comments we only want to see max_blanks in a row.
         grouped = self.group_blanks(self.blanks)
-        if not self.last_non_blank:
+        if self.bof:
             if not grouped[0][0]:
                 W_WSV_BOF(grouped[0][1][0].where)
                 has_comment, grouped_blanks = grouped.pop(0)
