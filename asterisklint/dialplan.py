@@ -16,6 +16,9 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
         message = ('unexpected variable name {variable!r} '
                    '(not exten/same/include)')
 
+    class E_DP_INCLUDE_POSITION(WarningDef):
+        message = 'an include should always be at the tail of the context'
+
     class E_DP_PAT_INVALID(ErrorDef):
         message = 'badly formatted pattern'
 
