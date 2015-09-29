@@ -22,8 +22,17 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class W_FILE_UNIX_NOLF(WarningDef):
         message = 'unexpected line without LF in UNIX file format'
 
+    class W_WSH_BOL(WarningDef):
+        message = 'unexpected leading whitespace'
+
     class W_WSH_EOL(WarningDef):
         message = 'unexpected trailing whitespace'
+
+    class W_WSV_BOF(WarningDef):
+        message = 'unexpected vertical space at beginning of file'
+
+    class W_WSV_EOF(WarningDef):
+        message = 'unexpected vertical space at end of file'
 
 
 class BinFileReader(object):

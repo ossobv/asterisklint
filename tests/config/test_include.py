@@ -116,3 +116,56 @@ variable2=value2  ; line 4 (and not line 3, keep this test!)
 
         self.assertLinted({'W_FILE_CTRL_CHAR': 1, 'W_WSH_BOL': 5,
                            'W_WSH_CTRL': 1, 'W_WSH_VARSET': 2})
+
+
+class WhiteSpaceInIncludesTest(ALintTestCase):
+    def opener(self, filename):
+        if filename == 'test.conf':
+            return NamedBytesIO(filename, b'''\
+
+
+[context1]
+variable=value
+#include "test2.conf"
+
+[context3]
+variable3=value3
+
+
+''')
+        elif filename == 'test2.conf':
+            return NamedBytesIO(filename, b'''\
+
+
+[context2]
+variable2=value2
+
+
+''')
+
+    @ignoreLinted('H_WSV_CTX_BETWEEN')  # don't care about this now
+    def test_with_two_bof_eof_warnings(self):
+        reader = FileConfigParser(opener=self.opener)
+        reader.include('test.conf')
+
+        out = [i for i in reader]
+        self.assertEqual([i.name for i in out],
+                         ['context1', 'context2', 'context3'])
+
+        variables = [i for i in out[0]]
+        self.assertEqual(
+            [(i.where.filename, i.where.lineno, i.variable, i.value)
+             for i in variables],
+            [('test.conf', 4, 'variable', 'value')])
+        variables = [i for i in out[1]]
+        self.assertEqual(
+            [(i.where.filename, i.where.lineno, i.variable, i.value)
+             for i in variables],
+            [('test2.conf', 4, 'variable2', 'value2')])
+        variables = [i for i in out[2]]
+        self.assertEqual(
+            [(i.where.filename, i.where.lineno, i.variable, i.value)
+             for i in variables],
+            [('test.conf', 8, 'variable3', 'value3')])
+
+        self.assertLinted({'W_WSV_BOF': 2, 'W_WSV_EOF': 2})
