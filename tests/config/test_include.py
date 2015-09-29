@@ -14,8 +14,8 @@ variable2 = value2
 ''')
         elif filename == 'test2.conf':
             return NamedBytesIO(filename, b'''\
-variable3 = value3
 #include "test3.conf"
+variable3 = value3
 variable4 = value4
 ''')
         elif filename == 'test3.conf':
@@ -38,7 +38,6 @@ variable6 = value6
             [(i.where.filename, i.where.lineno, i.variable, i.value)
              for i in variables],
             [('test.conf', 2, 'variable', 'value'),
-             ('test2.conf', 1, 'variable3', 'value3'),
              ('test3.conf', 1, 'variable5', 'value5')])
 
         variables = [i for i in out[1]]
@@ -46,5 +45,38 @@ variable6 = value6
             [(i.where.filename, i.where.lineno, i.variable, i.value)
              for i in variables],
             [('test3.conf', 4, 'variable6', 'value6'),
-             ('test2.conf', 2, 'variable4', 'value4'),
-             ('test.conf', 3, 'variable2', 'value2')])
+             ('test2.conf', 2, 'variable3', 'value3'),
+             ('test2.conf', 3, 'variable4', 'value4'),
+             ('test.conf', 4, 'variable2', 'value2')])
+
+
+class LineNumberTest(ALintTestCase):
+    """
+    Initially, there was a bug, where the variable=value on line 3 would
+    get marked as being on line 2. Test that that's fixed.
+    """
+    def opener(self, filename):
+        if filename == 'test.conf':
+            return NamedBytesIO(filename, b'''\
+[context1]
+#include "test2.conf"
+variable=value  ; line 3
+''')
+        elif filename == 'test2.conf':
+            return NamedBytesIO(filename, b'''\
+variable2=value2
+''')
+
+    def test_correct_linenumber(self):
+        reader = FileConfigParser(opener=self.opener)
+        reader.include('test.conf')
+
+        out = [i for i in reader]
+        self.assertEqual([i.name for i in out], ['context1'])
+
+        variables = [i for i in out[0]]
+        self.assertEqual(
+            [(i.where.filename, i.where.lineno, i.variable, i.value)
+             for i in variables],
+            [('test2.conf', 1, 'variable2', 'value2'),
+             ('test.conf', 3, 'variable', 'value')])

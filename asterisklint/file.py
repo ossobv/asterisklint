@@ -124,7 +124,7 @@ class FileformatReader(object):
                 else:
                     fileinfo.append([where.filename, None, None, where])
                 # Re-set values.
-                filename, is_dos, latest_has_lf, where = fileinfo[-1]
+                filename, is_dos, latest_has_lf, last_where = fileinfo[-1]
 
             has_crlf = data.endswith('\r\n')
             has_lf = data.endswith('\n')
