@@ -16,7 +16,24 @@ class ALintTestCase(TestCase):
         self.linted_counts = defaultdict(int)
 
     def tearDown(self):
-        self.assertLinted({})  # also calls MessageDefManager.reset()
+        if self.last_test_was_a_success():
+            self.assertLinted({})
+        MessageDefManager.reset()
+
+    def last_test_was_a_success(self):
+        """
+        Hope that unittest for Python3.4 doesn't change.
+        """
+        # If the test was "supposed to fail", we still want it reported
+        # as a failure.
+        if self._outcome.expectedFailure:
+            return False
+
+        # The error list holds accumulated status reports (not all of
+        # them errors).
+        last_error = self._outcome.errors[-1]
+        test_method, errors = last_error
+        return not bool(errors)
 
     def assertLinted(self, expected_counts):
         raised = MessageDefManager.raised

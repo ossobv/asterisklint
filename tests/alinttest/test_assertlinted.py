@@ -1,3 +1,5 @@
+from unittest import expectedFailure
+
 from asterisklint.alinttest import ALintTestCase, ignoreLinted
 from asterisklint.defines import HintDef, WarningDef
 from asterisklint.where import Where
@@ -101,3 +103,35 @@ class IgnoreAssertLintedTestCase(ALintTestCase):
         H_MY_HINT6(DummyWhere())
 
         self.assertLinted({'H_MY_HINT6': 2})
+
+
+class AssertLintedIsCalledOnTearDown(ALintTestCase):
+    def tearDown(self):
+        self.assertRaises(AssertionError, super().tearDown)
+
+    def test_assertlinted_on_teardown(self):
+        class W_MY_WARNING7(WarningDef):
+            message = 'irrelevant'
+
+        # Raise a warning, but don't check it. We must now get an error
+        # raised from the tearDown().
+        W_MY_WARNING7(DummyWhere())
+
+
+class AssertLintedIsNotCalledIfAlreadyErrored(ALintTestCase):
+    def tearDown(self):
+        try:
+            super().tearDown()
+        except AssertionError:
+            self.assertFalse(True, 'tearDown should not cause trouble')
+
+    @expectedFailure
+    def test_no_assertlinted_on_teardown(self):
+        class W_MY_WARNING8(WarningDef):
+            message = 'irrelevant'
+
+        # Raise a warning.
+        W_MY_WARNING8(DummyWhere())
+        # Raise an Assertion failure. Now we *don't* want any checks in
+        # tearDown().
+        self.assertTrue(False)
