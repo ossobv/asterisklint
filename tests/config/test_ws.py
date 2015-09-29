@@ -67,11 +67,13 @@ class VerticalWhitespaceTest(ALintTestCase):
         self.assertEqual(out[1].name, 'context2')
 
         variables = [i for i in out[0]]
-        self.assertEqual(len(variables), 2)
+        self.assertEqual(len(variables), 3)
         self.assertEqual(variables[0].variable, 'foo')
         self.assertEqual(variables[0].value, 'bar')
         self.assertEqual(variables[1].variable, 'foo2')
         self.assertEqual(variables[1].value, 'bar2')
+        self.assertEqual(variables[2].variable, 'foo3')
+        self.assertEqual(variables[2].value, 'bar3')
 
         variables = [i for i in out[1]]
         self.assertEqual(len(variables), 1)
@@ -86,6 +88,7 @@ class VerticalWhitespaceTest(ALintTestCase):
 [context]
 foo=bar
 foo2=bar2
+foo3=bar3
 
 [context2]
 bar=baz
@@ -100,6 +103,7 @@ bar=baz
 [context]
 foo=bar
 foo2=bar2
+foo3=bar3
 
 [context2]
 bar=baz
@@ -123,6 +127,7 @@ bar=baz
 [context]
 foo=bar
 foo2=bar2
+foo3=bar3
 [context2]
 bar=baz
 ''')
@@ -136,6 +141,8 @@ bar=baz
 [context]
 foo=bar
 foo2=bar2
+
+foo3=bar3
 
 
 
@@ -154,8 +161,10 @@ bar=baz
 
 
 [context]
+
 foo=bar
 foo2=bar2
+foo3=bar3
 
 
 
@@ -181,6 +190,7 @@ bar=baz
 [context]
 foo=bar
 foo2=bar2
+foo3=bar3
 
 
 [context2]
@@ -195,7 +205,10 @@ bar=baz
             b'''\
 [context]
 foo=bar
+
 foo2=bar2
+
+foo3=bar3
 
 ;
 ;
@@ -214,6 +227,7 @@ bar=baz
 [context]
 foo=bar
 foo2=bar2
+foo3=bar3
 
 ; near comment
 [context2]
@@ -231,6 +245,7 @@ bar=baz
 foo=bar
 
 foo2=bar2
+foo3=bar3
 
 [context2]
 bar=baz
@@ -249,6 +264,7 @@ foo=bar
 ; ok
 
 foo2=bar2
+foo3=bar3
 
 [context2]
 bar=baz
@@ -267,9 +283,64 @@ foo=bar
 
 
 foo2=bar2
+foo3=bar3
 
 [context2]
 bar=baz
 ''')
         self.check_values(reader)
         self.assertLinted({'H_WSV_VARSET_BETWEEN': 2})
+
+
+class TightVerticalWhitespaceTest(ALintTestCase):
+    def test_no_space_at_all_is_fine_for_0(self):
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
+[context]
+[context2]
+''')
+        out = [i for i in reader]
+        self.assertEqual(len(out), 2)
+
+    def test_no_space_at_all_is_fine_for_1(self):
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
+[context]
+foo=bar
+[context2]
+bar=baz
+''')
+        out = [i for i in reader]
+        self.assertEqual(len(out), 2)
+
+    def test_no_space_at_all_is_fine_for_2(self):
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
+[context]
+foo=bar
+foo2=bar2
+[context2]
+bar=baz
+bar2=baz2
+''')
+        out = [i for i in reader]
+        self.assertEqual(len(out), 2)
+
+    def test_now_its_enough(self):
+        reader = self.create_instance_and_load_single_file(
+            FileConfigParser, 'test.conf',
+            b'''\
+[context]
+foo=bar
+foo2=bar2
+foo3=bar3
+[context2]
+bar=baz
+bar2=baz2
+''')
+        out = [i for i in reader]
+        self.assertEqual(len(out), 2)
+        self.assertLinted({'H_WSV_CTX_BETWEEN': 1})

@@ -6,7 +6,8 @@ from .file import W_WSV_BOF, W_WSV_EOF
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class H_WSV_CTX_BETWEEN(HintDef):
-        message = 'expected one or two lines between contexts'
+        # We skip this if the context contains only 0..2 varsets.
+        message = 'expected one or two lines between non-tiny contexts'
 
     class H_WSV_VARSET_BETWEEN(HintDef):
         message = 'expected zero or one lines between varsets'
@@ -24,6 +25,7 @@ class VswContext(object):
         self.filename = where.filename
         self.bof = True
         self.blanks = []
+        self.last_context_varsets = 0
 
     def is_where(self, where):
         return self.filename == where.filename
@@ -36,15 +38,18 @@ class VswContext(object):
                 yield delayed
 
     def handle_nonblank(self, element):
-        if self.bof:
-            min_blanks, max_blanks = 0, 2
+        if isinstance(element, Context):
+            if self.last_context_varsets <= 2:
+                min_blanks = 0
+            else:
+                min_blanks = 1
+            max_blanks = 2
             message = H_WSV_CTX_BETWEEN
-        elif isinstance(element, Context):
-            min_blanks, max_blanks = 1, 2
-            message = H_WSV_CTX_BETWEEN
+            self.last_context_varsets = 0
         elif isinstance(element, Varset):
             min_blanks, max_blanks = 0, 1
             message = H_WSV_VARSET_BETWEEN
+            self.last_context_varsets += 1
         else:
             raise NotImplementedError('unknown element {!r}'.format(
                 element))
