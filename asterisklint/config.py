@@ -72,10 +72,15 @@ class Context(object):
         Use this on subclasses of Context.
         """
         assert not context._varsets
-        return cls(context.name, context._templates, context.comment,
-                   context.where)
+        return cls(name=context.name, templates=context._templates,
+                   comment=context.comment, bolspace='',
+                   where=context.where)
 
-    def __init__(self, name, templates, comment, where):
+    def __init__(self, name, templates='', comment=False, bolspace='',
+                 where=None):
+        if bolspace:
+            W_WSH_BOL(where)
+
         self.name = name
         self.comment = comment
         self.where = where
@@ -142,15 +147,15 @@ class ConfigParser(object):
 
     regexes = (
         # [context](template1,template2)
-        (re.compile(r'^\[([^]]*)\]\s*\(([^)\+])\)$'),
+        (re.compile(r'^(\s*)\[([^]]*)\]\s*\(([^)\+])\)$'),
          (lambda comment, where, match: Context(
-             name=match.groups()[0], templates=match.groups()[1],
-             comment=comment, where=where))),
+             name=match.groups()[1], templates=match.groups()[2],
+             comment=comment, bolspace=match.groups()[0], where=where))),
         # [context]
-        (re.compile(r'^\[([^]]*)\]$'),
+        (re.compile(r'^(\s*)\[([^]]*)\]$'),
          (lambda comment, where, match: Context(
-             name=match.groups()[0], templates='',
-             comment=comment, where=where))),
+             name=match.groups()[1], templates='',
+             comment=comment, bolspace=match.groups()[0], where=where))),
         # object => value
         (re.compile(r'^([^=]*?)(\s*=>\s*)(.*)$'),
          (lambda comment, where, match: Varset(

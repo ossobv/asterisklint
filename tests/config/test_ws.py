@@ -18,8 +18,8 @@ class HorizontalWhitespaceTest(ALintTestCase):
         reader = self.create_instance_and_load_single_file(
             FileConfigParser, 'test.conf',
             b' [context]\n')
-        self.assertEqual(len([i for i in reader]), 0)
-        self.assertLinted({'E_CONF_BAD_LINE': 1})
+        self.assertEqual(len([i for i in reader]), 1)
+        self.assertLinted({'W_WSH_BOL': 1})
 
     def test_wsh_bol_2(self):
         "Leading white space before variable."

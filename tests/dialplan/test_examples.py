@@ -28,3 +28,24 @@ exten => s,1,NoOp(another)
   's' =>            1. NoOp(1)                                    [pbx_config]
                     2. NoOp(2)                                    [pbx_config]
 ''')
+
+    @ignoreLinted('H_*')
+    def test_leading_spaces_are_allowed(self):
+        reader = self.create_instance_and_load_single_file(
+            FileDialplanParser, 'test.conf', b'''\
+\t [abc]
+exten => s,1,NoOp(1)
+   exten => s,n,NoOp(2)
+''')
+        out = [i for i in reader]
+        self.assertEqual(len(out), 1)
+        self.assertLinted({'W_WSH_BOL': 2})
+
+        dialplan = out[0]
+        fmt = dialplan.format_as_dialplan_show()
+
+        self.assertEqual(fmt, '''\
+[ Context 'abc' created by 'pbx_config' ]
+  's' =>            1. NoOp(1)                                    [pbx_config]
+                    2. NoOp(2)                                    [pbx_config]
+''')
