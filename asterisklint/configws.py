@@ -91,7 +91,7 @@ class VswContext(object):
                 yield blank
         self.blanks = []
 
-    def handle_eof(self):
+    def handle_eof(self, report_eof_blanks=True):
         if not self.blanks:
             return
 
@@ -116,7 +116,7 @@ class VswContext(object):
                 yield blank
 
         # Check tail whitespace and report on that.
-        if eof_blanks:
+        if eof_blanks and report_eof_blanks:
             for blank in eof_blanks:
                 yield blank
             W_WSV_EOF(self.blanks[-1].where)
@@ -149,10 +149,12 @@ class VswContextStack(list):
         return any(i.is_where(where) for i in reversed(self))
 
     def handle_eof(self):
+        first = True
         while self:
             locontext = self.pop()
-            for delayed in locontext.handle_eof():
+            for delayed in locontext.handle_eof(report_eof_blanks=first):
                 yield delayed
+            first = False
 
 
 class VerticalSpaceWarner(object):

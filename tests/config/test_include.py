@@ -2,28 +2,27 @@ from asterisklint import FileConfigParser
 from asterisklint.alinttest import ALintTestCase, NamedBytesIO, ignoreLinted
 
 
-@ignoreLinted('W_WSH_*')  # temporarily ignore this
 class NormalTest(ALintTestCase):
     def opener(self, filename):
         if filename == 'test.conf':
             return NamedBytesIO(filename, b'''\
 [context1]
-variable = value
+variable=value
 #include "test2.conf"
-variable2 = value2
+variable2=value2
 ''')
         elif filename == 'test2.conf':
             return NamedBytesIO(filename, b'''\
 #include "test3.conf"
-variable3 = value3
-variable4 = value4
+variable3=value3
+variable4=value4
 ''')
         elif filename == 'test3.conf':
             return NamedBytesIO(filename, b'''\
-variable5 = value5
+variable5=value5
 
 [context2]
-variable6 = value6
+variable6=value6
 ''')
 
     def test_normal(self):
@@ -169,3 +168,36 @@ variable2=value2
             [('test.conf', 8, 'variable3', 'value3')])
 
         self.assertLinted({'W_WSV_BOF': 2, 'W_WSV_EOF': 2})
+
+
+class IncludeFileLastTest(ALintTestCase):
+    def opener(self, filename, extra_space=b''):
+        if filename == 'test.conf':
+            return NamedBytesIO(filename, b'''\
+[context1]
+variable=value
+
+#include "test2.conf"
+''' + extra_space)
+        elif filename == 'test2.conf':
+            return NamedBytesIO(filename, b'''\
+[context2]
+variable2=value2
+''')
+
+    def opener_with_extra_space(self, filename):
+        return self.opener(filename, extra_space=b'\n')
+
+    def test_that_this_yields_no_lint_messages(self):
+        reader = FileConfigParser(opener=self.opener)
+        reader.include('test.conf')
+        out = [i for i in reader]
+        del out
+        self.assertLinted({})  # *not* W_WSV_EOF
+
+    def test_that_this_yields_an_eof_lint_message(self):
+        reader = FileConfigParser(opener=self.opener_with_extra_space)
+        reader.include('test.conf')
+        out = [i for i in reader]
+        del out
+        self.assertLinted({'W_WSV_EOF': 1})
