@@ -172,7 +172,7 @@ class App(object):
         if data.startswith('(') and data.endswith(')'):
             data = data[1:-1]
         else:
-            W_APP_NEED_PARENS(self.where)
+            W_APP_NEED_PARENS(self.where, app=app)
 
         # Set it and try to find a handler for it.
         self.app = app
