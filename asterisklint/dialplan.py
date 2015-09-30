@@ -43,8 +43,11 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_DP_LABEL_DUPE(WarningDef):
         message = 'duplicate label {label!r}, one of them will not be used'
 
-    class W_DP_PRIO_BADORDER(ErrorDef):
-        message = 'bad priority order'
+    class E_DP_PRIO_BAD(ErrorDef):
+        message = 'cannot match priority for pattern {pat!r}'
+
+    class W_DP_PRIO_BADORDER(WarningDef):
+        message = 'bad priority order for pattern {pat!r} and prio {prio}'
 
     class H_DP_GENERAL_MISPLACED(HintDef):
         message = '[general] context not found or not at top of file'
@@ -139,6 +142,7 @@ class DialplanContext(Context):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.includes = []
+        self.last_prio = None
 
     def by_pattern(self):
         """
@@ -162,42 +166,55 @@ class DialplanContext(Context):
             extension.pattern = self[-1].pattern
 
         if extension.prio is None:
-            if not len(self):
-                E_DP_PRIO_MISSING(extension.where)
+            if not self.last_prio:
+                E_DP_PRIO_MISSING(
+                    extension.where, pat=extension.pattern.pattern)
                 return
             if self[-1].pattern != extension.pattern:
-                W_DP_PRIO_BADORDER(extension.where)
-                prev = [i for i in self if i.pattern == extension.pattern][-1]
-            else:
-                prev = self[-1]
-            assert prev.pattern == extension.pattern  # E_PRIO_FUCKUP
-            extension.prio = prev.prio + 1
+                W_DP_PRIO_BADORDER(
+                    extension.where, pat=extension.pattern.pattern,
+                    prio='<unset>')
+            extension.prio = self.last_prio + 1
         elif extension.prio < 1:
             E_DP_PRIO_INVALID(extension.where, prio=extension.prio)
             return
         elif extension.prio != 1:
             # Check that there is a prio with N-1.
-            # TODO: here we have to be careful with pattern matching, we
-            # should check whether a pattern exists with a greater scope
-            # than our pattern.
             try:
                 prev = [i for i in self if i.pattern == extension.pattern][-1]
             except IndexError:
-                W_DP_PRIO_BADORDER(extension.where)
+                # TODO: here we have to be careful with pattern
+                # matching, we should check whether a pattern exists
+                # with a greater scope than our pattern.
+                # The odd pattern order can be succesfully employed
+                # in temporary branching situations:
+                #   _X!,1,both
+                #   _1!,2,specific-1-stuff
+                #   _[02-9]!,2,specific-other-stuff
+                #   _X!,3,both
+                W_DP_PRIO_BADORDER(
+                    extension.where, pat=extension.pattern.pattern,
+                    prio=extension.prio)
             else:
                 if prev.prio != extension.prio - 1:
                     # Don't warn if same prio, we do the dupe check
                     # later on.
                     if prev.prio != extension.prio:
-                        W_DP_PRIO_BADORDER(extension.where)
+                        W_DP_PRIO_BADORDER(
+                            extension.where, pat=extension.pattern.pattern,
+                            prio=extension.prio)
+
+        # Okay, prio is valid here. Store it so we can use the next 'n'
+        # as last_prio + 1.
+        self.last_prio = extension.prio
 
         # Check duplicate priorities.
         extensions = [i for i in self if i.pattern == extension.pattern]
-        if any(True for i in extensions if i.prio == extension.prio):
+        if any(i.prio == extension.prio for i in extensions):
             previous = [i.where for i in extensions
                         if i.prio == extension.prio][0]
-            E_DP_PRIO_DUPE(extension.where, previous=previous,
-                           prio=extension.prio)
+            E_DP_PRIO_DUPE(
+                extension.where, previous=previous, prio=extension.prio)
             return
 
         # Check duplicate labels.
@@ -213,6 +230,7 @@ class DialplanContext(Context):
     def add_include(self, include):
         assert isinstance(include, Include)
         # FIXME: check for dupes and other stupidity (circular includes?)
+        # FIXME: complain when the include is not at the tail of the context
         self.includes.append(include)
 
 
@@ -337,6 +355,16 @@ class Extension(Varset):
         if ')' not in self.app.raw:
             ret.append(')')
         return ''.join(ret)
+
+    @property
+    def prio_with_label(self):
+        if self.label:
+            return '{}({})'.format(self.prio, self.label)
+        return str(self.prio)
+
+    def __repr__(self):
+        return '<Extension({},{})>'.format(
+            self.pattern.pattern, self.prio_with_label)
 
 
 class DialplanAggregator(ConfigAggregator):

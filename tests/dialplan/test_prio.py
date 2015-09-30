@@ -123,6 +123,36 @@ exten => pattern,n,NoOp(3)
         self.assertLinted({'E_APP_MISSING': 1,
                            'W_APP_NEED_PARENS': 1})
 
+    def test_prio_inconsistent_n(self):
+        reader = self.create_instance_and_load_single_file(
+            FileDialplanParser, 'test.conf', b'''\
+[context]
+exten => 10,1,NoOp(10a)
+exten => 10,n,NoOp(10b)
+exten => 20,1,NoOp(20a)
+exten => 10,n,NoOp(20b) ; this does not become 10,2, but gets discarded
+exten => 10,n,NoOp(20c) ; this becomes 10,3
+exten => 10,n,NoOp(20d) ; this becomes 10,4
+exten => 10,n,NoOp(20e) ; this becomes 10,5
+''')
+        dialplan = [i for i in reader][0]
+        self.assertEqual(len(dialplan.contexts), 1)
+        self.assertEqual(
+            [(i.pattern.pattern, i.prio, i.app.raw)
+             for i in dialplan.contexts[0].by_pattern()],
+            [('10', 1, 'NoOp(10a)'),
+             ('10', 2, 'NoOp(10b)'),
+             ('10', 3, 'NoOp(20c)'),
+             ('10', 4, 'NoOp(20d)'),
+             ('10', 5, 'NoOp(20e)'),
+             ('20', 1, 'NoOp(20a)')])
+        self.assertLinted({
+            # 20b (10,2) is dupe
+            'E_DP_PRIO_DUPE': 1,
+            # Both 20b and 20c get a BADORDER remark.
+            'W_DP_PRIO_BADORDER': 2,
+        })
+
 
 class UnusualButGoodPrioTest(ALintTestCase):
     @expectedFailure
