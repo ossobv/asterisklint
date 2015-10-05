@@ -9,3 +9,6 @@ class Where(object):
 
     def __str__(self):
         return '%s:%d' % (self.filename, self.lineno)
+
+
+DUMMY_WHERE = Where(filename='<dummy>', lineno=-1, line='<dummy config line>')

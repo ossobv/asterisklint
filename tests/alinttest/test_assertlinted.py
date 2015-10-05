@@ -2,7 +2,7 @@ from unittest import expectedFailure
 
 from asterisklint.alinttest import ALintTestCase, ignoreLinted
 from asterisklint.defines import HintDef, WarningDef
-from asterisklint.where import Where
+from asterisklint.where import DUMMY_WHERE
 
 """
 NOTE: We define our custom hints *inside* the test cases because they
@@ -10,11 +10,6 @@ auto-register themselves upon definition. If we import this file but
 don't run the tests, our test run would end with a warning that we did
 not test our custom messages.
 """
-
-
-class DummyWhere(Where):
-    def __init__(self):
-        super().__init__(filename='dummy', lineno=-1, line='irrelevant')
 
 
 class AssertLintedTestCase(ALintTestCase):
@@ -26,7 +21,7 @@ class AssertLintedTestCase(ALintTestCase):
             message = 'irrelevant'
 
         # Raise a hint.
-        H_MY_HINT(DummyWhere())
+        H_MY_HINT(DUMMY_WHERE)
 
         self.assertLinted({'H_MY_HINT': 1})
 
@@ -38,9 +33,9 @@ class AssertLintedTestCase(ALintTestCase):
             message = 'irrelevant'
 
         # Raise 2 hints and a warning.
-        H_MY_HINT2(DummyWhere())
-        W_MY_WARNING2(DummyWhere())
-        H_MY_HINT2(DummyWhere())
+        H_MY_HINT2(DUMMY_WHERE)
+        W_MY_WARNING2(DUMMY_WHERE)
+        H_MY_HINT2(DUMMY_WHERE)
 
         self.assertLinted({'H_MY_HINT2': 2, 'W_MY_WARNING2': 1})
 
@@ -53,9 +48,9 @@ class AssertLintedTestCase(ALintTestCase):
             message = 'irrelevant'
 
         # Raise 2 hints and a warning.
-        H_MY_HINT3(DummyWhere())
-        W_MY_WARNING3(DummyWhere())
-        H_MY_HINT3(DummyWhere())
+        H_MY_HINT3(DUMMY_WHERE)
+        W_MY_WARNING3(DUMMY_WHERE)
+        H_MY_HINT3(DUMMY_WHERE)
 
         self.assertLinted({'W_MY_WARNING3': 1})
 
@@ -68,9 +63,9 @@ class AssertLintedTestCase(ALintTestCase):
             message = 'irrelevant'
 
         # Raise 2 hints and a warning.
-        H_MY_HINT4(DummyWhere())
-        W_MY_WARNING4(DummyWhere())
-        H_MY_HINT4(DummyWhere())
+        H_MY_HINT4(DUMMY_WHERE)
+        W_MY_WARNING4(DUMMY_WHERE)
+        H_MY_HINT4(DUMMY_WHERE)
 
         self.assertLinted({'W_MY_WARNING4': 1})
 
@@ -83,9 +78,9 @@ class AssertLintedTestCase(ALintTestCase):
             message = 'irrelevant'
 
         # Raise 2 hints and a warning.
-        H_MY_HINT5(DummyWhere())
-        W_MY_WARNING5(DummyWhere())
-        H_MY_HINT5(DummyWhere())
+        H_MY_HINT5(DUMMY_WHERE)
+        W_MY_WARNING5(DUMMY_WHERE)
+        H_MY_HINT5(DUMMY_WHERE)
 
 
 @ignoreLinted('H_SOMETHING_DIFFERENT', 'W_MY_WARN*')
@@ -98,9 +93,9 @@ class IgnoreAssertLintedTestCase(ALintTestCase):
             message = 'irrelevant'
 
         # Raise 2 hints and a warning.
-        H_MY_HINT6(DummyWhere())
-        W_MY_WARNING6(DummyWhere())
-        H_MY_HINT6(DummyWhere())
+        H_MY_HINT6(DUMMY_WHERE)
+        W_MY_WARNING6(DUMMY_WHERE)
+        H_MY_HINT6(DUMMY_WHERE)
 
         self.assertLinted({'H_MY_HINT6': 2})
 
@@ -115,7 +110,7 @@ class AssertLintedIsCalledOnTearDown(ALintTestCase):
 
         # Raise a warning, but don't check it. We must now get an error
         # raised from the tearDown().
-        W_MY_WARNING7(DummyWhere())
+        W_MY_WARNING7(DUMMY_WHERE)
 
 
 class AssertLintedIsNotCalledIfAlreadyErrored(ALintTestCase):
@@ -131,7 +126,7 @@ class AssertLintedIsNotCalledIfAlreadyErrored(ALintTestCase):
             message = 'irrelevant'
 
         # Raise a warning.
-        W_MY_WARNING8(DummyWhere())
+        W_MY_WARNING8(DUMMY_WHERE)
         # Raise an Assertion failure. Now we *don't* want any checks in
         # tearDown().
         self.assertTrue(False)

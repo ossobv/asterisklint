@@ -14,7 +14,7 @@ class SamePrioTest(ALintTestCase):
 
         context = dialplan.contexts[0]
         self.assertEqual(len(context), 3)
-        self.assertEqual(set(i.pattern for i in context), set(['pattern']))
+        self.assertEqual(set(i.pattern.raw for i in context), set(['pattern']))
         self.assertEqual([i.prio for i in context], [1, 2, 3])
         self.assertEqual([i.app.raw for i in context],
                          ['NoOp({})'.format(i) for i in range(1, 4)])
@@ -138,7 +138,7 @@ exten => 10,n,NoOp(20e) ; this becomes 10,5
         dialplan = [i for i in reader][0]
         self.assertEqual(len(dialplan.contexts), 1)
         self.assertEqual(
-            [(i.pattern.pattern, i.prio, i.app.raw)
+            [(i.pattern.raw, i.prio, i.app.raw)
              for i in dialplan.contexts[0].by_pattern()],
             [('10', 1, 'NoOp(10a)'),
              ('10', 2, 'NoOp(10b)'),

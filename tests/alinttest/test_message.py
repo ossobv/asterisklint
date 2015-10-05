@@ -1,11 +1,6 @@
 from asterisklint.alinttest import ALintTestCase
 from asterisklint.defines import WarningDef
-from asterisklint.where import Where
-
-
-class DummyWhere(Where):
-    def __init__(self):
-        super().__init__(filename='dummy', lineno=-1, line='irrelevant')
+from asterisklint.where import DUMMY_WHERE
 
 
 class MessageTestCase(ALintTestCase):
@@ -13,7 +8,7 @@ class MessageTestCase(ALintTestCase):
         class W_WARNING1(WarningDef):
             message = 'irrelevant'
 
-        W_WARNING1(DummyWhere())
+        W_WARNING1(DUMMY_WHERE)
         self.assertLinted({'W_WARNING1': 1})
 
     def test_format_required(self):
@@ -21,11 +16,11 @@ class MessageTestCase(ALintTestCase):
             message = '{message} with {format}'
 
         # Properly formatted.
-        W_WARNING2(DummyWhere(), format='cheese', message='sandwitch')
+        W_WARNING2(DUMMY_WHERE, format='cheese', message='sandwitch')
 
         # Missing formats.
         self.assertRaises(
             KeyError,
-            W_WARNING2, DummyWhere(), message='sandwitch')
+            W_WARNING2, DUMMY_WHERE, message='sandwitch')
 
         self.assertLinted({'W_WARNING2': 2})

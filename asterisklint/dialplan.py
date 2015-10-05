@@ -1,10 +1,9 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
-from functools import total_ordering
-
 from .application import App
 from .config import ConfigAggregator, Context, Varset
 from .config import E_CONF_CTX_MISSING, E_CONF_KEY_INVALID, W_CONF_CTX_DUPE
 from .defines import ErrorDef, WarningDef, HintDef, DupeDefMixin
+from .pattern import Pattern
 from .where import Where
 
 
@@ -168,11 +167,11 @@ class DialplanContext(Context):
         if extension.prio is None:
             if not self.last_prio:
                 E_DP_PRIO_MISSING(
-                    extension.where, pat=extension.pattern.pattern)
+                    extension.where, pat=extension.pattern.raw)
                 return
             if self[-1].pattern != extension.pattern:
                 W_DP_PRIO_BADORDER(
-                    extension.where, pat=extension.pattern.pattern,
+                    extension.where, pat=extension.pattern.raw,
                     prio='<unset>')
             extension.prio = self.last_prio + 1
         elif extension.prio < 1:
@@ -193,7 +192,7 @@ class DialplanContext(Context):
                 #   _[02-9]!,2,specific-other-stuff
                 #   _X!,3,both
                 W_DP_PRIO_BADORDER(
-                    extension.where, pat=extension.pattern.pattern,
+                    extension.where, pat=extension.pattern.raw,
                     prio=extension.prio)
             else:
                 if prev.prio != extension.prio - 1:
@@ -296,40 +295,6 @@ class Include(object):
         self.where = where
 
 
-@total_ordering  # now we only need 'eq' and 'lt'
-class Pattern(object):
-    # Pattern heeft equality tests zodat "s-zap" == "s-[1-9]ap", maar emit
-    # wel een warning als je hier iets anders neerzet! (Zelfde verhaal
-    # met hoofdletters vs. kleine letters.)
-    def __init__(self, pattern, where):
-        self.pattern = pattern
-        self.where = where
-
-    def __hash__(self):
-        # FIXME: this needs more work
-        return hash(self.pattern.lower().replace('-', ''))
-
-    def __eq__(self, other):
-        if other is None:
-            return False
-        if isinstance(other, str):
-            other = Pattern(other, None)
-        return self.pattern == other.pattern
-
-    def __lt__(self, other):
-        if other is None:
-            return False
-        if isinstance(other, str):
-            other = Pattern(other, None)
-        return self.pattern < other.pattern
-
-    def __repr__(self):
-        return '<Pattern({})>'.format(self.pattern or '')
-
-    def __str__(self):
-        return self.pattern
-
-
 class Extension(Varset):
     def __init__(self, pattern, prio, label, app, comment, where):
         # Check pattern voor mixen van letters en pattern-letters:
@@ -364,7 +329,7 @@ class Extension(Varset):
 
     def __repr__(self):
         return '<Extension({},{})>'.format(
-            self.pattern.pattern, self.prio_with_label)
+            self.pattern.raw, self.prio_with_label)
 
 
 class DialplanAggregator(ConfigAggregator):
