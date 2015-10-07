@@ -110,16 +110,15 @@ class Dialplan(object):
     def format_as_dialplan_show(self):
         # If we have this, we can compare to the asterisk output :)
         ret = []
-        # TODO: for asterisk 1.4 we want reversed(self.contexts), for 11
-        # we don't.
+        # NOTE: Asterisk 1.4 loops over self.contexts in reversed order.
         for context in self.contexts:
             ret.append("[ Context {!r} created by 'pbx_config' ]".format(
                 context.name))
-            # TODO: context.by_pattern? print the "=>" notation for the
-            # first of every pattern. note that the show-dialplan is
-            # ordered by pattern..
             last_pattern = None
             for extension in context.by_pattern():
+                # NOTE: Asterisk 1.4 and LOW_MEMORY limits show_dialplan
+                # output of extension.prio+app_with_parents to 255
+                # chars. Asterisk 11 limits it to 1023.
                 if extension.pattern == last_pattern:
                     ret.append('     %-14s %-45s [pbx_config]' % (
                         (extension.label and '[{}]'.format(extension.label) or
@@ -149,7 +148,7 @@ class DialplanContext(Context):
         """
         Used by format_as_dialplan_show().
         """
-        patterns = sorted(list(set(i.pattern for i in self)))  # TODO: order
+        patterns = sorted(list(set(i.pattern for i in self)))
         ret = []
         for pattern in patterns:
             ret.extend(i for i in self if i.pattern == pattern)
