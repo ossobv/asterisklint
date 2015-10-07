@@ -20,6 +20,8 @@ class CanonicalPatternTest(ALintTestCase):
             ('_[A-Z0-9+]', '_[0-9A-Z+]'),
             ('_[A-EQc-z0-9+#*]', '_[0-9A-EQc-z#*+]'),
             ('_[23]xx', '_[23]XX'),
+            ('_[+abs]', '_[abs+]'),
+            ('_[{Aa@QqZz`]', '_[AQZaqz@`{]'),
         )
         for a, b in synonyms:
             pattern = Pattern(a, None)

@@ -290,7 +290,7 @@ class Pattern(object):
         # Fix so 0-9A-Za-z comes first.
         if (0x30 <= range_[0] <= 0x39 or
                 0x41 <= range_[0] <= 0x5a or
-                0x61 <= range_[0] <= 0x6a):
+                0x61 <= range_[0] <= 0x7a):
             return range_[0]
         return range_[0] + 0x100
 
