@@ -51,7 +51,8 @@ class PatternOrderTest(ALintTestCase):
             ('_s-[0-5]', '_s-[1-6]'),   # second one is later
             ('_s-[1-6]', '_s-[0-59]'),  # second one is longer
             # And yet more complicated, with ranges where the middle differs.
-            ('_s-[0-259]', '_s-[01269]'),  # both with length 5 and start 0
+            ('_s-[1259]', '_s-[1269]'),     # both with length 4 and start 1
+            ('_s-[0-259]', '_s-[01269]'),   # both with length 5 and start 0
             # The other operators.
             ('_.', '_!'),       # period is one-or-more, excl. is zero-or-more
             ('_A.', '_A!'),

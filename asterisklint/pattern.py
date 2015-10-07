@@ -175,6 +175,81 @@ class Pattern(object):
 
         return (num,)
 
+    @property
+    def canonical_pattern(self):
+        if not hasattr(self, '_canonical_pattern'):
+            # Ignore the first IS_A_PATTERN/NOT_A_PATTERN, we know
+            # better.
+            if all(i[0] < 0x200 for i in self.values[1:]):
+                # Hrm.. latin1 here.. not so nice.
+                ret = bytes((i[0] & 0xff)
+                            for i in self.values[1:]).decode('latin1')
+            else:
+                # Okay, so we have a pattern. Fix it up.
+                assert self.values[0] == self.IS_A_PATTERN
+                ret = ('_' + self._canonical_pattern_range(
+                    self.values[1:]).decode('latin1'))
+            self._canonical_pattern = ret
+        return self._canonical_pattern
+
+    def _canonical_pattern_range(self, values):
+        common = {
+            0xa30: 0x58,    # 'X'
+            0x931: 0x5a,    # 'Z'
+            0x832: 0x4e,    # 'N'
+            0x18000: 0x2e,  # '.'
+            0x28000: 0x21,  # '!'
+        }
+        special = set([0x21, 0x2d, 0x2e,
+                       0x4e, 0x58, 0x5a, 0x6e, 0x78, 0x7a])
+
+        ret = []
+        for value in values:
+            if len(value) == 1:
+                num = value[0]
+                if num < 0x200:  # single char?
+                    start = num & 0xff
+                    if start in special:  # must escape these in range
+                        ret.extend([0x5b, start, 0x5d])
+                    else:
+                        ret.append(num & 0xff)
+                else:
+                    try:
+                        ret.append(common[num])
+                    except KeyError:
+                        length = (num & 0xff00) >> 8
+                        start = num & 0xff
+                        ret.extend([0x5b, start, 0x2d,
+                                    start + length - 1, 0x5d])
+            else:
+                binstr = list(value[1])
+                assert binstr
+                ret.append(0x5b)
+                dash = (0x2d in binstr)
+                if dash:
+                    binstr.remove(0x2d)
+                if (0x5d in binstr):
+                    binstr.remove(0x5d)
+                    ret.append(0x5d)
+                while binstr:
+                   self._canonical_pattern_add_range(ret, binstr)
+                if dash:
+                    ret.append(0x2d)
+                ret.append(0x5d)
+
+        return bytes(ret)
+
+    def _canonical_pattern_add_range(self, ret, binstr):
+        i = len(binstr) - 1
+        while i >= 2:
+            if (binstr[i] - binstr[0] == i):
+                ret.extend([binstr[0], 0x2d, binstr[i]])
+                binstr[0:i + 1] = []  # inline remove
+                return
+            i -= 1
+        ret.extend(binstr)
+        binstr[:] = []  # inline remove
+
     def matches_same(self, other):
         """
         Same as regular equal, but this time, ignore whether this is
