@@ -3,7 +3,7 @@ from .application import App
 from .config import ConfigAggregator, Context, Varset
 from .config import E_CONF_CTX_MISSING, E_CONF_KEY_INVALID, W_CONF_CTX_DUPE
 from .defines import ErrorDef, WarningDef, HintDef, DupeDefMixin
-from .pattern import Pattern
+from .pattern import H_PAT_NON_CANONICAL, Pattern
 from .where import Where
 
 
@@ -370,6 +370,11 @@ class DialplanAggregator(ConfigAggregator):
     def on_dialplanvarset(self, dialplanvarset):
         assert isinstance(self._curcontext, DialplanContext)
         if isinstance(dialplanvarset, Extension):
+            pattern = dialplanvarset.pattern
+            if pattern and not pattern.is_canonical:
+                H_PAT_NON_CANONICAL(
+                    dialplanvarset.where, pat=pattern.raw,
+                    expected=pattern.canonical_pattern)
             self._curcontext.add(dialplanvarset)
         elif isinstance(dialplanvarset, Include):
             self._curcontext.add_include(dialplanvarset)

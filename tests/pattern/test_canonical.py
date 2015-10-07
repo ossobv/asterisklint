@@ -14,6 +14,11 @@ class CanonicalPatternTest(ALintTestCase):
             ('_[n][a][m][e][d]-[123]', '_[n]amed[1-3]'),
             ('_[N][n][X][x][Z][z][.][!]', 'NnXxZz.!'),
             ('_X[N][n][X][x][Z][z][.][!]', '_X[N][n][X][x][Z][z][.][!]'),
+            # We've added exceptions so 0-9A-Za-z sorts before other
+            # patterns; because [0-9+#*] is a common pattern.
+            ('_[0-26-94]', '_[0-246-9]'),
+            ('_[A-Z0-9+]', '_[0-9A-Z+]'),
+            ('_[A-EQc-z0-9+#*]', '_[0-9A-EQc-z#*+]'),
         )
         for a, b in synonyms:
             pattern = Pattern(a, None)

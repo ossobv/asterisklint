@@ -1,9 +1,16 @@
 from functools import total_ordering
 
-# TODO: two classes of errors?
-# - in-pattern errors
-# - in-dialplan errors (inconsistent used of same-valued pattern, or
-#   could we catch this by using a single canonical form only?)
+from .defines import HintDef
+
+
+if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
+    class H_PAT_NON_CANONICAL(HintDef):
+        message = 'pattern {pat!r} is not in the canonical form {expected!r}'
+
+    # TODO: two classes of errors?
+    # - in-pattern errors
+    # - in-dialplan errors (inconsistent used of same-valued pattern, or
+    #   could we catch this by using a single canonical form only?)
 
 
 # Pattern info:
@@ -75,14 +82,9 @@ class Pattern(object):
         # Let's live with the space complexity for now and cast all
         # to a list of tuples.
         #
-        # Note that according to asizeof [1] a relatively simple pattern
-        # like "_s-[0-259]" translates to (1, (371,), (1328, b'01259'))
-        # which takes up 328 bytes.
-        # [1] http://code.activestate.com/recipes/546530/
-        #
-        # We could consider investing in making the pattern a Fly-Weight
+        # We could consider investing in making the Pattern a Fly-Weight
         # or Singleton, so it doesn't consume more memory than it has
-        # to.
+        # to. (Check sys.getsizeof() for actual space usage.)
         #
         self.values = self.parse(pattern)
 
@@ -176,6 +178,11 @@ class Pattern(object):
         return (num,)
 
     @property
+    def is_canonical(self):
+        # FIXME: we should take dashes into account!
+        return self.raw == self.canonical_pattern
+
+    @property
     def canonical_pattern(self):
         if not hasattr(self, '_canonical_pattern'):
             # Ignore the first IS_A_PATTERN/NOT_A_PATTERN, we know
@@ -207,13 +214,15 @@ class Pattern(object):
         for value in values:
             if len(value) == 1:
                 num = value[0]
-                if num < 0x200:  # single char?
+                if num < 0x200:
+                    # Single character.
                     start = num & 0xff
                     if start in special:  # must escape these in range
                         ret.extend([0x5b, start, 0x5d])
                     else:
                         ret.append(num & 0xff)
                 else:
+                    # Easy range.
                     try:
                         ret.append(common[num])
                     except KeyError:
@@ -222,33 +231,58 @@ class Pattern(object):
                         ret.extend([0x5b, start, 0x2d,
                                     start + length - 1, 0x5d])
             else:
-                binstr = list(value[1])
-                assert binstr
-                ret.append(0x5b)
-                dash = (0x2d in binstr)
-                if dash:
-                    binstr.remove(0x2d)
-                if (0x5d in binstr):
-                    binstr.remove(0x5d)
-                    ret.append(0x5d)
-                while binstr:
-                   self._canonical_pattern_add_range(ret, binstr)
-                if dash:
-                    ret.append(0x2d)
-                ret.append(0x5d)
+                # Complex range.
+                self._canonical_pattern_add_range(ret, list(value[1]))
 
         return bytes(ret)
 
     def _canonical_pattern_add_range(self, ret, binstr):
-        i = len(binstr) - 1
-        while i >= 2:
-            if (binstr[i] - binstr[0] == i):
-                ret.extend([binstr[0], 0x2d, binstr[i]])
-                binstr[0:i + 1] = []  # inline remove
-                return
+        assert binstr
+        ret.append(0x5b)
+        dash = (0x2d in binstr)
+        if dash:
+            binstr.remove(0x2d)
+        if (0x5d in binstr):
+            binstr.remove(0x5d)
+            ret.append(0x5d)
+        ranges = self._canonical_pattern_get_ranges(binstr)
+        # Reorder ranges: first numeric and alpha, and then the rest.
+        ranges.sort(key=self._canonical_pattern_range_sort)
+        for range_ in ranges:
+            if len(range_) == 1:
+                ret.append(range_[0])
+            else:
+                assert len(range_) == 2
+                ret.extend([range_[0], 0x2d, range_[1]])
+        if dash:
+            ret.append(0x2d)
+        ret.append(0x5d)
+
+    def _canonical_pattern_get_ranges(self, binstr):
+        ranges = []
+        while binstr:
+            maxi = len(binstr) - 1
+            i = 1
+            while maxi >= 2 and i <= maxi:
+                if (binstr[i] - binstr[0] != i):
+                    break
+                i += 1
             i -= 1
-        ret.extend(binstr)
-        binstr[:] = []  # inline remove
+            if 2 <= i <= maxi and (binstr[i] - binstr[0] == i):
+                ranges.append((binstr[0], binstr[i]))
+                binstr[0:i + 1] = []  # inline remove
+            else:
+                ranges.append((binstr.pop(0),))
+        return ranges
+
+    @staticmethod
+    def _canonical_pattern_range_sort(range_):
+        # Fix so 0-9A-Za-z comes first.
+        if (0x30 <= range_[0] <= 0x39 or
+                0x41 <= range_[0] <= 0x5a or
+                0x61 <= range_[0] <= 0x6a):
+            return range_[0]
+        return range_[0] + 0x100
 
     def matches_same(self, other):
         """

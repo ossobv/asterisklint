@@ -36,3 +36,24 @@ exten => _X!,n,NoOp(_X!,2)
         self.assertEqual(
             [i.raw for i in patterns],
             ['s', 's', '100', '100', '100', '101', '_X!', '_X!'])
+
+    def test_canonical_hints(self):
+        patterns = self.do_patterns('''\
+exten => _s[2-9]ob,1,NoOp(1)
+exten => _s[2-9]ob,n,NoOp(2)
+exten => _s[2-9]ob,n,NoOp(3)
+''')
+        self.assertEqual(
+            [i.canonical_pattern for i in patterns],
+            ['_sNob', '_sNob', '_sNob'])
+        self.assertLinted({'H_PAT_NON_CANONICAL': 3})
+
+    def test_canonical_valid(self):
+        patterns = self.do_patterns('''\
+exten => _[0-9a-f].,1,NoOp(1)
+exten => _[0-9a-f].,n,NoOp(2)
+''')
+        self.assertEqual(
+            [i.canonical_pattern for i in patterns],
+            ['_[0-9a-f].', '_[0-9a-f].'])
+        self.assertLinted({})  # nothing wrong with this..
