@@ -228,8 +228,11 @@ class Pattern(object):
                     except KeyError:
                         length = (num & 0xff00) >> 8
                         start = num & 0xff
-                        ret.extend([0x5b, start, 0x2d,
-                                    start + length - 1, 0x5d])
+                        if length == 2:
+                            ret.extend([0x5b, start, start + 1, 0x5d])
+                        else:
+                            ret.extend([0x5b, start, 0x2d,
+                                        start + length - 1, 0x5d])
             else:
                 # Complex range.
                 self._canonical_pattern_add_range(ret, list(value[1]))
