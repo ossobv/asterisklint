@@ -33,7 +33,9 @@ class PatternOrderTest(ALintTestCase):
             ('A', 'B'),         # letters are fine
             ('A', 'a'),         # case sensitive
             ('0', 'A'),         # ascii table rules
-            ('000', '0000'),    # shortest match wins
+            # Longer or shorter?
+            ('000', '0000'),    # shortest match wins for non-patterns
+            ('_XXX', '_XX'),    # longest match wins for patterns
             # Non-patterns are always ordered lower than patterns.
             ('100', '_100'),
             ('2222', '_100'),
@@ -45,7 +47,7 @@ class PatternOrderTest(ALintTestCase):
             ('_N2', '_X1'),
             ('_0N2', '_0X1'),
             # Make it more complicated.
-            ('_', '_N2'),
+            ('_N2', '_'),
             ('_N2', '_X1'),
             ('_0N2', '_0X1'),
             ('_s-[0-5]', '_s-[1-6]'),   # second one is later
@@ -57,8 +59,8 @@ class PatternOrderTest(ALintTestCase):
             ('_.', '_!'),       # period is one-or-more, excl. is zero-or-more
             ('_A.', '_A!'),
             ('_AA', '_A.'),
-            ('_AA', '_AA.'),
-            ('_AA', '_AA!'),
+            ('_AA.', '_AA'),
+            ('_AA!', '_AA'),
             ('_AX!', '_B'),     # the order of the earlier bytes count
             ('_AX!', '_B'),     # the order of the earlier bytes count
         )

@@ -25,13 +25,13 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 #
 # General problems:
 #
-# - trip on lowercase
+# - trip on lowercase (tackled by canonical form)
 # - trip on inconsistent use of pattern styles (combining [0-9] with X)
+#   (tackled by canonical form)
 # - trip on backslashes and spaces in patterns
 # - trip on unescaped undelimited XZN between other letters
 #   (_snake-! == _s[0-9]ake-!, should be _s[n]ake-!)
-# - trip on empty charset
-# - ...
+# - trip on empty range, bracket in range, dash in range, backslash..
 # - ...
 #
 # Pattern order:
@@ -42,7 +42,7 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 # - 0x0yyxx     yy characters, character set starting with xx
 # - 0x18000     '.' (one or more of anything)
 # - 0x28000     '!' (zero or more of anything)
-# - 0x30000     NUL (end of string) <-- ? needed
+# - 0x30000     NUL (end of string)
 # - 0x40000     error in set.
 #
 # However(!), when sorting, the non-pattern comes before a pattern
@@ -68,14 +68,14 @@ class Pattern(object):
         # pattern) and the second value is a single integral value as
         # mentioned in the pattern value-list above.
         #
-        # 100     = (0, 0x31, 0x030, 0x30)
-        # _20     = (1, 0x32, 0x031)
-        # _2[0-2] = (1, 0x32, 0x330)
+        # 100     = (0, 0x31, 0x030, 0x30, 0x30000)
+        # _20     = (1, 0x32, 0x031, 0x30000)
+        # _2[0-2] = (1, 0x32, 0x330, 0x30000)
         #
         # Unless the pattern has gaps, in which case we store it as a
         # tuple instead.
         #
-        # _2[013] = (1, (0x32,), (0x330, b'013'))
+        # _2[013] = (1, (0x32,), (0x330, b'013'), (0x4000,))
         #
         # This would require us to marshal patterns to the same type
         # before comparing the values. And that complicates things.
@@ -126,7 +126,7 @@ class Pattern(object):
                 except IndexError:
                     # TODO: raise error!
                     ret.append((0x40000,))
-                    break
+                    return ret
                 ret.append(cls.parse_range_list(raw[0:range_end]))
                 raw = raw[(range_end + 1):]  # drop ']'
             else:
@@ -134,6 +134,7 @@ class Pattern(object):
                 # characters
                 ret.append((0x100 + num,))
 
+        ret.append((0x30000,))
         return ret
 
     @classmethod
@@ -185,17 +186,23 @@ class Pattern(object):
     @property
     def canonical_pattern(self):
         if not hasattr(self, '_canonical_pattern'):
-            # Ignore the first IS_A_PATTERN/NOT_A_PATTERN, we know
-            # better.
-            if all(i[0] < 0x200 for i in self.values[1:]):
+            if self.values[0] == self.NOT_A_PATTERN:
                 # Hrm.. latin1 here.. not so nice.
                 ret = bytes((i[0] & 0xff)
                             for i in self.values[1:]).decode('latin1')
+            # Don't trust IS_A_PATTERN; it may not be a pattern after
+            # all. (TODO: decide whether we can simply drop the pattern,
+            # since it does affect sort order :-/ )
+            elif (all(i[0] < 0x200 for i in self.values[1:-1]) and
+                    self.values[-1] == (0x30000,)):
+                ret = bytes((i[0] & 0xff)
+                            for i in self.values[1:-1]).decode('latin1')
             else:
-                # Okay, so we have a pattern. Fix it up.
+                # Okay, so we have a pattern with pattern stuff. Fix it
+                # up.
                 assert self.values[0] == self.IS_A_PATTERN
                 ret = ('_' + self._canonical_pattern_range(
-                    self.values[1:]).decode('latin1'))
+                    self.values[1:-1]).decode('latin1'))
             self._canonical_pattern = ret
         return self._canonical_pattern
 
@@ -294,7 +301,11 @@ class Pattern(object):
         """
         if other is None:
             return False
-        return self.values[1:] == other.values[1:]
+        if self.values[0] == other.values[0]:  # both pattern or both not
+            return self.values == other.values
+        if self.values[0] == self.IS_A_PATTERN:
+            return self.values[1:-1] == other.values[1:]    # self is pattern
+        return self.values[1:] == other.values[1:-1]        # other is pattern
 
     def __hash__(self):
         return hash(self.values)

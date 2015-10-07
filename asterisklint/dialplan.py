@@ -110,7 +110,9 @@ class Dialplan(object):
     def format_as_dialplan_show(self):
         # If we have this, we can compare to the asterisk output :)
         ret = []
-        for context in reversed(self.contexts):
+        # TODO: for asterisk 1.4 we want reversed(self.contexts), for 11
+        # we don't.
+        for context in self.contexts:
             ret.append("[ Context {!r} created by 'pbx_config' ]".format(
                 context.name))
             # TODO: context.by_pattern? print the "=>" notation for the
@@ -200,7 +202,7 @@ class DialplanContext(Context):
                     # later on.
                     if prev.prio != extension.prio:
                         W_DP_PRIO_BADORDER(
-                            extension.where, pat=extension.pattern.pattern,
+                            extension.where, pat=extension.pattern.raw,
                             prio=extension.prio)
 
         # Okay, prio is valid here. Store it so we can use the next 'n'

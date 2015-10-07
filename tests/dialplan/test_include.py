@@ -26,14 +26,14 @@ include => context1
         fmt = dialplan.format_as_dialplan_show()
 
         self.assertEqual(fmt, '''\
+[ Context 'context1' created by 'pbx_config' ]
+  '_Z!' =>          1. NoOp()                                     [pbx_config]
+                    2. Goto(2${EXTEN:1})                          [pbx_config]
+  Include =>        'context2'                                    [pbx_config]
+
 [ Context 'context2' created by 'pbx_config' ]
   '_Z!' =>          1. NoOp()                                     [pbx_config]
                     2. Set(CALLERID(num)=1234)                    [pbx_config]
                     3. Dial(SIP/300)                              [pbx_config]
   Include =>        'context1'                                    [pbx_config]
-
-[ Context 'context1' created by 'pbx_config' ]
-  '_Z!' =>          1. NoOp()                                     [pbx_config]
-                    2. Goto(2${EXTEN:1})                          [pbx_config]
-  Include =>        'context2'                                    [pbx_config]
 ''')
