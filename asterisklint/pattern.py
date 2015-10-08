@@ -1,4 +1,5 @@
 from functools import total_ordering
+from re import compile as re_compile
 
 from .defines import HintDef
 
@@ -53,6 +54,8 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 class Pattern(object):
     NOT_A_PATTERN = 0
     IS_A_PATTERN = 1
+
+    RE_NO_DASH = re_compile(r'(\[.[^]]*\]|[^][-]+)')
 
     # Pattern heeft equality tests zodat "s-zap" == "s-[1-9]ap", maar emit
     # wel een warning als je hier iets anders neerzet! (Zelfde verhaal
@@ -180,8 +183,12 @@ class Pattern(object):
 
     @property
     def is_canonical(self):
-        # FIXME: we should take dashes into account!
-        return self.raw == self.canonical_pattern
+        if not hasattr(self, '_is_canonical'):
+            # Strip dashes from the raw version.
+            raw_no_dash = ''.join(self.RE_NO_DASH.findall(self.raw))
+            # Compare the dashless version with the canonical one.
+            self._is_canonical = (raw_no_dash == self.canonical_pattern)
+        return self._is_canonical
 
     @property
     def canonical_pattern(self):
