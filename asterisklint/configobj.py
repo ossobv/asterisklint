@@ -45,6 +45,13 @@ class Context(object):
         if templates:
             I_NOTIMPL_TEMPLATES(where)
 
+    def update(self, othercontext):
+        assert self.name == othercontext.name
+        assert not othercontext.comment
+        self.where = othercontext.where  # or not?
+        assert not othercontext._templates
+        assert not othercontext._varsets
+
     def add(self, varset):
         self._varsets.append(varset)
 

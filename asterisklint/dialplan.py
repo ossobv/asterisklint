@@ -107,11 +107,18 @@ class Dialplan(object):
         if not self._globals:
             H_DP_GLOBALS_MISPLACED(self.get_where())
 
-    def format_as_dialplan_show(self):
-        # If we have this, we can compare to the asterisk output :)
+    def format_as_dialplan_show(self, reverse=True):
+        # Okay; please explain the reverse madness to me? I've seen
+        # output from one source in proper order, but usually (Asterisk
+        # 13, Asterisk 1.4) it comes in reversed order...
+        #
+        # Use the `dialplan show` to compare with asterisk output.
+        contexts = self.contexts
+        if reverse:
+            contexts = reversed(contexts)
+
         ret = []
-        # NOTE: Asterisk 1.4 loops over self.contexts in reversed order.
-        for context in self.contexts:
+        for context in contexts:
             ret.append("[ Context {!r} created by 'pbx_config' ]".format(
                 context.name))
             last_pattern = None
@@ -143,6 +150,11 @@ class DialplanContext(Context):
         super().__init__(*args, **kwargs)
         self.includes = []
         self.last_prio = None
+
+    def update(self, othercontext):
+        assert not othercontext.includes
+        assert othercontext.last_prio is None
+        super().update(othercontext)
 
     def by_pattern(self):
         """
@@ -336,6 +348,7 @@ class Extension(Varset):
 class DialplanAggregator(ConfigAggregator):
     def on_begin(self):
         self._dialplan = Dialplan()
+        self._prevcontexts = {}
         self._curcontext = None
 
     def on_yield(self):
@@ -365,8 +378,14 @@ class DialplanAggregator(ConfigAggregator):
             self._curcontext.add(varset)
 
     def on_dialplancontext(self, dialplancontext):
-        self._dialplan.contexts.append(dialplancontext)
-        self._curcontext = dialplancontext
+        oldcontext = self._prevcontexts.get(dialplancontext.name)
+        if oldcontext:
+            oldcontext.update(dialplancontext)
+            self._curcontext = oldcontext
+        else:
+            self._prevcontexts[dialplancontext.name] = dialplancontext
+            self._dialplan.contexts.append(dialplancontext)
+            self._curcontext = dialplancontext
 
     def on_dialplanvarset(self, dialplanvarset):
         assert isinstance(self._curcontext, DialplanContext)
