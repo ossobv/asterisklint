@@ -83,3 +83,45 @@ exten => 102,1,NoOp(102)
   '101' =>          1. NoOp(101)                                  [pbx_config]
   '102' =>          1. NoOp(102)                                  [pbx_config]
 ''')
+
+    @ignoreLinted('H_*')
+    def test_new_context_does_not_reset_n(self):
+        reader = self.create_instance_and_load_single_file(
+            FileDialplanParser, 'test.conf', b'''\
+[quirk1]
+exten => s,1,NoOp(1)
+exten => s,n,NoOp(2)
+exten => s,n,NoOp(3)
+
+[quirk2]
+exten => t,1,NoOp(t1)
+exten => t,n,NoOp(t2)
+
+[quirk1]
+exten => s,n,NoOp(4) ; E_DP_PRIO_DUPE: tries to overwrite s3
+exten => s,n,NoOp(5) ; W_DP_PRIO_BADORDER: context_last_prio should be reset
+
+[quirk3]
+exten => h,n,NoOp(h) ; W_DP_PRIO_BADORDER: it works, but order is stupid
+''')
+        out = [i for i in reader]
+        self.assertEqual(len(out), 1)
+        self.assertLinted({'E_DP_PRIO_DUPE': 1, 'W_DP_PRIO_BADORDER': 2})
+
+        dialplan = out[0]
+        fmt = dialplan.format_as_dialplan_show()
+
+        self.assertEqual(fmt, '''\
+[ Context 'quirk3' created by 'pbx_config' ]
+  'h' =>            5. NoOp(h)                                    [pbx_config]
+
+[ Context 'quirk2' created by 'pbx_config' ]
+  't' =>            1. NoOp(t1)                                   [pbx_config]
+                    2. NoOp(t2)                                   [pbx_config]
+
+[ Context 'quirk1' created by 'pbx_config' ]
+  's' =>            1. NoOp(1)                                    [pbx_config]
+                    2. NoOp(2)                                    [pbx_config]
+                    3. NoOp(3)                                    [pbx_config]
+                    4. NoOp(5)                                    [pbx_config]
+''')

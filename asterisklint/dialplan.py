@@ -60,18 +60,19 @@ class Dialplan(object):
         self._general = None
         self._globals = None
         self.contexts = []
+        self.last_prio = None  # used by the DialplanContext
 
     @property
     def general(self):
         """If it doesn't exist, we return an empty object, so it behaves
         normally."""
-        return self._general or DialplanContext('general')
+        return self._general or DialplanContext('general', dialplan=self)
 
     @property
     def globals(self):
         """If it doesn't exist, we return an empty object, so it behaves
         normally."""
-        return self._globals or DialplanContext('globals')
+        return self._globals or DialplanContext('globals', dialplan=self)
 
     def add_general(self, general):
         if self._general:
@@ -147,13 +148,15 @@ class Dialplan(object):
 
 class DialplanContext(Context):
     def __init__(self, *args, **kwargs):
+        self.dialplan = kwargs.pop('dialplan')
         super().__init__(*args, **kwargs)
         self.includes = []
-        self.last_prio = None
+        self.context_last_prio = None
 
     def update(self, othercontext):
         assert not othercontext.includes
-        assert othercontext.last_prio is None
+        assert othercontext.context_last_prio is None
+        self.context_last_prio = None
         super().update(othercontext)
 
     def by_pattern(self):
@@ -178,15 +181,18 @@ class DialplanContext(Context):
             extension.pattern = self[-1].pattern
 
         if extension.prio is None:
-            if not self.last_prio:
+            if not self.dialplan.last_prio:
+                # Can't use 'next' priority on the first entry at line
+                # ..  of extensions.conf!
                 E_DP_PRIO_MISSING(
                     extension.where, pat=extension.pattern.raw)
                 return
-            if self[-1].pattern != extension.pattern:
+            elif (not self.context_last_prio or
+                    self[-1].pattern != extension.pattern):
                 W_DP_PRIO_BADORDER(
                     extension.where, pat=extension.pattern.raw,
                     prio='<unset>')
-            extension.prio = self.last_prio + 1
+            extension.prio = self.dialplan.last_prio + 1
         elif extension.prio < 1:
             E_DP_PRIO_INVALID(extension.where, prio=extension.prio)
             return
@@ -218,7 +224,8 @@ class DialplanContext(Context):
 
         # Okay, prio is valid here. Store it so we can use the next 'n'
         # as last_prio + 1.
-        self.last_prio = extension.prio
+        self.dialplan.last_prio = extension.prio
+        self.context_last_prio = extension.prio
 
         # Check duplicate priorities.
         extensions = [i for i in self if i.pattern == extension.pattern]
@@ -363,7 +370,8 @@ class DialplanAggregator(ConfigAggregator):
             self._dialplan.add_globals(context)
             self._curcontext = context
         else:
-            dialplan_context = DialplanContext.from_context(context)
+            dialplan_context = DialplanContext.from_context(
+                context, dialplan=self._dialplan)
             if dialplan_context:
                 self.on_dialplancontext(dialplan_context)
 

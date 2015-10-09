@@ -22,14 +22,14 @@ class EmptyLine(object):
 
 class Context(object):
     @classmethod
-    def from_context(cls, context):
+    def from_context(cls, context, **kwargs):
         """
         Use this on subclasses of Context.
         """
         assert not context._varsets
         return cls(name=context.name, templates=context._templates,
                    comment=context.comment, bolspace='',
-                   where=context.where)
+                   where=context.where, **kwargs)
 
     def __init__(self, name, templates='', comment=False, bolspace='',
                  where=None):
