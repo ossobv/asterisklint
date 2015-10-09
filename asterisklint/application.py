@@ -1,5 +1,7 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
 import os
+import string
+from collections import defaultdict
 from importlib import import_module
 
 from .defines import ErrorDef, WarningDef
@@ -48,6 +50,97 @@ class Singleton(type):
         if cls not in cls._instances:
             cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
+
+
+class VarsLoader(metaclass=Singleton):
+    def __init__(self, version='v11'):
+        self.version = version
+        self._variables = defaultdict(list)
+
+    def substitute_variables(self, data, where):
+        """
+        We cannot pretend to know what the variables will hold, but we
+        do know that certain function return certain types of
+        information. We can attempt to replace things as appropriate.
+        """
+        ret = []
+        beginpos = searchpos = 0
+        while True:
+            try:
+                pos = data.index('$', searchpos)
+                next_ = data[pos + 1]
+            except (IndexError, ValueError):
+                ret.append(data[beginpos:])
+                break
+            else:
+                if next_ in '{[':
+                    ret.append(data[beginpos:pos])
+                    if next_ == '{':
+                        endpos, more_substitutions = self._find_brackets_end(
+                            data, pos + 2, '{', '}')
+                    elif next_ == '[':
+                        endpos, more_substitutions = self._find_brackets_end(
+                            data, pos + 2, '[', ']')
+
+                    inner_data = data[(pos + 2):(endpos - 1)]
+                    if more_substitutions:
+                        inner_data = self.substitute_variables(
+                            inner_data, where)
+
+                    if next_ == '{':
+                        inner_data = self._process_variable(
+                            inner_data, where)
+                    elif next_ == '[':
+                        inner_data = self._process_expression(
+                            inner_data, where)
+
+                    ret.append(inner_data)
+                    data = data[endpos:]
+                    beginpos = searchpos = 0
+                else:
+                    searchpos = pos + 1
+
+        return ''.join(ret)
+
+    def _find_brackets_end(self, data, pos, beginbracket, endbracket):
+        more_substitutions = False
+        brackets = 1
+        while brackets:
+            try:
+                ch = data[pos]
+            except IndexError:
+                raise ValueError(
+                    "Error in extension logic (missing '}')")  # TODO
+            if ch == '$':
+                if data[(pos + 1):(pos + 2)] in '{[':
+                    more_substitutions = True
+            elif ch == beginbracket:
+                brackets += 1
+            elif ch == endbracket:
+                brackets -= 1
+            pos += 1
+        return pos, more_substitutions
+
+    def _process_variable(self, data, where):
+        if '(' in data:
+            raise NotImplementedError(
+                'FUNCTION support not implemented yet: {} (at {})'.format(
+                    data, where))
+        if ':' in data:
+            raise NotImplementedError(
+                'SUBSTRING support not implemented yet: {} (at {})'.format(
+                    data, where))
+        assert all(i in string.ascii_letters or i in string.digits or i == '_'
+                   for i in data), data
+        self._variables[data].append(where)
+
+        # On to return something sensible.
+        return 'variable_{}'.format(data)
+
+    def _process_expression(self, data, where):
+        raise NotImplementedError(
+            'EXPR support not implemented yet: {} (at {})'.format(
+                data, where))
 
 
 class AppLoader(metaclass=Singleton):
@@ -118,7 +211,6 @@ class App(object):
     #
     # Hoe pakken we dan app_compat settings voor Set? Hm.
     def __init__(self, app, where):
-        # FIXME: parse app
         self.raw = app
         self.where = where
 
@@ -145,9 +237,7 @@ class App(object):
 
         # Pass the data through a handler -- which also handles
         # functions -- first:
-        # SOURCE: main/pbx.c: pbx_substitute_variables_helper_full
-        # TODO: here..
-        self.data = self.data  # this stuff..
+        self.data = self.parse_inner(self.data)
 
         # Check app availability.
         if app.name != self.app:
@@ -158,6 +248,21 @@ class App(object):
 
         # Run data through app.
         app(self.data, where=self.where)
+
+    def parse_inner(self, data):
+        """
+        Asterisk calls pbx_substitute_variables_helper_full on the
+        entire app "data" line. So do we.
+
+        SOURCE: main/pbx.c: pbx_extension_helper, calls
+        SOURCE: main/pbx.c: pbx_substitute_variables_helper_full.
+        """
+        if '${' in data or '$[' in data:
+            try:
+                data = VarsLoader().substitute_variables(data, self.where)
+            except NotImplementedError:  # FIXME: remove this
+                pass
+        return data
 
     def split_app_data(self):
         """
