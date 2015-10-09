@@ -59,6 +59,12 @@ class AppLoader(metaclass=Singleton):
         self.load_all()
 
     @property
+    def used_apps(self):
+        return list(sorted(
+            (i for i in self._lower_apps.values() if i.name != 'Unknown'),
+            key=(lambda x: x.name)))
+
+    @property
     def used_modules(self):
         return list(filter(
             (lambda x: x != 'unknown'),
