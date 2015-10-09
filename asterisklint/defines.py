@@ -27,7 +27,12 @@ class MessageDefManager(type):
             raise DuplicateMessageDef(name)
         if not name.endswith('Def'):  # MessageDef, ErrorDef, WarningDef, ...
             cls.types.add(name)       # W_FOO, E_BAR
-        return type.__new__(cls, name, bases, classdict)
+        class_ = type.__new__(cls, name, bases, classdict)
+
+        # Add list of callbacks, specific per class.
+        class_._callbacks = []
+
+        return class_
 
     @classmethod
     def reset(cls):
@@ -60,10 +65,24 @@ class MessageDefManager(type):
 
 
 class MessageDef(object, metaclass=MessageDefManager):
+    @classmethod
+    def add_callback(cls, callback):
+        # self._callbacks is subclass-specific, initialized through our
+        # metaclass.
+        cls._callbacks.append(callback)
+
+    @classmethod
+    def call_callbacks(cls, instance):
+        for callback in cls._callbacks:
+            callback(instance)
+
     def __init__(self, where, previous=None, **fmtkwargs):
         self.where = where
         self.previous = previous
         self.fmtkwargs = fmtkwargs
+        # Notify optional callbacks.
+        self.call_callbacks(self)
+        # Notify our general manager.
         MessageDefManager.on_message(self)
 
 

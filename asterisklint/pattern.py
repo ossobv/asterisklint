@@ -221,8 +221,8 @@ class Pattern(object):
             0x18000: 0x2e,  # '.'
             0x28000: 0x21,  # '!'
         }
-        special = set([0x21, 0x2d, 0x2e,
-                       0x4e, 0x58, 0x5a, 0x6e, 0x78, 0x7a])
+        special = set([0x21, 0x2d, 0x2e,  # '!', '-', '.'
+                       0x4e, 0x58, 0x5a, 0x6e, 0x78, 0x7a])  # NnXxZz
 
         ret = []
         for value in values:
@@ -244,6 +244,9 @@ class Pattern(object):
                         start = num & 0xff
                         if length == 2:
                             ret.extend([0x5b, start, start + 1, 0x5d])
+                        elif length == 3:
+                            ret.extend([0x5b, start, start + 1, start + 2,
+                                        0x5d])
                         else:
                             ret.extend([0x5b, start, 0x2d,
                                         start + length - 1, 0x5d])
@@ -264,13 +267,18 @@ class Pattern(object):
             ret.append(0x5d)
         ranges = self._canonical_pattern_get_ranges(binstr)
         # Reorder ranges: first numeric and alpha, and then the rest.
+        # (Does this cause trouble if the dash is in a range?)
         ranges.sort(key=self._canonical_pattern_range_sort)
         for range_ in ranges:
             if len(range_) == 1:
                 ret.append(range_[0])
             else:
                 assert len(range_) == 2
-                ret.extend([range_[0], 0x2d, range_[1]])
+                length = range_[1] - range_[0] + 1
+                if length <= 3:
+                    ret.extend([range_[0] + i for i in range(length)])
+                else:
+                    ret.extend([range_[0], 0x2d, range_[1]])
         if dash:
             ret.append(0x2d)
         ret.append(0x5d)
