@@ -52,6 +52,90 @@ class Singleton(type):
         return cls._instances[cls]
 
 
+class Variable(object):
+    """
+    A single variable, or a list of variables and literals.
+    """
+    @classmethod
+    def join(self, variables):
+        copy = []
+        for var in variables:
+            if not isinstance(var, (str, Variable)):
+                raise TypeError(
+                    'Variables can only consist of strings and variables, '
+                    'got {!r}'.format(var))
+            if var:
+                copy.append(var)
+
+        if len(copy) == 0:
+            return ''
+        if len(copy) == 1:
+            return copy[0]
+
+        # Use private setter instead of constructor.
+        ret = Variable()
+        ret._list = copy
+        return ret
+
+    def __init__(self, name=None):
+        self.name = name
+
+    def format(self, **kwargs):
+        if self.name is None:
+            ret = []
+            for var in self._list:
+                if isinstance(var, str):
+                    ret.append(var)
+                else:
+                    ret.append(var.format(**kwargs))
+            return ''.join(ret)
+
+        return kwargs[self.name]
+
+    def __iter__(self):
+        """
+        You may iterate over this thing, as if it where a string. In
+        which case you get the literal letters, and Variables in
+        between.
+        """
+        return iter(self._get_cached_iter())
+
+    def __getitem__(self, *args, **kwargs):
+        return self._get_cached_iter().__getitem__(*args, **kwargs)
+
+    def _get_cached_iter(self):
+        if not hasattr(self, '_cached_iter'):
+            ret = []
+            if self.name is None:
+                for var in self._list:
+                    for inner in var:
+                        ret.append(inner)
+            else:
+                ret.append(self)
+            self._cached_iter = ret
+        return self._cached_iter
+
+    def __eq__(self, other):
+        if not isinstance(other, Variable):
+            return False
+
+        if (self.name, other.name) == (None, None):
+            if len(self._list) != len(other._list):
+                return False
+            return all(self._list[i] == other._list[i]
+                       for i in range(len(self._list)))
+
+        if None in (self.name, other.name):
+            return False
+
+        return self.name == other.name
+
+    def __str__(self):
+        if self.name:
+            return '${{{}}}'.format(self.name)
+        return ''.join(str(i) for i in self._list)
+
+
 class VarsLoader(metaclass=Singleton):
     def __init__(self, version='v11'):
         self.version = version
@@ -100,7 +184,7 @@ class VarsLoader(metaclass=Singleton):
                 else:
                     searchpos = pos + 1
 
-        return ''.join(ret)
+        return Variable.join(ret)
 
     def _find_brackets_end(self, data, pos, beginbracket, endbracket):
         more_substitutions = False
@@ -135,7 +219,7 @@ class VarsLoader(metaclass=Singleton):
         self._variables[data].append(where)
 
         # On to return something sensible.
-        return 'variable_{}'.format(data)
+        return Variable(data)
 
     def _process_expression(self, data, where):
         raise NotImplementedError(

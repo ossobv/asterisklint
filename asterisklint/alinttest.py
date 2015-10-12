@@ -95,10 +95,15 @@ class ALintTestResult(TextTestResult):
         if hasattr(test, 'linted_counts'):
             for id_, count in test.linted_counts.items():
                 self.linted_counts[id_] += count
-        else:
+        elif test.__class__.__name__ == 'ModuleImportFailure':
             # Happens if we get module import errors during test load.
-            assert test.__class__.__name__ == 'ModuleImportFailure', \
-                test.__class__.__mro__
+            pass
+        else:
+            # Otherwise, this is probably a test, and that means that
+            # you didn't call our setUp()...
+            raise ValueError(
+                'Did you forget to call super().setUp() on {!r}?'.format(
+                    test.__class__.__name__))
 
         super(ALintTestResult, self).stopTest(test)
 

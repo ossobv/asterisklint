@@ -1,8 +1,11 @@
-from ..base import AppBase
+from ..base import App, AppArg, AppOptions, AppBase
 
 
-class VoiceMail(AppBase):
-    pass
+class VoiceMail(App):
+    def __init__(self):
+        super().__init__(
+            # BUG: g takes an argument NUM.
+            args=[AppArg('mailboxes'), AppOptions('bdgsuUP')], min_args=1)
 
 
 class VoiceMailMain(AppBase):

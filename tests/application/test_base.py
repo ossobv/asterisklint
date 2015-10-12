@@ -1,5 +1,8 @@
 from asterisklint.alinttest import ALintTestCase
 from asterisklint.app.base import AppBase
+from asterisklint.app.vall.app_voicemail import VoiceMail
+from asterisklint.application import VarsLoader
+from asterisklint.where import DUMMY_WHERE
 
 
 class AppBaseSeparateArgsTest(ALintTestCase):
@@ -70,3 +73,20 @@ class AppBaseSeparateArgsTest(ALintTestCase):
         self.assertEqual(
             AppBase.separate_args('abc,def[g(h]i(,j],k)),l],m([),]n)o'),
             ['abc', 'def[g(h]i(,j],k))', 'l]', 'm([),]n)o'])
+
+
+class AppBaseCallTest(ALintTestCase):
+    def call_app(self, appclass, data):
+        where = DUMMY_WHERE
+        app = appclass()
+        var = VarsLoader().substitute_variables(data, where)
+        app(var, where)
+
+    def test_abcdefghi(self):
+        self.call_app(AppBase, 'abc,def,ghi')
+
+    def test_variables(self):
+        self.call_app(AppBase, '${abc},def,ghi')
+
+    def test_voicemail(self):
+        self.call_app(VoiceMail, '${abc},s')
