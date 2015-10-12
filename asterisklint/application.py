@@ -29,6 +29,9 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_APP_MISSING(ErrorDef):
         message = 'app {app!r} does not exist, dialplan will halt here!'
 
+    class E_APP_PARSE_ERROR(ErrorDef):
+        message = 'app {app!r} arguments {args!r} raise a parse error'
+
     class W_APP_BALANCE(WarningDef):
         message = ('app data {data!r} looks like unbalanced'
                    'parenthesis/quotes/curlies')
@@ -41,6 +44,10 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 
     class W_APP_WSH(ErrorDef):
         message = 'unexpected whitespace after app {app!r}'
+
+
+class ParseError(ValueError):
+    pass
 
 
 class Singleton(type):
@@ -193,7 +200,7 @@ class VarsLoader(metaclass=Singleton):
             try:
                 ch = data[pos]
             except IndexError:
-                raise ValueError(
+                raise ParseError(
                     "Error in extension logic (missing '}')")  # TODO
             if ch == '$':
                 if data[(pos + 1):(pos + 2)] in '{[':
@@ -346,6 +353,8 @@ class App(object):
                 data = VarsLoader().substitute_variables(data, self.where)
             except NotImplementedError:  # FIXME: remove this
                 pass
+            except ParseError:
+                E_APP_PARSE_ERROR(self.where, app=self.app, args=data)
         return data
 
     def split_app_data(self):
