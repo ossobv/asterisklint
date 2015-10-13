@@ -1,5 +1,5 @@
 from ..application import W_APP_BALANCE
-from ..defines import ErrorDef
+from ..defines import ErrorDef, WarningDef
 from ..variable import Var
 
 
@@ -22,6 +22,10 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 
     class E_APP_ARG_DUPEOPT(ErrorDef):
         message = 'duplicate options {opts!r} in arg {argno} for app {app!r}'
+
+    class W_APP_ARG_PIPEDELIM(WarningDef):
+        message = ('the application delimiter is now the comma, not '
+                   'the pipe; see app {app!r} and data {data!r}')
 
 
 class AppArg(object):
@@ -241,5 +245,19 @@ class AppArgsMixin(MinMaxArgsMixin):
         return args
 
 
-class App(AppArgsMixin, MinMaxArgsMixin, DelimitedArgsMixin, AppBase):
+class NoPipeDelimiterMixin(object):
+    # TODO: we should not use this for the System() app,
+    # nor for the SHELL() function,
+    # and it would be improved if we checked for surrounding quotes
+    # which clearly show that the user isn't doing anything unintended.
+
+    def split_args(self, data, where):
+        args = super().split_args(data, where)
+        if len(args) == 1 and '|' in args[0]:
+            W_APP_ARG_PIPEDELIM(where, app=self.name, data=data)
+
+        return args
+
+
+class App(NoPipeDelimiterMixin, AppArgsMixin, DelimitedArgsMixin, AppBase):
     pass
