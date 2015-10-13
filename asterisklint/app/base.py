@@ -1,5 +1,6 @@
-from ..application import W_APP_BALANCE, Variable
+from ..application import W_APP_BALANCE
 from ..defines import ErrorDef
+from ..variable import Var
 
 
 # TODO: instead of where, we should pass a context object that context
@@ -66,13 +67,28 @@ class AppBase(object):
 
     @staticmethod
     def check_balance(data):
-        # TODO: we don't check backslash escapes here, should we?
-        # TODO: write proper tests for this?
+        """
+        This function is a simple check that looks sane, but is not
+        implemented like this in Asterisk. It may warn you of badly
+        placed delimiters, but you shouldn't use this to interpret
+        variables.
 
+        For that, see separate_args which is modeled after the function
+        as implemented in Asterisk.
+        """
         arr = ['X']
         for char in data:
-            if isinstance(char, Variable):
-                pass
+            if isinstance(char, Var):
+                # It's possible that we're looping over a Var variable.
+                # In that case we'll have to assume the Var itself
+                # contains no separators that we might be interested in.
+                # E.g. we expect you do *not* do this:
+                # ``Set(var=mailbox@context,s)``
+                # ``VoiceMail(${var})``
+                # But we expect you to do this:
+                # ``Set(mailbox=mailbox@context)``
+                # ``VoiceMail(${mailbox},s)``
+                pass  # skip char
             elif char == '"':
                 if arr[-1] == '"':
                     arr.pop()
@@ -106,15 +122,12 @@ class AppBase(object):
 
     @staticmethod
     def separate_args(data, delimiter=',', remove_quotes_backslashes=True):
-        """
-        #define AST_STANDARD_APP_ARGS(...) => separate_args(',', True)
-        #define AST_STANDARD_RAW_ARGS(...) => separate_args(',', False)
-
-        SOURCE: main/app.c -- __ast_app_separate_args()
-
-        TODO: we should separate args using a more sensible approach as
-        well, so we can warn on inconsistencies.
-        """
+        # #define AST_STANDARD_APP_ARGS(...) => separate_args(',', True)
+        # #define AST_STANDARD_RAW_ARGS(...) => separate_args(',', False)
+        # SOURCE: main/app.c -- __ast_app_separate_args()
+        #
+        # TODO: we should separate args using a more sensible approach as
+        # well, so we can warn on inconsistencies.
         brackets = 0
         parens = 0
         quotes = False
@@ -123,9 +136,17 @@ class AppBase(object):
         ret = [[]]
         start = 0
         for i, char in enumerate(data):
-            if isinstance(char, Variable):
-                # Skip.
-                ret[-1].extend(data[start:i])
+            if isinstance(char, Var):
+                # It's possible that we're looping over a Var variable.
+                # In that case we'll have to assume the Var itself
+                # contains no separators that we might be interested in.
+                # E.g. we expect you do *not* do this:
+                # ``Set(var=mailbox@context,s)``
+                # ``VoiceMail(${var})``
+                # But we expect you to do this:
+                # ``Set(mailbox=mailbox@context)``
+                # ``VoiceMail(${mailbox},s)``
+                ret[-1].extend(data[start:i])  # skip char
                 start = i + 1
             elif skipnext:
                 skipnext = False

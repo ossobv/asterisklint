@@ -1,7 +1,7 @@
 from asterisklint.alinttest import ALintTestCase
 from asterisklint.app.base import AppBase
 from asterisklint.app.vall.app_voicemail import VoiceMail
-from asterisklint.application import VarsLoader
+from asterisklint.variable import VarLoader
 from asterisklint.where import DUMMY_WHERE
 
 
@@ -79,7 +79,7 @@ class AppBaseCallTest(ALintTestCase):
     def call_app(self, appclass, data):
         where = DUMMY_WHERE
         app = appclass()
-        var = VarsLoader().substitute_variables(data, where)
+        var = VarLoader().parse_variables(data, where)
         app(var, where)
 
     def test_abcdefghi(self):

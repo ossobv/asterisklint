@@ -1,25 +1,10 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
 import os
-import string
-from collections import defaultdict
 from importlib import import_module
 
+from .cls import Singleton
 from .defines import ErrorDef, WarningDef
-
-# 1:
-# # SOURCE: main/pbx.c: pbx_substitute_variables_helper_full
-# die zoekt naar ${} of $[] en zoekt daarbinnen naar balanced } of resp. ]
-# (zonder escaping), daarna wordt replacement gedaan:
-# ${} => if endswith () => ast_func_read2, anders ast_str_retrieve_variable
-# $[] =>
-
-
-# 2: run app, bijv, Set, die een split doet, en dan dit:
-# # int pbx_builtin_setvar_helper(struct ast_channel *chan,
-#     const char *name, const char *value)
-# L:                 return ast_func_write(chan, function, value);
-# R:
-#
+from .variable import VarLoader, VarParseError
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
@@ -44,204 +29,6 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 
     class W_APP_WSH(ErrorDef):
         message = 'unexpected whitespace after app {app!r}'
-
-
-class ParseError(ValueError):
-    pass
-
-
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super().__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-class Variable(object):
-    """
-    A single variable, or a list of variables and literals.
-    """
-    @classmethod
-    def join(self, variables):
-        copy = []
-        for var in variables:
-            if not isinstance(var, (str, Variable)):
-                raise TypeError(
-                    'Variables can only consist of strings and variables, '
-                    'got {!r}'.format(var))
-            if var:
-                copy.append(var)
-
-        if len(copy) == 0:
-            return ''
-        if len(copy) == 1:
-            return copy[0]
-
-        # Use private setter instead of constructor.
-        ret = Variable()
-        ret._list = copy
-        return ret
-
-    def __init__(self, name=None):
-        self.name = name
-
-    def format(self, **kwargs):
-        if self.name is None:
-            ret = []
-            for var in self._list:
-                if isinstance(var, str):
-                    ret.append(var)
-                else:
-                    ret.append(var.format(**kwargs))
-            return ''.join(ret)
-
-        elif isinstance(self.name, Variable):
-            ret = self.name.format(**kwargs)
-            return kwargs[ret]
-
-        else:
-            return kwargs[self.name]
-
-    def __iter__(self):
-        """
-        You may iterate over this thing, as if it where a string. In
-        which case you get the literal letters, and Variables in
-        between.
-        """
-        return iter(self._get_cached_iter())
-
-    def __getitem__(self, *args, **kwargs):
-        return self._get_cached_iter().__getitem__(*args, **kwargs)
-
-    def _get_cached_iter(self):
-        if not hasattr(self, '_cached_iter'):
-            ret = []
-            if self.name is None:
-                for var in self._list:
-                    for inner in var:
-                        ret.append(inner)
-            else:
-                ret.append(self)
-            self._cached_iter = ret
-        return self._cached_iter
-
-    def __eq__(self, other):
-        if not isinstance(other, Variable):
-            return False
-
-        if (self.name, other.name) == (None, None):
-            if len(self._list) != len(other._list):
-                return False
-            return all(self._list[i] == other._list[i]
-                       for i in range(len(self._list)))
-
-        if None in (self.name, other.name):
-            return False
-
-        return self.name == other.name
-
-    def __str__(self):
-        if self.name:
-            return '${{{}}}'.format(self.name)
-        return ''.join(str(i) for i in self._list)
-
-
-class VarsLoader(metaclass=Singleton):
-    def __init__(self, version='v11'):
-        self.version = version
-        self._variables = defaultdict(list)
-
-    def substitute_variables(self, data, where):
-        """
-        We cannot pretend to know what the variables will hold, but we
-        do know that certain function return certain types of
-        information. We can attempt to replace things as appropriate.
-        """
-        ret = []
-        beginpos = searchpos = 0
-        while True:
-            try:
-                pos = data.index('$', searchpos)
-                next_ = data[pos + 1]
-            except (IndexError, ValueError):
-                ret.append(data[beginpos:])
-                break
-            else:
-                if next_ in '{[':
-                    ret.append(data[beginpos:pos])
-                    if next_ == '{':
-                        endpos, more_substitutions = self._find_brackets_end(
-                            data, pos + 2, '{', '}')
-                    elif next_ == '[':
-                        endpos, more_substitutions = self._find_brackets_end(
-                            data, pos + 2, '[', ']')
-
-                    inner_data = data[(pos + 2):(endpos - 1)]
-                    if more_substitutions:
-                        inner_data = self.substitute_variables(
-                            inner_data, where)
-
-                    if next_ == '{':
-                        inner_data = self._process_variable(
-                            inner_data, where)
-                    elif next_ == '[':
-                        inner_data = self._process_expression(
-                            inner_data, where)
-
-                    ret.append(inner_data)
-                    data = data[endpos:]
-                    beginpos = searchpos = 0
-                else:
-                    searchpos = pos + 1
-
-        return Variable.join(ret)
-
-    def _find_brackets_end(self, data, pos, beginbracket, endbracket):
-        more_substitutions = False
-        brackets = 1
-        while brackets:
-            try:
-                ch = data[pos]
-            except IndexError:
-                raise ParseError(
-                    "Error in extension logic (missing '}')")  # TODO
-            if ch == '$':
-                if data[(pos + 1):(pos + 2)] in '{[':
-                    more_substitutions = True
-            elif ch == beginbracket:
-                brackets += 1
-            elif ch == endbracket:
-                brackets -= 1
-            pos += 1
-        return pos, more_substitutions
-
-    def _process_variable(self, data, where):
-        if '(' in data:
-            raise NotImplementedError(
-                'FUNCTION support not implemented yet: {} (at {})'.format(
-                    data, where))
-        if ':' in data:
-            raise NotImplementedError(
-                'SUBSTRING support not implemented yet: {} (at {})'.format(
-                    data, where))
-
-        # If data is a variable already, there's not much more we can do.
-        if not isinstance(data, Variable):
-            assert all((i in string.ascii_letters or
-                        i in string.digits or
-                        i == '_')
-                       for i in data), data
-            self._variables[data].append(where)
-
-        # On to return something sensible.
-        return Variable(data)
-
-    def _process_expression(self, data, where):
-        raise NotImplementedError(
-            'EXPR support not implemented yet: {} (at {})'.format(
-                data, where))
 
 
 class AppLoader(metaclass=Singleton):
@@ -354,16 +141,15 @@ class App(object):
         """
         Asterisk calls pbx_substitute_variables_helper_full on the
         entire app "data" line. So do we.
-
-        SOURCE: main/pbx.c: pbx_extension_helper, calls
-        SOURCE: main/pbx.c: pbx_substitute_variables_helper_full.
         """
+        # SOURCE: main/pbx.c: pbx_extension_helper, calls
+        # SOURCE: main/pbx.c: pbx_parse_variables_helper_full.
         if '${' in data or '$[' in data:
             try:
-                data = VarsLoader().substitute_variables(data, self.where)
+                data = VarLoader().parse_variables(data, self.where)
             except NotImplementedError:  # FIXME: remove this
                 pass
-            except ParseError:
+            except VarParseError:
                 E_APP_PARSE_ERROR(self.where, app=self.app, args=data)
         return data
 

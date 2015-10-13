@@ -2,10 +2,10 @@
 import sys
 
 from asterisklint import FileDialplanParser
-from asterisklint.application import VarsLoader
+from asterisklint.application import VarLoader
 
 
-loader = VarsLoader()
+loader = VarLoader()
 parser = FileDialplanParser()
 parser.include(sys.argv[1])
 dialplan = next(iter(parser))
