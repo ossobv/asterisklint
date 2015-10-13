@@ -97,7 +97,12 @@ class Variable(object):
                     ret.append(var.format(**kwargs))
             return ''.join(ret)
 
-        return kwargs[self.name]
+        elif isinstance(self.name, Variable):
+            ret = self.name.format(**kwargs)
+            return kwargs[ret]
+
+        else:
+            return kwargs[self.name]
 
     def __iter__(self):
         """
@@ -221,9 +226,14 @@ class VarsLoader(metaclass=Singleton):
             raise NotImplementedError(
                 'SUBSTRING support not implemented yet: {} (at {})'.format(
                     data, where))
-        assert all(i in string.ascii_letters or i in string.digits or i == '_'
-                   for i in data), data
-        self._variables[data].append(where)
+
+        # If data is a variable already, there's not much more we can do.
+        if not isinstance(data, Variable):
+            assert all((i in string.ascii_letters or
+                        i in string.digits or
+                        i == '_')
+                       for i in data), data
+            self._variables[data].append(where)
 
         # On to return something sensible.
         return Variable(data)
