@@ -291,8 +291,9 @@ class VarLoader(metaclass=Singleton):
         elif len(parts) == 3:
             varname, start, length = parts[0], parts[1], parts[2]
         else:
-            E_VAR_SUBSTR_ARGS(where, data=data)
+            varname = parts[0]
             start = length = None
+            E_VAR_SUBSTR_ARGS(where, data=data)
 
         if start is not None:
             if (start and (start.isdigit() or
@@ -314,9 +315,17 @@ class VarLoader(metaclass=Singleton):
                 start = length = None
                 E_VAR_SUBSTR_LENGTH(where, length=length)
 
+        # If start is 0 and there is no length, it makes no sense.
+        if start == 0 and not length:
+            start = None
+            E_VAR_SUBSTR_START(where, start=start)
+
         # On to return something sensible.
         if not isinstance(varname, Var):
             self._count_var(varname, where)
+
+        if start is None:
+            return Var(varname)
         return VarSlice(varname, start=start, length=length)
 
     def _process_expression(self, data, where):

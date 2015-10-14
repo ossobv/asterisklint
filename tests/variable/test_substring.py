@@ -39,3 +39,55 @@ class SubstringTest(ALintTestCase):
             str(var), '${foo:-2}')
         self.assertEqual(
             var.format(foo='ABCDEF'), 'EF')
+
+    def test_var_endmiddle(self):
+        var = VarLoader().parse_variables('${foo:-3:2}', DUMMY_WHERE)
+        self.assertEqual(
+            var, Var('foo', start=-3, length=2))
+        self.assertEqual(
+            str(var), '${foo:-3:2}')
+        self.assertEqual(
+            var.format(foo='ABCDEF'), 'DE')
+
+    def test_invalid_args(self):
+        VarLoader().parse_variables('${foo:1:2:3}', DUMMY_WHERE)
+        self.assertLinted({'E_VAR_SUBSTR_ARGS': 1})
+
+    def test_invalid_start(self):
+        # blank
+        VarLoader().parse_variables('${foo:}', DUMMY_WHERE)
+        self.assertLinted({'E_VAR_SUBSTR_START': 1})
+
+        # garbage
+        VarLoader().parse_variables('${foo:x}', DUMMY_WHERE)
+        self.assertLinted({'E_VAR_SUBSTR_START': 1})
+
+        # 0-offset
+        VarLoader().parse_variables('${foo:0}', DUMMY_WHERE)
+        self.assertLinted({'E_VAR_SUBSTR_START': 1})
+
+        # blank with length
+        VarLoader().parse_variables('${foo::2}', DUMMY_WHERE)
+        self.assertLinted({'E_VAR_SUBSTR_START': 1})
+
+    def test_invalid_length(self):
+        # blank
+        VarLoader().parse_variables('${foo:0:}', DUMMY_WHERE)
+        self.assertLinted({'E_VAR_SUBSTR_LENGTH': 1})
+
+        # garbage
+        VarLoader().parse_variables('${foo:0:x}', DUMMY_WHERE)
+        self.assertLinted({'E_VAR_SUBSTR_LENGTH': 1})
+
+        # 0-length
+        VarLoader().parse_variables('${foo:2:0}', DUMMY_WHERE)
+        self.assertLinted({'E_VAR_SUBSTR_LENGTH': 1})
+
+        # negative length
+        VarLoader().parse_variables('${foo:0:-2}', DUMMY_WHERE)
+        self.assertLinted({'E_VAR_SUBSTR_LENGTH': 1})
+
+        # length as large as negative offset
+        VarLoader().parse_variables('${foo:-2:1}', DUMMY_WHERE)  # ok
+        VarLoader().parse_variables('${foo:-2:2}', DUMMY_WHERE)
+        self.assertLinted({'E_VAR_SUBSTR_LENGTH': 1})
