@@ -1,4 +1,4 @@
-from ..base import AppBase
+from ..base import AppBase, IfStyleApp
 
 # In the following commit -- between Asterisk 1.4 and Asterisk 1.6.x --
 # not only did the default App argument delimiter change from pipe (|)
@@ -25,7 +25,7 @@ class Exec(AppBase):
     pass
 
 
-class ExecIf(AppBase):
+class ExecIf(IfStyleApp):
     pass
 
 

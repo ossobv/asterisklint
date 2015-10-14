@@ -147,8 +147,8 @@ class App(object):
         if '${' in data or '$[' in data:
             try:
                 data = VarLoader().parse_variables(data, self.where)
-            except NotImplementedError:  # FIXME: remove this
-                pass
+#            except NotImplementedError:  # FIXME: remove this
+#                pass
             except VarParseError:
                 E_APP_PARSE_ERROR(self.where, app=self.app, args=data)
         return data

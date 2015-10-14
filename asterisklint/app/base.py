@@ -1,5 +1,5 @@
 from ..application import W_APP_BALANCE
-from ..defines import ErrorDef, WarningDef
+from ..defines import ErrorDef
 from ..variable import Var
 
 
@@ -23,7 +23,11 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_APP_ARG_DUPEOPT(ErrorDef):
         message = 'duplicate options {opts!r} in arg {argno} for app {app!r}'
 
-    class W_APP_ARG_PIPEDELIM(WarningDef):
+    class E_APP_ARG_IFSTYLE(ErrorDef):
+        message = ("{app!r} takes the form <cond>?<iftrue>[:<iffalse>] "
+                   "but data is '{data}'")
+
+    class E_APP_ARG_PIPEDELIM(ErrorDef):
         message = ('the application delimiter is now the comma, not '
                    'the pipe; see app {app!r} and data {data!r}')
 
@@ -226,7 +230,9 @@ class MinMaxArgsMixin(object):
 
 class AppArgsMixin(MinMaxArgsMixin):
     def __init__(self, args=None, **kwargs):
-        assert args
+        assert args, 'AppArgsMixin wants some args for {!r}'.format(
+            self.__class__.__name__)
+
         super().__init__(max_args=len(args), **kwargs)
 
         # Set the arguments and pimp them a bit with more info.
@@ -254,10 +260,43 @@ class NoPipeDelimiterMixin(object):
     def split_args(self, data, where):
         args = super().split_args(data, where)
         if len(args) == 1 and '|' in args[0]:
-            W_APP_ARG_PIPEDELIM(where, app=self.name, data=data)
+            E_APP_ARG_PIPEDELIM(where, app=self.name, data=data)
 
         return args
 
 
 class App(NoPipeDelimiterMixin, AppArgsMixin, DelimitedArgsMixin, AppBase):
+    """
+    The App takes an optional args=[AppArg(...), ...] and max_args=INT,
+    and checks the values if available.
+    """
     pass
+
+
+class IfStyleApp(DelimitedArgsMixin, AppBase):
+    """
+    The IfStyleApp takes the form <cond>?<iftrue>:<iffalse>.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(arg_delimiter='?', arg_raw=True, **kwargs)
+
+    def split_args(self, data, where):
+        args = super().split_args(data, where)
+        if len(args) != 2:
+            E_APP_ARG_IFSTYLE(where, app=self.name, data=data)
+            return None
+
+        # BEWARE: GosubIf and ExecIf use this method, while GotoIf
+        # uses a simpler split. In the majority of cases the result
+        # would be the same (barring crazy backslash usage).
+        cond = args[0]
+        actions = self.separate_args(
+            args[1], delimiter=':', remove_quotes_backslashes=False)
+        if len(actions) == 1:
+            iftrue, iffalse = actions[0], None
+        elif len(actions) == 2:
+            iftrue, iffalse = actions[0], actions[1]
+        else:
+            return None
+
+        return cond, iftrue, iffalse

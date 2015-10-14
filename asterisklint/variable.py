@@ -2,6 +2,18 @@ import string
 from collections import defaultdict
 
 from .cls import Singleton
+from .defines import ErrorDef
+
+
+if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
+    class E_VAR_SUBSTR_ARGS(ErrorDef):
+        message = "bad substring syntax of variable '{data}'"
+
+    class E_VAR_SUBSTR_START(ErrorDef):
+        message = "bad substring start value '{start}'"
+
+    class E_VAR_SUBSTR_LENGTH(ErrorDef):
+        message = "bad substring length value '{length}'"
 
 
 class VarParseError(ValueError):
@@ -50,7 +62,7 @@ class Var(object):
         ret._list = copy
         return ret
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, start=None, length=None):
         self.name = name
 
     def format(self, **kwargs):
@@ -112,6 +124,63 @@ class Var(object):
         if self.name:
             return '${{{}}}'.format(self.name)
         return ''.join(str(i) for i in self._list)
+
+
+class VarSlice(Var):
+    def __init__(self, name=None, start=None, length=None):
+        assert name is not None and start is not None
+        super().__init__(name=name)
+        self.start = start
+        self.length = length
+        if length is not None:
+            assert length != 0
+            if self.start < 0:
+                self._endpos = self.start + length
+                assert self._endpos < 0
+            else:
+                self._endpos = self.start + length
+
+    def format(self, **kwargs):
+        value = super().format(**kwargs)
+        if self.length:
+            return value[self.start:self._endpos]
+        return value[self.start:]
+
+    def __str__(self):
+        if self.length:
+            return '${{{}:{}:{}}}'.format(
+                self.name, self.start, self.length)
+        return '${{{}:{}}}'.format(
+            self.name, self.start)
+
+
+class Expr(Var):
+    """
+    A special case of Var where an expression is evaluated.
+
+    TODO: complain about (expr);
+    - excess whitespace
+    - no agreement on quotes on either side of expression
+    - bad/unknown operators
+    """
+    def __init__(self, expression=None):  # drop start and length args
+        super().__init__(name=expression)
+
+    def __str__(self):
+        if self.name:
+            return '$[{}]'.format(self.name)
+        return super().__str__()
+
+
+class Func(Var):
+    """
+    A special case of Var where a function call is evaluated.
+
+    TODO: this shouldn't be here probably, since we need the more
+    complicated function loaders from elsewhere..
+    """
+    def __init__(self, func_and_args=None):
+        super().__init__(name=func_and_args)
 
 
 class VarLoader(metaclass=Singleton):
@@ -193,27 +262,82 @@ class VarLoader(metaclass=Singleton):
         return pos, more_substitutions
 
     def _process_variable(self, data, where):
-        if '(' in data:
-            raise NotImplementedError(
-                'FUNCTION support not implemented yet: {} (at {})'.format(
-                    data, where))
-        if ':' in data:
-            raise NotImplementedError(
-                'SUBSTRING support not implemented yet: {} (at {})'.format(
-                    data, where))
+        """
+        Process: <varname>
 
-        # If data is a variable already, there's not much more we can do.
-        if not isinstance(data, Var):
-            assert all((i in string.ascii_letters or
-                        i in string.digits or
-                        i == '_')
-                       for i in data), data
-            self._variables[data].append(where)
+        (Or sliced variable, or expression, or function.)
+        """
+        if '(' in data:
+            # Create function and return.
+            return self._process_function(data, where)
+
+        elif ':' in data:
+            # Create sliced var and return.
+            return self._process_variable_slice(data, where)
+
+        else:
+            # On to return something sensible.
+            if not isinstance(data, Var):
+                self._count_var(data, where)
+            return Var(data)
+
+    def _process_variable_slice(self, data, where):
+        """
+        Process: <varname>:<start>[:<length>]
+        """
+        parts = data.split(':')
+        if len(parts) == 2:
+            varname, start, length = parts[0], parts[1], None
+        elif len(parts) == 3:
+            varname, start, length = parts[0], parts[1], parts[2]
+        else:
+            E_VAR_SUBSTR_ARGS(where, data=data)
+            start = length = None
+
+        if start is not None:
+            if (start and (start.isdigit() or
+                           (start[0] == '-' and start[1:].isdigit()))):
+                start = int(start)
+            else:
+                start = length = None
+                E_VAR_SUBSTR_START(where, start=start)
+
+        if length is not None:
+            if length and length.isdigit():
+                length = int(length)
+                # If we use an offset from the end, then it makes no
+                # sense to have a length that's as large or larger.
+                if length == 0 or (start < 0 and -length <= start):
+                    length = None
+                    E_VAR_SUBSTR_LENGTH(where, length=length)
+            else:
+                start = length = None
+                E_VAR_SUBSTR_LENGTH(where, length=length)
 
         # On to return something sensible.
-        return Var(data)
+        if not isinstance(varname, Var):
+            self._count_var(varname, where)
+        return VarSlice(varname, start=start, length=length)
 
     def _process_expression(self, data, where):
-        raise NotImplementedError(
-            'EXPR support not implemented yet: {} (at {})'.format(
-                data, where))
+        """
+        Process: <expression>
+        """
+        # We should parse the expression and supply errors/warnings
+        # here, before returning the expression.
+        return Expr(data)
+
+    def _process_function(self, data, where):
+        """
+        Process: <function>(<args>)
+        """
+        # We should do actual function parsing stuff...
+        return Func(data)
+
+    def _count_var(self, varname, where):
+        assert isinstance(varname, str), varname
+        assert all((i in string.ascii_letters or
+                    i in string.digits or
+                    i == '_')
+                   for i in varname), varname
+        self._variables[varname].append(where)

@@ -1,10 +1,14 @@
-from ..base import AppBase
+from ..base import AppBase, IfStyleApp
 
 
-class BuiltinAppBase(AppBase):
+class _Builtin(object):
     @property
     def module(self):
         return '<builtin>'
+
+
+class BuiltinAppBase(_Builtin, AppBase):
+    pass
 
 
 class Answer(BuiltinAppBase):
@@ -29,15 +33,15 @@ class Goto(BuiltinAppBase):
     pass
 
 
-class GotoIf(BuiltinAppBase):
+class GotoIf(_Builtin, IfStyleApp):
     pass
 
 
-class GotoIfTime(BuiltinAppBase):
+class GotoIfTime(_Builtin, IfStyleApp):
     pass
 
 
-class ExecIfTime(BuiltinAppBase):
+class ExecIfTime(_Builtin, IfStyleApp):
     pass
 
 
