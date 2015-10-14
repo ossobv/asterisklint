@@ -25,11 +25,30 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 
     class E_APP_ARG_IFSTYLE(ErrorDef):
         message = ("{app!r} takes the form <cond>?<iftrue>[:<iffalse>] "
-                   "but data is '{data}'")
+                   "but data is '{data}', cond '{cond}', args '''{args}'''")
 
     class E_APP_ARG_PIPEDELIM(ErrorDef):
         message = ('the application delimiter is now the comma, not '
                    'the pipe; see app {app!r} and data {data!r}')
+
+
+def strjoin(list_of_items_and_strings):
+    """
+    Joins all consecutive items that are strings together.
+
+    E.g.: [1, 2, 'a', 'b', 'c', 3, 'd', 'e'] ==> [1, 2, 'abc', 3, 'de']
+    """
+    cache = []
+    for ch in list_of_items_and_strings:
+        if isinstance(ch, str):
+            cache.append(ch)
+        else:
+            if cache:
+                yield ''.join(cache)
+                cache = []
+            yield ch
+    if cache:
+        yield ''.join(cache)
 
 
 class AppArg(object):
@@ -49,11 +68,12 @@ class AppOptions(AppArg):
         self.options = options
 
     def validate(self, arg, where):
-        bad_options = [i for i in arg if i not in self.options]
+        str_options = [i for i in arg if isinstance(i, str)]
+        bad_options = [i for i in str_options if i not in self.options]
         if bad_options:
             E_APP_ARG_BADOPT(where, argno=self.argno, app=self.app,
                              opts=''.join(bad_options))
-        if len(arg) != len(set(arg)):
+        if len(str_options) != len(set(str_options)):
             E_APP_ARG_DUPEOPT(where, argno=self.argno, app=self.app,
                               opts=arg)
 
@@ -154,8 +174,11 @@ class AppBase(object):
                 # But we expect you to do this:
                 # ``Set(mailbox=mailbox@context)``
                 # ``VoiceMail(${mailbox},s)``
-                ret[-1].extend(data[start:i])  # skip char
-                start = i + 1
+                # Skip it?
+                # #ret[-1].extend(data[start:i])  # skip char
+                # #start = i + 1
+                # Don't skip it, we want the returned value.
+                pass
             elif skipnext:
                 skipnext = False
             elif char == '[':
@@ -187,9 +210,15 @@ class AppBase(object):
         ret[-1].extend(data[start:])
 
         # Squash args.
-        ret = [''.join(i) for i in ret]
+        squashed = []
+        for letters in ret:
+            letters = list(strjoin(letters))
+            if len(letters) == 1:
+                squashed.append(letters[0])
+            else:
+                squashed.append(Var.join(letters))
 
-        return ret
+        return squashed
 
 
 class DelimitedArgsMixin(object):
@@ -282,9 +311,18 @@ class IfStyleApp(DelimitedArgsMixin, AppBase):
 
     def split_args(self, data, where):
         args = super().split_args(data, where)
-        if len(args) != 2:
-            E_APP_ARG_IFSTYLE(where, app=self.name, data=data)
-            return None
+        if len(args) == 1:
+            # Attempt to separate the arguments the old fashioned way.
+            args = self.separate_args(
+                data, ',', remove_quotes_backslashes=False)
+            E_APP_ARG_IFSTYLE(where, app=self.name, data=data, cond=args[0],
+                              args=args[1:])
+            return args[0], args[1:], None
+        elif len(args) > 2:
+            # This is no good either, with too many results.
+            E_APP_ARG_IFSTYLE(where, app=self.name, data=data, cond=args[0],
+                              args=args[1:])
+            return args
 
         # BEWARE: GosubIf and ExecIf use this method, while GotoIf
         # uses a simpler split. In the majority of cases the result
