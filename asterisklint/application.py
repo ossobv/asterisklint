@@ -4,7 +4,7 @@ from importlib import import_module
 
 from .cls import Singleton
 from .defines import ErrorDef, WarningDef
-from .variable import VarLoader, VarParseError
+from .varloader import VarLoader, VarParseError
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8

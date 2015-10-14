@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""
+Show dialplan like Asterisk does with CLI command "dialplan show".
+"""
 import sys
 
 from asterisklint import FileDialplanParser

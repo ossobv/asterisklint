@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""
+Show which modules and apps are used by the dialplan.
+"""
 from collections import defaultdict
 import sys
 

@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
+"""
+Show which variables are used by the dialplan.
+"""
 import sys
 
 from asterisklint import FileDialplanParser
-from asterisklint.application import VarLoader
+from asterisklint.varloader import VarLoader
 
 
 loader = VarLoader()

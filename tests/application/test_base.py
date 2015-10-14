@@ -1,7 +1,7 @@
 from asterisklint.alinttest import ALintTestCase
 from asterisklint.app.base import AppBase
 from asterisklint.app.vall.app_voicemail import VoiceMail
-from asterisklint.variable import VarLoader
+from asterisklint.varloader import VarLoader
 from asterisklint.where import DUMMY_WHERE
 
 
