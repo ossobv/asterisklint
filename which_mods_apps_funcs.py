@@ -16,10 +16,13 @@ dialplan = next(iter(parser))
 
 apploader = AppLoader()
 funcloader = FuncLoader()
+all_modules = set()
 
 for what, used_items, used_modules in (
         ('Application', apploader.used_apps, apploader.used_modules),
         ('Function', funcloader.used_funcs, funcloader.used_modules)):
+    all_modules.update(used_modules)
+
     used_items_per_module = defaultdict(list)
     for item in used_items:
         used_items_per_module[item.module].append(item)
@@ -45,3 +48,8 @@ for what, used_items, used_modules in (
             print('  {:20s}  {}'.format(
                 '', item_line))
     print()
+
+print('; modules.conf')
+for module in sorted(all_modules):
+    print('load => {}.so'.format(module))
+print()
