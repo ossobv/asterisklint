@@ -1,10 +1,10 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
-import os
 from importlib import import_module
 
 from .cls import Singleton
 from .defines import ErrorDef, WarningDef
 from .varloader import VarLoader, VarParseError
+from .version import AsteriskVersion
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
@@ -54,13 +54,7 @@ class AppLoader(metaclass=Singleton):
                  for i in self._used_apps]))))
 
     def load_all(self):
-        # Load all from our version dir.
-        appsdir = os.path.join(os.path.dirname(__file__),
-                               'app', self.version)
-        appsmods = [i[0:-3] for i in os.listdir(appsdir) if i.endswith('.py')]
-
-        for appsmod in appsmods:
-            mod_name = 'asterisklint.app.{}.{}'.format(self.version, appsmod)
+        for mod_name in AsteriskVersion().list_app_mods():
             mod = import_module(mod_name)
             if hasattr(mod, 'register'):
                 mod.register(self)

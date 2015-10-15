@@ -29,8 +29,7 @@ class VarLoader(metaclass=Singleton):
     contained here with the variables only, because the functions are
     a special form of variables in asterisk.
     """
-    def __init__(self, version='v11'):
-        self.version = version
+    def __init__(self):
         self._variables = defaultdict(list)
 
     def parse_variables(self, data, where):

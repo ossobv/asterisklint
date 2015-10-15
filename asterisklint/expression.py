@@ -9,6 +9,8 @@ class Expr(Var):
     - excess whitespace
     - no agreement on quotes on either side of expression
     - bad/unknown operators
+    - joined expressions (expr in expr, which is not needed, because you
+      can use parens)
     """
     def __init__(self, expression=None):  # drop start and length args
         super().__init__(name=expression)
