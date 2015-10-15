@@ -3,7 +3,7 @@ from importlib import import_module
 
 from .cls import Singleton
 from .defines import ErrorDef, WarningDef
-from .varloader import VarLoader, VarParseError
+from .varfun import VarLoader, VarParseError
 from .version import AsteriskVersion
 
 

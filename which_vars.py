@@ -5,7 +5,7 @@ Show which variables are used by the dialplan.
 import sys
 
 from asterisklint import FileDialplanParser
-from asterisklint.varloader import VarLoader
+from asterisklint.varfun import VarLoader
 
 
 loader = VarLoader()
