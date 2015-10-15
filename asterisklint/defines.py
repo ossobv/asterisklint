@@ -1,4 +1,5 @@
 # vim: set ts=8 sw=4 sts=4 et ai:
+import os
 import sys
 from collections import defaultdict
 
@@ -14,6 +15,7 @@ class DuplicateMessageDef(MessageDefException):
 class MessageDefManager(type):
     types = set()
     muted = False
+    mute_by_message = set()
 
     show_line = False
     show_previous = False
@@ -23,14 +25,28 @@ class MessageDefManager(type):
     # The metaclass invocation. (No need for __prepare__ at this
     # point.)
     def __new__(cls, name, bases, classdict):
+        class_mute = False
+
         if name in cls.types:
             raise DuplicateMessageDef(name)
         if not name.endswith('Def'):  # MessageDef, ErrorDef, WarningDef, ...
             cls.types.add(name)       # W_FOO, E_BAR
+
+            # We want the user to specify items to ignore somehow. For
+            # now we'll use the environment variable ALINT_IGNORE with a
+            # comma delimited list of messages to silence.
+            # Example: export ALINT_IGNORE=E_APP_ARG_IFSTYLE,E_FUNC_MISSING
+            alint_ignore = set(os.environ.get('ALINT_IGNORE', '').split(','))
+            if name in alint_ignore:
+                class_mute = True
+
         class_ = type.__new__(cls, name, bases, classdict)
 
         # Add list of callbacks, specific per class.
         class_._callbacks = []
+
+        # Add class specific mute setting.
+        class_.muted = class_mute
 
         return class_
 
@@ -43,7 +59,7 @@ class MessageDefManager(type):
         cls.raised[msg.__class__.__name__].append(msg)
         formatted = msg.message.format(**msg.fmtkwargs)
 
-        if cls.muted:
+        if cls.muted or msg.muted:
             return
 
         print('{} {}: {}'.format(
