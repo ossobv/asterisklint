@@ -1,6 +1,6 @@
 from ..application import W_APP_BALANCE
 from ..defines import ErrorDef
-from ..variable import Var
+from ..variable import Var, strjoin
 
 
 # TODO: instead of where, we should pass a context object that context
@@ -30,25 +30,6 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_APP_ARG_PIPEDELIM(ErrorDef):
         message = ('the application delimiter is now the comma, not '
                    'the pipe; see app {app!r} and data {data!r}')
-
-
-def strjoin(list_of_items_and_strings):
-    """
-    Joins all consecutive items that are strings together.
-
-    E.g.: [1, 2, 'a', 'b', 'c', 3, 'd', 'e'] ==> [1, 2, 'abc', 3, 'de']
-    """
-    cache = []
-    for ch in list_of_items_and_strings:
-        if isinstance(ch, str):
-            cache.append(ch)
-        else:
-            if cache:
-                yield ''.join(cache)
-                cache = []
-            yield ch
-    if cache:
-        yield ''.join(cache)
 
 
 class AppArg(object):
@@ -212,7 +193,7 @@ class AppBase(object):
         # Squash args.
         squashed = []
         for letters in ret:
-            letters = list(strjoin(letters))
+            letters = list(strjoin(letters))  # join sequences of strings
             if len(letters) == 1:
                 squashed.append(letters[0])
             else:

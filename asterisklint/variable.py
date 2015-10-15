@@ -69,7 +69,31 @@ class Var(object):
         return iter(self._get_cached_iter())
 
     def __getitem__(self, *args, **kwargs):
-        return self._get_cached_iter().__getitem__(*args, **kwargs)
+        """
+        Get an item or list of items.
+
+        If a slice is requested (and a list is returned), we attempt to
+        join the list using strjoin. Examples::
+
+            ['A', 'B', 'C', <Var>, 'D'] ==> ['ABC', <Var>, 'D']
+            ['A', 'B', 'C'] ==> 'ABC'
+            ['A'] ==> 'A'
+            [<Var>] ==> <Var>
+            [] ==> []
+
+        This should never be a problem because you'll be iterating over
+        the results anyway.
+        """
+        item = self._get_cached_iter().__getitem__(*args, **kwargs)
+        if isinstance(item, list):
+            ret = list(strjoin(item))  # joins consecutive strings together
+            if len(ret) == 1:
+                return ret[0]
+            return ret
+        return item
+
+    def __len__(self):
+        return len(self._get_cached_iter())
 
     def _get_cached_iter(self):
         if not hasattr(self, '_cached_iter'):
@@ -104,10 +128,10 @@ class Var(object):
         return ''.join(str(i) for i in self._list)
 
 
-class VarSlice(Var):
-    def __init__(self, name=None, start=None, length=None):
-        assert name is not None and start is not None
-        super().__init__(name=name)
+class SliceMixin(object):
+    def __init__(self, *args, start=None, length=None, **kwargs):
+        assert start is not None
+        super().__init__(*args, **kwargs)
         self.start = start
         self.length = length
         if length is not None:
@@ -130,3 +154,28 @@ class VarSlice(Var):
                 self.name, self.start, self.length)
         return '${{{}:{}}}'.format(
             self.name, self.start)
+
+
+class VarSlice(SliceMixin, Var):
+    def __init__(self, name=None, start=None, length=None):
+        assert name is not None
+        super().__init__(name=name, start=start, length=length)
+
+
+def strjoin(list_of_items_and_strings):
+    """
+    Joins all consecutive items that are strings together.
+
+    E.g.: [1, 2, 'a', 'b', 'c', 3, 'd', 'e'] ==> [1, 2, 'abc', 3, 'de']
+    """
+    cache = []
+    for ch in list_of_items_and_strings:
+        if isinstance(ch, str):
+            cache.append(ch)
+        else:
+            if cache:
+                yield ''.join(cache)
+                cache = []
+            yield ch
+    if cache:
+        yield ''.join(cache)
