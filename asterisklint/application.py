@@ -32,8 +32,7 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 
 
 class AppLoader(metaclass=Singleton):
-    def __init__(self, version='v11'):
-        self.version = version
+    def __init__(self):
         self._lower_apps = {}
         self._used_apps = set()
 
@@ -41,9 +40,10 @@ class AppLoader(metaclass=Singleton):
 
     @property
     def used_apps(self):
-        return list(sorted(
-            (i for i in self._lower_apps.values() if i.name != 'Unknown'),
-            key=(lambda x: x.name)))
+        return list(
+            self._lower_apps[i]
+            for i in sorted(self._used_apps)
+            if i != 'unknown')
 
     @property
     def used_modules(self):
@@ -63,7 +63,12 @@ class AppLoader(metaclass=Singleton):
         # Fetch app named lower_app. If it doesn't exist, we alias the
         # 'Unknown' app to it.
         if lower_app not in self._lower_apps:
-            # TODO: at this point we want an error raised here, right?
+            if 'unknown' not in self._lower_apps:
+                raise NotImplementedError(
+                    'There should be an Unknown application that we can map '
+                    'unknown applications to!')
+            # We don't raise anything here, we do that outside, when we
+            # see that the appname is not canonical.
             self._lower_apps[lower_app] = self._lower_apps['unknown']
 
         self._used_apps.add(lower_app)

@@ -1,16 +1,28 @@
 import string
 from collections import defaultdict
+from importlib import import_module
 
 from .cls import Singleton
-from .defines import ErrorDef
+from .defines import ErrorDef, WarningDef
 from .expression import Expr
 from .function import ReadFunc, ReadFuncSlice
 from .variable import Var, VarSlice
+from .version import AsteriskVersion
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
+    class E_FUNC_BAD_CASE(ErrorDef):
+        message = 'function {func!r} does not have the proper Case {proper!r}'
+
+    class E_FUNC_MISSING(ErrorDef):
+        # BUG: this is also called for func_odbc created functions..
+        message = 'function {func!r} does not exist (or func_odbc created?)'
+
     class E_FUNC_PARENS(ErrorDef):
         message = "missing trailing parenthesis for function call '{data}'"
+
+    class E_FUNC_TAIL(ErrorDef):
+        message = "excess tokens at the end of the function call '{data}'"
 
     class E_VAR_SUBSTR_ARGS(ErrorDef):
         message = "bad substring syntax of variable '{data}'"
@@ -20,6 +32,9 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 
     class E_VAR_SUBSTR_LENGTH(ErrorDef):
         message = "bad substring length value '{length}'"
+
+    class W_FUNC_DYNAMIC(WarningDef):
+        message = "calling functions dynamically is not good practise '{data}'"
 
 
 class VarParseError(ValueError):
@@ -32,7 +47,50 @@ class FuncLoader(metaclass=Singleton):
     function is encountered.
     """
     def __init__(self):
-        self._variables = defaultdict(list)
+        self._lower_funcs = defaultdict(list)
+        self._used_funcs = set()
+
+        self.load_all()
+
+    @property
+    def used_funcs(self):
+        return list(
+            self._lower_funcs[i]
+            for i in sorted(self._used_funcs)
+            if i != 'unknown')
+
+    @property
+    def used_modules(self):
+        return list(filter(
+            (lambda x: x != 'unknown'),
+            sorted(set(
+                [self._lower_funcs[i].module
+                 for i in self._used_funcs]))))
+
+    def load_all(self):
+        for mod_name in AsteriskVersion().list_func_mods():
+            mod = import_module(mod_name)
+            if hasattr(mod, 'register'):
+                mod.register(self)
+
+    def get(self, lower_func):
+        # Fetch func named lower_func. If it doesn't exist, we alias the
+        # 'UNKNOWN' func to it.
+        if lower_func not in self._lower_funcs:
+            if 'unknown' not in self._lower_funcs:
+                raise NotImplementedError(
+                    'There should be an UNKNOWN function that we can map '
+                    'unknown functions to!')
+            # We don't raise anything here, we do that outside, when we
+            # see that the appname is not canonical.
+            self._lower_funcs[lower_func] = self._lower_funcs['unknown']
+
+        self._used_funcs.add(lower_func)
+        return self._lower_funcs[lower_func]
+
+    def register(self, func):
+        lower_func = func.name.lower()
+        self._lower_funcs[lower_func] = func
 
     def process_function(self, func_and_args, where):
         """
@@ -80,7 +138,17 @@ class FuncLoader(metaclass=Singleton):
             return ReadFunc(func, args)
 
         # Okay, so we have a string function. Look it up.
-        # TODO: do so.. :)
+        loaded = FuncLoader().get(func.lower())
+
+        # Check function availability.
+        if loaded.name != func:
+            if loaded.name == 'UNKNOWN':
+                E_FUNC_MISSING(where, func=func)
+            else:
+                E_FUNC_BAD_CASE(where, func=func, proper=loaded.name)
+
+        # TODO: do more stuff with this..?
+
         if start is not None:
             return ReadFuncSlice(func, args, start=start, length=length)
         return ReadFunc(func, args)
@@ -178,9 +246,11 @@ class VarLoader(metaclass=Singleton):
             return self._process_variable_slice(data, where)
 
         else:
-            # On to return something sensible.
+            # Count Var usage.
             if not isinstance(data, Var):
-                self._count_var(data, where)
+                self.count_var(data, where)
+
+            # On to return something sensible.
             return Var(data)
 
     def _process_variable_slice(self, data, where):
@@ -189,10 +259,11 @@ class VarLoader(metaclass=Singleton):
         """
         varname, start, length = self.split_variable_slice(data, where)
 
-        # On to return something sensible.
+        # Count Var usage.
         if not isinstance(varname, Var):
-            self._count_var(varname, where)
+            self.count_var(varname, where)
 
+        # On to return something sensible.
         if start is None:
             return Var(varname)
         return VarSlice(varname, start=start, length=length)
@@ -205,7 +276,7 @@ class VarLoader(metaclass=Singleton):
         # here, before returning the expression.
         return Expr(data)
 
-    def _count_var(self, varname, where):
+    def count_var(self, varname, where):
         assert isinstance(varname, str), varname
         assert all((i in string.ascii_letters or
                     i in string.digits or
