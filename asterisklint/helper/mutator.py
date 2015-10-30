@@ -79,6 +79,16 @@ class FileMutatorBase(object):
 
         # Awesome, we've succeeded. Atomic move time!
         tempout.close()
+
+        # Update file permissions.
+        srcstat = os.stat(tempout.name)
+        dststat = os.stat(filename)
+        if (srcstat.st_uid != dststat.st_uid or
+                srcstat.st_gid != dststat.st_gid):
+            os.chown(tempout.name, dststat.st_uid, dststat.st_gid)
+        if srcstat.st_mode != dststat.st_mode:
+            os.chmod(tempout.name, dststat.st_mode)
+
         print('Overwriting', filename, '...')
         os.rename(tempout.name, filename)
 
