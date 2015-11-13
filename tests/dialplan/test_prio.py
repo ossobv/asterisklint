@@ -153,6 +153,38 @@ exten => 10,n,NoOp(20e) ; this becomes 10,5
             'W_DP_PRIO_BADORDER': 2,
         })
 
+    def test_prio_missing_1_in_context2(self):
+        reader = self.create_instance_and_load_single_file(
+            FileDialplanParser, 'test.conf', b'''\
+[context]
+exten => 10,1,NoOp(10a)
+exten => 10,n,NoOp(10b)
+
+[context2a]
+exten => 10,n,NoOp(10c) ; gets eaten in Ast11, gets prio 3 in Ast1.4
+exten => 20,50,NoOp(20a)
+''')
+        dialplan = [i for i in reader][0]
+        self.assertEqual(len(dialplan.contexts), 2)
+        self.assertEqual(
+            [(i.pattern.raw, i.prio, i.app.raw)
+             for i in dialplan.contexts[0].by_pattern()],
+            [('10', 1, 'NoOp(10a)'),
+             ('10', 2, 'NoOp(10b)')])
+        self.assertEqual(
+            [(i.pattern.raw, i.prio, i.app.raw)
+             for i in dialplan.contexts[1].by_pattern()],
+            # NOTE: Works in Asterisk 1.4 only, not in Asterisk 11.
+            [('10', 3, 'NoOp(10c)'),  # cross-context next prio
+             ('20', 50, 'NoOp(20a)')])
+        self.assertLinted({
+            # TODO: should 10,3 get a E_* error because this is invalid
+            # in newer Asterisk?
+            # - 10c (10,3) is missing a prio
+            # - 20a (20,50) should not start at 50
+            'W_DP_PRIO_BADORDER': 2,
+        })
+
 
 class UnusualButGoodPrioTest(ALintTestCase):
     @expectedFailure
