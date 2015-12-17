@@ -1,4 +1,6 @@
 *.sw?
-
 *.pyc
 __pycache__
+
+/Makefile.version
+/build

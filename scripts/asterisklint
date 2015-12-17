@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+# Add ../ to the path, useful when running from development dir.
+if os.path.basename(os.path.dirname(os.path.abspath(__file__))) == 'scripts':
+    sys.path.insert(
+        0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Remove bindir from path, lest we try to import from self.
+try:
+    sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
+except ValueError:
+    pass
+
+from asterisklint.main import main
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:], os.environ))
