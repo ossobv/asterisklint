@@ -1,4 +1,6 @@
-0.1.0rc0 (2015-12-17)
+0.1.0rc1 (2015-12-17)
 ~~~~~~~~~~~~~~~~~~~~~
 
 * Initial release.
+* The following commands are available:
+  dialplan-check, dialplan-show, modules-show
