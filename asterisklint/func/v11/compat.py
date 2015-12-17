@@ -7,9 +7,12 @@ from ..vall.func_cdr import register as func_cdr_register
 from ..vall.func_channel import register as func_channel_register
 from ..vall.func_curl import register as func_curl_register
 from ..vall.func_cut import register as func_cut_register
+from ..vall.func_env import register as func_env_register
+from ..vall.func_groupcount import register as func_groupcount_register
 from ..vall.func_logic import register as func_logic_register
 from ..vall.func_math import register as func_math_register
 from ..vall.func_strings import register as func_strings_register
+from ..vall.res_fax import register as res_fax_register
 
 
 def register(func_loader):
@@ -22,7 +25,10 @@ def register(func_loader):
             func_channel_register,
             func_curl_register,
             func_cut_register,
+            func_env_register,
+            func_groupcount_register,
             func_logic_register,
             func_math_register,
-            func_strings_register):
+            func_strings_register,
+            res_fax_register):
         regfunc(func_loader)
