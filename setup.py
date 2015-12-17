@@ -1,13 +1,14 @@
-import os
 from distutils.core import setup
+from os import walk
+from os.path import abspath, dirname, join
 
 
 def get_packages():
-    here = os.path.dirname(__file__)
-    superdir = os.path.join(here, 'asterisklint')
+    here = dirname(abspath(__file__))
+    superdir = join(here, 'asterisklint')
     packages = []
-    for root, dirs, files in os.walk(superdir):
-        packages.append(root.replace('/', '.'))
+    for root, dirs, files in walk(superdir):
+        packages.append(root[len(here) + 1:].replace('/', '.'))
         if '__pycache__' in dirs:
             dirs.remove('__pycache__')
     packages.sort()
@@ -16,12 +17,11 @@ def get_packages():
 
 if __name__ == '__main__':
     long_descriptions = []
-    with open('README.rst') as file:
+    with open(join(dirname(__file__), 'README.rst')) as file:
         long_descriptions.append(file.read())
-    with open('CHANGES.rst') as file:
+    with open(join(dirname(__file__), 'CHANGES.rst')) as file:
         long_descriptions.append(file.read())
-    with open('CHANGES.rst') as file:
-        version = file.read(31).strip().split(' ')[0]
+    version = long_descriptions[-1].strip().split(' ', 1)[0]
 
     setup(
         name='asterisklint',
