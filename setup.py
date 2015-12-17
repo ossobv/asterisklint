@@ -1,3 +1,4 @@
+import sys
 from distutils.core import setup
 from os import walk
 from os.path import abspath, dirname, join
@@ -16,6 +17,10 @@ def get_packages():
 
 
 if __name__ == '__main__':
+    if sys.version_info < (3,):
+        raise NotImplementedError(
+            "I'm sorry, but asterisklint works with Python3+ only")
+
     long_descriptions = []
     with open(join(dirname(__file__), 'README.rst')) as file:
         long_descriptions.append(file.read())
@@ -41,6 +46,7 @@ if __name__ == '__main__':
             ('License :: OSI Approved :: GNU General Public License v3 '
              'or later (GPLv3+)'),
             'Programming Language :: Python :: 3',
+            'Programming Language :: Python :: 3 :: Only',
             'Topic :: Communications :: Telephony',
             'Topic :: Software Development :: Pre-processors',
         ],
