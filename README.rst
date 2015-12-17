@@ -56,3 +56,6 @@ context using ``ALINT_IGNORE``.
 Not everything it checks is documented, and it does not check everything
 that we like yet. But it's a start. Bug reports are welcome. Feature requests
 prefer to be accompanied by a patch :-)
+
+
+Walter Doekes, OSSO B.V. 2015
