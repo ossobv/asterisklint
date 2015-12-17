@@ -6,7 +6,9 @@ It takes the H_PAT_NON_CANONICAL messages, and rewrites your config,
 changing the pattern from the current form to the expected form.
 """
 from collections import defaultdict, namedtuple
+import os
 import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from asterisklint import FileDialplanParser
 from asterisklint.defines import MessageDefManager

@@ -2,7 +2,9 @@
 """
 Show dialplan like Asterisk does with CLI command "dialplan show".
 """
+import os
 import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from asterisklint import FileDialplanParser
 

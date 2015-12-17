@@ -3,7 +3,9 @@
 Show which modules and apps are used by the dialplan.
 """
 from collections import defaultdict
+import os
 import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from asterisklint import FileDialplanParser
 from asterisklint.application import AppLoader
