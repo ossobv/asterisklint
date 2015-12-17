@@ -119,6 +119,9 @@ def main(args, envs):
             except NoSuchCommand as e:
                 print(e)
                 return 1
+            # Update argv[0] for the command argparse help.
+            sys.argv[0] = '{} {}'.format(sys.argv[0], command)
+            # Run command main.
             command_module.main(args, envs)
 
     # If there was no command, pass it along to the arg parser.
