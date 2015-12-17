@@ -35,10 +35,18 @@ class MessageDefManager(type):
             # We want the user to specify items to ignore somehow. For
             # now we'll use the environment variable ALINT_IGNORE with a
             # comma delimited list of messages to silence.
-            # Example: export ALINT_IGNORE=E_APP_ARG_IFSTYLE,E_FUNC_MISSING
-            alint_ignore = set(os.environ.get('ALINT_IGNORE', '').split(','))
-            if name in alint_ignore:
-                class_mute = True
+            # Example: export ALINT_IGNORE=E_APP_ARG_IFSTYLE,E_FUNC_MISSING,W_
+            # (Will silence *all* warnings.)
+            alint_ignore = tuple(
+                i for i in set(os.environ.get('ALINT_IGNORE', '').split(','))
+                if i)
+            if name.startswith(alint_ignore):
+                for ignore in alint_ignore:
+                    if (name == ignore or
+                            (ignore[-1] == '_' and
+                             name.startswith(ignore))):
+                        class_mute = True
+                        break
 
         class_ = type.__new__(cls, name, bases, classdict)
 
