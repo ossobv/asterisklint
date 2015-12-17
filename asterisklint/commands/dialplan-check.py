@@ -5,6 +5,7 @@ Suppress error classes using ALINT_IGNORE.
 import argparse
 
 from asterisklint import FileDialplanParser
+from asterisklint.defines import MessageDefManager
 
 
 def main(args, envs):
@@ -21,3 +22,6 @@ def main(args, envs):
     parser.include(args.dialplan)
     dialplan = next(iter(parser))
     del dialplan
+
+    if MessageDefManager.raised:
+        return 1

@@ -112,6 +112,7 @@ def main(args, envs):
         # Builtin commands.
         if command == 'ls':
             list_commands(args, envs)
+
         # Dynamically loaded commands.
         else:
             try:
@@ -119,10 +120,11 @@ def main(args, envs):
             except NoSuchCommand as e:
                 print(e)
                 return 1
+
             # Update argv[0] for the command argparse help.
             sys.argv[0] = '{} {}'.format(sys.argv[0], command)
             # Run command main.
-            command_module.main(args, envs)
+            return command_module.main(args, envs)
 
     # If there was no command, pass it along to the arg parser.
     else:
@@ -133,4 +135,4 @@ def main(args, envs):
             help=("the command to execute, 'ls' lists the available "
                   "commands"))
         # TODO: add --version
-        args = parser.parse_args(args)  # will fail, because .. no command
+        args = parser.parse_args(args)  # will fail/exit, because .. no command
