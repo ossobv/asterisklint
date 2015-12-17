@@ -19,7 +19,7 @@ def main(args, envs):
         help="path to extensions.conf")
     parser.add_argument(
         '--reverse', action='store_true',
-        help="some versions of Asterisk output the diaplan file in reverse")
+        help="some versions of Asterisk output the dialplan file in reverse")
     args = parser.parse_args(args)
 
     MessageDefManager.muted = True  # no messages to stderr
