@@ -5,11 +5,25 @@ import re
 import sys
 
 
-COMMAND_RE = re.compile(r'^[a-z0-9][a-z0-9_]*$')
+COMMAND_RE = re.compile(r'^[a-z0-9][a-z0-9-]*$')
 
 
 class NoSuchCommand(ValueError):
     pass
+
+
+def wrap(text, skip, maxlen):
+    lines = []
+    words = text.split()
+    maxlen -= (skip + 1)  # add one for the space
+    for word in words:
+        if not lines:
+            lines.append(word)
+        elif len(lines[-1]) + len(word) >= maxlen:
+            lines.append(word)
+        else:
+            lines[-1] += ' ' + word
+    return '\n{}'.format(' ' * skip).join(lines)
 
 
 def list_commands(args, envs):
@@ -17,6 +31,7 @@ def list_commands(args, envs):
     List the available commands by browsing through your pythonpath and
     listing the commands inside 'asterisklint.commands'.
     """
+    commands_used = set()
     commands = []
     for path in sys.path:
         try:
@@ -27,27 +42,32 @@ def list_commands(args, envs):
             for file_ in files:
                 if file_.endswith('.py') and COMMAND_RE.match(file_[0:-3]):
                     command_name = file_[0:-3]
-                    try:
-                        command = load_command(command_name)
-                    except NoSuchCommand as e:
-                        command_help = '(error: {})'.format(e)
-                    else:
+                    if command_name not in commands_used:
                         try:
-                            command_help = command.help
-                        except AttributeError:
-                            command_help = '(help text missing)'
-                    commands.append((command_name, command_help))
+                            command = load_command(command_name)
+                        except NoSuchCommand as e:
+                            command_desc = '(error: {})'.format(e)
+                        else:
+                            try:
+                                command_desc = command.__doc__.strip()
+                            except AttributeError:
+                                command_desc = '(help text missing)'
+
+                        commands_used.add(command_name)
+                        commands.append((path, command_name, command_desc))
     commands.sort()
 
-    fmt = '  {name:13} {help}'
-    print('Builtins:')
-    print(fmt.format(name='listcmd', help='List available commands.'))
+    fmt = '  {name:21} {desc}'
+    print('builtin:')
+    print(fmt.format(name='ls', desc='List available commands.'))
+    last_path = None
+    for path, name, desc in commands:
+        if last_path != path:
+            print()
+            print('{}:'.format(path))
+            last_path = path
+        print(fmt.format(name=name, desc=wrap(desc, 24, 80)))
     print()
-    if commands:
-        print('Dynamic:')
-        for name, help in commands:
-            print(fmt.format(name=name, help=help))
-        print()
     print('Place custom commands in ~/.asterisklint/asterisklint/commands.')
 
 
@@ -83,26 +103,31 @@ def main(args, envs):
     if os.path.exists(userdir) and userdir not in sys.path:
         sys.path.insert(0, userdir)
 
-    # Create arg parser and parse.
-    parser = argparse.ArgumentParser(
-        description='Check Asterisk PBX configuration syntax.')
-    parser.add_argument(
-        'command', metavar='CMD',
-        help=('the command to execute, use the "listcmd" command'
-              'to show the available commands'))
+    # Fetch first argument: the command.
+    non_options = [i for i in args if not i.startswith('-')]
+    if non_options:
+        command = non_options[0]
+        args.remove(command)
 
-    args = parser.parse_args(args)
+        # Builtin commands.
+        if command == 'ls':
+            list_commands(args, envs)
+        # Dynamically loaded commands.
+        else:
+            try:
+                command_module = load_command(command)
+            except NoSuchCommand as e:
+                print(e)
+                return 1
+            command_module.main(args, envs)
 
-    # Builtin commands.
-    if args.command == 'listcmd':
-        list_commands(args, envs)
-
-    # Dynamic commands.
+    # If there was no command, pass it along to the arg parser.
     else:
-        try:
-            command = load_command(args.command)
-        except NoSuchCommand as e:
-            print(e)
-            return 1
-
-        command.main(args, envs)
+        parser = argparse.ArgumentParser(
+            description='Check Asterisk PBX configuration syntax.')
+        parser.add_argument(
+            'command', metavar='CMD',
+            help=("the command to execute, 'ls' lists the available "
+                  "commands"))
+        # TODO: add --version
+        args = parser.parse_args(args)  # will fail, because .. no command
