@@ -4,6 +4,8 @@ import os
 import re
 import sys
 
+from . import alintver
+
 
 COMMAND_RE = re.compile(r'^[a-z0-9][a-z0-9-]*$')
 
@@ -118,7 +120,7 @@ def main(args, envs):
             try:
                 command_module = load_command(command)
             except NoSuchCommand as e:
-                print(e)
+                print(e, file=sys.stderr)
                 return 1
 
             # Update argv[0] for the command argparse help.
@@ -129,10 +131,15 @@ def main(args, envs):
     # If there was no command, pass it along to the arg parser.
     else:
         parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawDescriptionHelpFormatter,
             description='Check Asterisk PBX configuration syntax.')
+        parser.add_argument(
+            '-V', '--version', action='version',
+            version="asterisklint {0.version_str}\n\n{0.license_str}".format(
+                alintver))
         parser.add_argument(
             'command', metavar='COMMAND',
             help=("the command to execute, 'ls' lists the available "
                   "commands"))
-        # TODO: add --version
+
         args = parser.parse_args(args)  # will fail/exit, because .. no command

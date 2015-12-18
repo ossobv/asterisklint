@@ -1,4 +1,4 @@
-default: test
+default: update_version test
 
 Makefile.version: FORCE
 	@echo "FILE_VERSION = `sed -e 's/ .*//;1q' CHANGES.rst`" \
@@ -12,7 +12,6 @@ Makefile.version: FORCE
 -include Makefile.version
 
 install: Makefile.version
-	# $(FILE_VERSION) $(GIT_VERSION)
 	python setup.py install
 
 test:
@@ -20,4 +19,9 @@ test:
 	  find . -name '*.py' | xargs -d\\n flake8.3 || true; echo
 	python3 -m asterisklint.alinttest discover --pattern='test_*.py'
 
-.PHONY: FORCE default install test
+update_version:
+	echo '$(GIT_VERSION)' | grep -Fq '$(FILE_VERSION)'  # startswith..
+	sed -i -e "s/^version_str = .*/version_str = '$(FILE_VERSION)'/" \
+	  asterisklint/alintver.py
+
+.PHONY: FORCE default install test update_version
