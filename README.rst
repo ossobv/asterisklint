@@ -99,7 +99,7 @@ The `dialplan-check` comes in handy as a git commit hook, for example `.git/hook
 
     asterisklint dialplan-check PATH/TO/extensions.conf
     ret=$?
-    if test $ret != 0; then
+    if test $ret -ne 0; then
         cat >&2 <<EOF
 
     One or more dialplan syntax errors. Please fix before committing.
