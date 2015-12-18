@@ -12,9 +12,10 @@ def main(args, envs):
     parser = argparse.ArgumentParser(
         description=(
             'Do sanity checks on dialplan. Suppress comma separated '
-            'error classes through the ALINT_IGNORE environment variable.'))
+            'error classes through the ALINT_IGNORE environment variable. '
+            'Returns 1 if any issue was reported.'))
     parser.add_argument(
-        'dialplan', metavar='CONF',
+        'dialplan', metavar='EXTENSIONS_CONF',
         help="path to extensions.conf")
     args = parser.parse_args(args)
 
@@ -23,5 +24,8 @@ def main(args, envs):
     dialplan = next(iter(parser))
     del dialplan
 
-    if MessageDefManager.raised:
+    # MessageDefManager.raised is a dict of messages ordered by message
+    # type. All message types share the same muted flag, so we need only
+    # examine the first.
+    if any(not i[0].muted for i in MessageDefManager.raised.values()):
         return 1

@@ -36,7 +36,7 @@ class MessageDefManager(type):
             # now we'll use the environment variable ALINT_IGNORE with a
             # comma delimited list of messages to silence.
             # Example: export ALINT_IGNORE=E_APP_ARG_IFSTYLE,E_FUNC_MISSING,W_
-            # (Will silence *all* warnings.)
+            # (Will silence *all* warnings, through the "W_".)
             alint_ignore = tuple(
                 i for i in set(os.environ.get('ALINT_IGNORE', '').split(','))
                 if i)

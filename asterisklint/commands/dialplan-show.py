@@ -15,7 +15,7 @@ def main(args, envs):
             '"dialplan show". Useful for testing whether asterisklint '
             'parser the input properly.'))
     parser.add_argument(
-        'dialplan', metavar='CONF',
+        'dialplan', metavar='EXTENSIONS_CONF',
         help="path to extensions.conf")
     parser.add_argument(
         '--reverse', action='store_true',

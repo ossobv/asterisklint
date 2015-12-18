@@ -18,7 +18,7 @@ def main(args, envs):
             "Useful when you use autoload=no in your modules.conf. Beware "
             "that you do need more modules than just these listed."))
     parser.add_argument(
-        'dialplan', metavar='CONF',
+        'dialplan', metavar='EXTENSIONS_CONF',
         help="path to extensions.conf")
     args = parser.parse_args(args)
 

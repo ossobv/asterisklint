@@ -131,7 +131,7 @@ def main(args, envs):
         parser = argparse.ArgumentParser(
             description='Check Asterisk PBX configuration syntax.')
         parser.add_argument(
-            'command', metavar='CMD',
+            'command', metavar='COMMAND',
             help=("the command to execute, 'ls' lists the available "
                   "commands"))
         # TODO: add --version

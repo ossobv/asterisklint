@@ -19,7 +19,7 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 
     class W_APP_BALANCE(WarningDef):
         message = ('app data {data!r} looks like unbalanced'
-                   'parenthesis/quotes/curlies')
+                   'parentheses/quotes/curlies')
 
     class W_APP_BAD_CASE(WarningDef):
         message = 'app {app!r} does not have the proper Case {proper!r}'
