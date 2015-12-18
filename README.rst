@@ -57,7 +57,7 @@ Not everything it checks is documented, and it does not check everything
 that we like yet. But it's a start. Bug reports are welcome. Feature requests
 prefer to be accompanied by a patch :-)
 
-Try out `modules-show` if you use `autoload=no` in your `modules.conf`.
+Try out ``modules-show`` if you use ``autoload=no`` in your ``modules.conf``.
 
 All commands show help if asked:
 
@@ -80,19 +80,20 @@ All commands show help if asked:
 Installation
 ------------
 
-Installation is a matter of `python3 setup.py install`. Or, for more convenience,
-install a PyPI uploaded version through `pip3(1)`:
+Installation is a matter of ``python3 setup.py install``. Or, for more convenience,
+install a PyPI uploaded version through ``pip3(1)``:
 
-.. code-block: console
+.. code-block:: console
 
     $ sudo pip3 install asterisklint
     ...
     Successfully installed asterisklint
 
 
-The `dialplan-check` comes in handy as a git commit hook, for example `.git/hooks/pre-commit`:
+The ``dialplan-check`` comes in handy as a git commit hook, for example
+``.git/hooks/pre-commit``:
 
-.. code-block: sh
+.. code-block:: sh
 
     #!/bin/sh
     export ALINT_IGNORE=  # adjust as needed
@@ -100,10 +101,8 @@ The `dialplan-check` comes in handy as a git commit hook, for example `.git/hook
     asterisklint dialplan-check PATH/TO/extensions.conf
     ret=$?
     if test $ret -ne 0; then
-        cat >&2 <<EOF
-
-    One or more dialplan syntax errors. Please fix before committing.
-    EOF
+        echo >&2
+        echo 'One or more dialplan syntax errors. Please fix before committing.' >&2
         exit $ret
     fi
 
@@ -118,8 +117,8 @@ TODO
 * Function argument parsing.
 * Recursive includes probably make asterisklint run out of stack.
 * Goto/Gosub-visiting to check for missing contexts/destinations/prios/labels.
-* Add `app-check` command to do dialplan checks of individual lines.
-* Add `expr-check` command to do expression (`$[...]`) checks.
+* Add ``app-check`` command to do dialplan checks of individual lines.
+* Add ``expr-check`` command to do expression (``$[...]``) checks.
 * Before 1.0, start adding versioning -- including semver -- so users can
   depend on a stable API from their custom scripts. Also version the scripts
   (commands) so they won't talk to older/newer libs if that poses a problem.
@@ -130,12 +129,12 @@ BUGS
 
 * The library is very much in flux. Don't expect it to stabilize any time
   soon. Pay attention to versions!
-* Multiline comments (`;-- ... --;`) are unsupported. Does anyone use those?
+* Multiline comments (``;-- ... --;``) are unsupported. Does anyone use those?
 * Limits aren't checked (dialplan lines are limited at 255 or 8191 bytes
   for LOW_MEMORY and normal mode respectively).
 * The function loader doesn't read func_odbc. So you may get lots of
-  `E_FUNC_MISSING` for your custom functions. Suppress those with
-  `ALINT_IGNORE=E_FUNC_MISSING` for now.
+  ``E_FUNC_MISSING`` for your custom functions. Suppress those with
+  ``ALINT_IGNORE=E_FUNC_MISSING`` for now.
 
 
 Author
