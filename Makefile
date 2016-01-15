@@ -17,6 +17,10 @@ Makefile.version: FORCE
 install: Makefile.version
 	$(PYTHON) setup.py install
 
+# upload:
+#	##python setup.py register # only needed once
+#	#python setup.py sdist upload
+
 test:
 	find . -name '*.py' | xargs -d\\n $(FLAKE8) || true; echo
 	$(PYTHON) -m asterisklint.alinttest discover --pattern='test_*.py'
