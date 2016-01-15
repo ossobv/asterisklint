@@ -1,3 +1,6 @@
+FLAKE8 = $(shell which flake8.3 flake8 true 2>/dev/null | head -n1)
+PYTHON = python3
+
 default: update_version test
 
 Makefile.version: FORCE
@@ -12,12 +15,11 @@ Makefile.version: FORCE
 -include Makefile.version
 
 install: Makefile.version
-	python setup.py install
+	$(PYTHON) setup.py install
 
 test:
-	which flake8.3 >/dev/null && \
-	  find . -name '*.py' | xargs -d\\n flake8.3 || true; echo
-	python3 -m asterisklint.alinttest discover --pattern='test_*.py'
+	find . -name '*.py' | xargs -d\\n $(FLAKE8) || true; echo
+	$(PYTHON) -m asterisklint.alinttest discover --pattern='test_*.py'
 
 update_version:
 	echo '$(GIT_VERSION)' | grep -Fq '$(FILE_VERSION)'  # startswith..
