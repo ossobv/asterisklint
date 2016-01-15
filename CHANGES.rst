@@ -1,5 +1,5 @@
-0.1.0rc6 (2015-12-18)
-~~~~~~~~~~~~~~~~~~~~~
+0.1.0 (2016-01-15)
+~~~~~~~~~~~~~~~~~~
 
 * Initial release.
 * The following commands are available:
