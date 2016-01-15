@@ -42,8 +42,7 @@ Now run the ``dialplan-check`` command on it:
 
 .. code-block:: console
 
-    $ ALINT_IGNORE=H_DP_ \
-        asterisklint dialplan-check extensions.conf
+    $ ALINT_IGNORE=H_DP_ asterisklint dialplan-check extensions.conf
     extensions.conf:2 H_PAT_NON_CANONICAL: pattern '_8[2-9]x' is not in the canonical form '_8NX'
     extensions.conf:3 W_APP_BAD_CASE: app 'GoSub' does not have the proper Case 'Gosub'
     extensions.conf:3 W_APP_BALANCE: app data 'somewhere,1,s(argument1,argument2' looks like unbalanced parentheses/quotes/curlies
@@ -112,6 +111,8 @@ The ``dialplan-check`` comes in handy as a git commit hook, for example
 TODO
 ----
 
+* Add ``func_odbc.conf`` parsing so the E_FUNC_MISSING isn't as annoying as
+  it is now.
 * Improve documentation as needed.
 * Expression parsing.
 * Function argument parsing.
