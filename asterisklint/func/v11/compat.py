@@ -1,6 +1,7 @@
 from ..vall.builtin import register as builtin_register
 from ..vall.unknown import register as unknown_register
 
+from ..vall.app_queue import register as app_queue_register
 from ..vall.chan_sip import register as chan_sip_register
 from ..vall.func_callerid import register as func_callerid_register
 from ..vall.func_cdr import register as func_cdr_register
@@ -19,6 +20,7 @@ def register(func_loader):
     for regfunc in (
             builtin_register,
             unknown_register,
+            app_queue_register,
             chan_sip_register,
             func_callerid_register,
             func_cdr_register,
