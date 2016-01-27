@@ -28,6 +28,9 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class W_WSH_EOL(WarningDef):
         message = 'unexpected trailing whitespace'
 
+    class W_WSH_COMMENT(WarningDef):
+        message = 'missing whitespace around comment semicolon'
+
     class W_WSV_BOF(WarningDef):
         message = 'unexpected vertical space at beginning of file'
 
@@ -169,11 +172,13 @@ class AsteriskCommentReader(object):
     TODO: also parse multiline asterisk comments
     """
     @staticmethod
-    def simple_comment_split(data):
+    def simple_comment_split(data, where):
         try:
             i = data.index(';')
         except ValueError:
             return data, ''
+        if i > 0 and data[i - 1] not in ' \t':
+            W_WSH_COMMENT(where)
         while i > 0 and data[i - 1] in ' \t':
             i -= 1
         return data[0:i], data[i:]
@@ -188,7 +193,7 @@ class AsteriskCommentReader(object):
 
             # Shortcut if we don't do any escaping.
             if '\\' not in data:
-                data, comment = self.simple_comment_split(data)
+                data, comment = self.simple_comment_split(data, where)
                 yield where, data, comment
                 continue
 
@@ -218,6 +223,8 @@ class AsteriskCommentReader(object):
 
             # Move all the whitespace at the end of data to comment.
             i = len(data)
+            if comment and i > 0 and data[i - 1] not in ' \t':
+                W_WSH_COMMENT(where)
             while i > 0 and data[i - 1] in ' \t':
                 i -= 1
             comment = data[i:] + comment

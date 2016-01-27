@@ -304,7 +304,7 @@ class DialplanVarset(object):
             return Include(varset.value, varset.where)
 
         else:
-            E_CONF_KEY_INVALID(varset.where)
+            E_CONF_KEY_INVALID(varset.where, key=varset.variable)
             return None
 
 

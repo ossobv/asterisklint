@@ -81,6 +81,10 @@ this_is_not_a_comment=semi\\;delimited; but this is a comment
              '',
              '; but this is a comment'])
 
+        # "this_is_not_a_comment=semi\\;delimited; but this is a comment"
+        # - W_WSH_COMMENT -----------------------^ (missing leading space)
+        self.assertLinted({'W_WSH_COMMENT': 1})
+
     def test_escaped_space(self):
         # Asterisk won't do any magic with the backslash, not even for
         # the backslash itself. It will only react to escaped semi's.
@@ -103,4 +107,30 @@ value4=\\\\;\\;; with comment
                          ['', '', '  ; with comment', ' ; with comment',
                           '; with comment'])
         # value1 with trailing \x20 will trigger a W_WSH_EOL warning.
-        self.assertLinted({'W_WSH_EOL': 1})
+        # vaule4 with missing \x20 will trigger a W_WSH_COMMENT warning.
+        self.assertLinted({'W_WSH_EOL': 1, 'W_WSH_COMMENT': 1})
+
+
+class CommentWithoutWhitespaceTest(ALintTestCase):
+    def string_test(self, string):
+        reader = self.create_instance_and_load_single_file(
+            FileReader, 'test.conf', '{}\n'.format(string).encode('utf-8'))
+        out = [i for i in reader]
+        del out
+
+    def test_no_problem(self):
+        self.string_test(';\\;')    # don't care about contents of comment
+        self.string_test('x\\;x')   # there is no comment
+        self.string_test('x\\;x ;no problem')  # the comment space is ok
+
+    def test_missing_space(self):
+        # We don't want a semi inside the value. Complain about the lack
+        # of space before it.
+        self.string_test('x=y;')
+        self.assertLinted({'W_WSH_COMMENT': 1})
+
+    def test_missing_space_after_escaped_semi(self):
+        # We don't want a semi inside the value. Complain about the lack
+        # of space before it.
+        self.string_test('x=y\;z;')
+        self.assertLinted({'W_WSH_COMMENT': 1})

@@ -15,8 +15,14 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_CONF_CTX_MISSING(ErrorDef):
         message = 'expected context before var/object set'
 
+    class E_CONF_KEY_DUPE(DupeDefMixin, ErrorDef):
+        message = 'duplicate varset of {key!r}'
+
     class E_CONF_KEY_INVALID(ErrorDef):
-        message = 'expected context or var/object set'
+        message = 'expected valid var/object or new context, got {key!r}'
+
+    class W_CONF_KEY_LATE(WarningDef):
+        message = 'expected varset {key!r} earlier, fix your ordering'
 
     class W_CONF_CTX_DUPE(DupeDefMixin, ErrorDef):
         # BEWARE: chan_pjsip explicitly takes multiple contexts with the
