@@ -7,7 +7,7 @@ import sys
 from . import alintver
 
 
-COMMAND_RE = re.compile(r'^[a-z0-9][a-z0-9-]*$')
+COMMAND_RE = re.compile(r'^[a-z0-9_][a-z0-9_-]*$')
 
 
 class NoSuchCommand(ValueError):
@@ -86,8 +86,9 @@ def load_command(command):
     try:
         command_module = importlib.import_module(
             'asterisklint.commands.{}'.format(command))
-    except ImportError:
-        raise NoSuchCommand('Command {!r} not found'.format(command))
+    except ImportError as exception:
+        raise NoSuchCommand('Could not load {!r}: {}'.format(
+            command, exception))
 
     try:
         command_module.main
