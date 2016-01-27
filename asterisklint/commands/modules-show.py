@@ -6,9 +6,27 @@ import argparse
 from collections import defaultdict
 
 from asterisklint import FileDialplanParser
-from asterisklint.application import AppLoader
+from asterisklint.application import E_APP_MISSING, AppLoader
 from asterisklint.defines import MessageDefManager
-from asterisklint.varfun import FuncLoader
+from asterisklint.varfun import E_FUNC_MISSING, FuncLoader
+
+
+class Aggregator(object):
+    """
+    Collector of all E_APP_MISSING, E_FUNC_MISSING errors. We want to
+    know about these things.
+    """
+    def __init__(self):
+        E_APP_MISSING.add_callback(self.on_e_app_missing)
+        E_FUNC_MISSING.add_callback(self.on_e_func_missing)
+        self.unknown_apps = set()
+        self.unknown_funcs = set()
+
+    def on_e_app_missing(self, message):
+        self.unknown_apps.add(message.fmtkwargs['app'])
+
+    def on_e_func_missing(self, message):
+        self.unknown_funcs.add(message.fmtkwargs['func'])
 
 
 def main(args, envs):
@@ -22,7 +40,10 @@ def main(args, envs):
         help="path to extensions.conf")
     args = parser.parse_args(args)
 
-    MessageDefManager.muted = True  # no messages to stderr
+    # No messages to stderr, but do collect the E_APP_MISSING and
+    # E_FUNC_MISSING errors.
+    aggregator = Aggregator()
+    MessageDefManager.muted = True
 
     parser = FileDialplanParser()
     parser.include(args.dialplan)
@@ -69,3 +90,13 @@ def main(args, envs):
         if module != '<builtin>':
             print('load => {}.so'.format(module))
     print()
+    if aggregator.unknown_apps:
+        print('; WARNING: The following unknown applications were seen:')
+        print(';   {}'.format(', '.join(sorted(aggregator.unknown_apps))))
+        print(';')
+    if aggregator.unknown_funcs:
+        print('; WARNING: The following unknown functions were seen:')
+        print(';   {}'.format(', '.join(sorted(aggregator.unknown_funcs))))
+        print(';')
+
+    return int(bool(aggregator.unknown_apps) or bool(aggregator.unknown_funcs))
