@@ -11,6 +11,13 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class I_NOTIMPL_HINT(ErrorDef):
         message = 'the dialplan hint directive has not been implemented yet'
 
+    class I_NOTIMPL_IGNOREPAT(ErrorDef):
+        message = ('the dialplan ignorepat directive has not been implemented '
+                   'yet')
+
+    class I_NOTIMPL_SWITCH(ErrorDef):
+        message = 'the dialplan switch directive has not been implemented yet'
+
     class E_DP_VAR_INVALID(ErrorDef):
         message = ('unexpected variable name {variable!r} '
                    '(not exten/same/include)')
@@ -302,6 +309,14 @@ class DialplanVarset(object):
         elif varset.variable == 'include':
             assert varset.arrow  # W_ARROW
             return Include(varset.value, varset.where)
+
+        elif varset.variable == 'switch':
+            assert varset.arrow  # W_ARROW
+            I_NOTIMPL_SWITCH(varset.where)
+
+        elif varset.variable == 'ignorepat':
+            assert varset.arrow  # W_ARROW
+            I_NOTIMPL_IGNOREPAT(varset.where)
 
         else:
             E_CONF_KEY_INVALID(varset.where, key=varset.variable)
