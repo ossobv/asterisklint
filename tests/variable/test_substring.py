@@ -92,3 +92,27 @@ class SubstringTest(ALintTestCase):
         VarLoader().parse_variables('${foo:-2:1}', DUMMY_WHERE)  # ok
         VarLoader().parse_variables('${foo:-2:2}', DUMMY_WHERE)
         self.assertLinted({'E_VAR_SUBSTR_LENGTH': 1})
+
+    def test_slice_by_variable_start(self):
+        var = VarLoader().parse_variables('${foo:${tmp}}', DUMMY_WHERE)
+        self.assertEqual(str(var), '${foo:${tmp}}')
+
+    def test_slice_by_variable_negstart(self):
+        var = VarLoader().parse_variables('${foo:-${tmp}}', DUMMY_WHERE)
+        self.assertEqual(str(var), '${foo:-${tmp}}')
+
+    def test_slice_by_variable_length(self):
+        var = VarLoader().parse_variables('${foo:1:${tmp}}', DUMMY_WHERE)
+        self.assertEqual(str(var), '${foo:1:${tmp}}')
+
+    def test_slice_by_variable_neglength(self):
+        var = VarLoader().parse_variables('${foo:1:-${tmp}}', DUMMY_WHERE)
+        self.assertEqual(str(var), '${foo:1:-${tmp}}')
+
+    def test_slice_by_two_variables(self):
+        var = VarLoader().parse_variables('${foo:${x}:-${y}}', DUMMY_WHERE)
+        self.assertEqual(str(var), '${foo:${x}:-${y}}')
+
+    def test_slice_by_expression(self):
+        var = VarLoader().parse_variables('${foo:$[1+1]:$[2+2]}', DUMMY_WHERE)
+        self.assertEqual(str(var), '${foo:$[1+1]:$[2+2]}')

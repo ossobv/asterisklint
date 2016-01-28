@@ -6,7 +6,7 @@ from .cls import Singleton
 from .defines import ErrorDef, WarningDef
 from .expression import Expr
 from .function import ReadFunc, ReadFuncSlice
-from .variable import Var, VarSlice
+from .variable import Var, VarSlice, VarDynSlice
 from .version import AsteriskVersion
 
 
@@ -266,6 +266,11 @@ class VarLoader(metaclass=Singleton):
         # On to return something sensible.
         if start is None:
             return Var(varname)
+
+        # Very dynamic, this..
+        if isinstance(start, Var) or isinstance(length, Var):
+            return VarDynSlice(varname, start=start, length=length)
+
         return VarSlice(varname, start=start, length=length)
 
     def _process_expression(self, data, where):
@@ -301,15 +306,22 @@ class VarLoader(metaclass=Singleton):
             E_VAR_SUBSTR_ARGS(where, data=data)
 
         if start is not None:
-            if (start and (start.isdigit() or
-                           (start[0] == '-' and start[1:].isdigit()))):
+            if isinstance(start, Var):
+                # We cannot determine anything more from this.
+                pass
+            elif (start and (
+                    start.isdigit() or
+                    (start[0] == '-' and start[1:].isdigit()))):
                 start = int(start)
             else:
                 start = length = None
                 E_VAR_SUBSTR_START(where, start=start)
 
         if length is not None:
-            if length and length.isdigit():
+            if isinstance(length, Var):
+                # We cannot determine anything more from this.
+                pass
+            elif length and length.isdigit():
                 length = int(length)
                 # If we use an offset from the end, then it makes no
                 # sense to have a length that's as large or larger.

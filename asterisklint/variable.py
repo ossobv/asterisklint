@@ -127,6 +127,40 @@ class Var(object):
             return '${{{}}}'.format(self.name)
         return ''.join(str(i) for i in self._list)
 
+    def split(self, token):
+        if token != ':':
+            raise TypeError('expected split on colon, got {!r}'.format(token))
+
+        assert not self.name
+        assert len(self._list) >= 2
+        ret = self._list[0].split(token)
+        assert len(ret) > 1, ret
+
+        # Split it up by token, so we group the values into subgroups.
+        split_up = [[]]
+        for item in self._list:
+            if isinstance(item, str):
+                subitems = item.split(token)
+                while len(subitems) > 1:
+                    first = subitems.pop(0)
+                    if first:
+                        split_up[-1].append(first)
+                    split_up.append([])
+                if subitems[0]:
+                    split_up[-1].append(subitems[0])
+            else:
+                split_up[-1].append(item)
+
+        # Join the subgroups back into variables.
+        for i, list_ in enumerate(split_up):
+            assert len(list_)
+            if len(list_) > 1:
+                split_up[i] = Var.join(split_up[i])
+            else:
+                split_up[i] = split_up[i][0]
+
+        return split_up
+
 
 class SliceMixin(object):
     def __init__(self, *args, start=None, length=None, **kwargs):
@@ -160,6 +194,21 @@ class VarSlice(SliceMixin, Var):
     def __init__(self, name=None, start=None, length=None):
         assert name is not None
         super().__init__(name=name, start=start, length=length)
+
+
+class VarDynSlice(Var):
+    def __init__(self, name=None, start=None, length=None):
+        assert name is not None
+        super().__init__(name=name)
+        self.start = start
+        self.length = length
+
+    def __str__(self):
+        if self.length:
+            return '${{{}:{}:{}}}'.format(
+                self.name, self.start, self.length)
+        return '${{{}:{}}}'.format(
+            self.name, self.start)
 
 
 def strjoin(list_of_items_and_strings):
