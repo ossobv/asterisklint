@@ -44,6 +44,15 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
         message = 'unexpected non-space/tab whitespace or a mix'
 
 
+class ProgrammingError(RuntimeError):
+    def __init__(self, message):
+        super().__init__(
+            'An unexpected exception was raised. This is most likely a '
+            'bug in the asterisklint library. If you can reproduce the '
+            'problem and file an issue on the bug tracker, that would be '
+            'nice. Further info: {}'.format(message))
+
+
 class ConfigParser(object):
     # Parse config and emit 1=>X
     # Define who prefers "=>" and who prefers "=". Allow warnings about
@@ -156,14 +165,17 @@ class ConfigAggregator(VerticalSpaceWarner, ConfigParser):
         self.on_begin()
 
         for element in super(ConfigAggregator, self).__iter__():
-            if isinstance(element, Context):
-                self.on_context(element)
-            elif isinstance(element, Varset):
-                self.on_varset(element)
-            elif isinstance(element, EmptyLine):
-                self.on_emptyline(element)
-            else:
-                raise NotImplementedError()
+            try:
+                if isinstance(element, Context):
+                    self.on_context(element)
+                elif isinstance(element, Varset):
+                    self.on_varset(element)
+                elif isinstance(element, EmptyLine):
+                    self.on_emptyline(element)
+                else:
+                    raise NotImplementedError()
+            except Exception as exc:
+                raise ProgrammingError(str(element.where)) from exc
 
         for item in self.on_yield():
             yield item
