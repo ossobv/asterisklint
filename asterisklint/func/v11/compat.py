@@ -1,6 +1,7 @@
 from ..vall.builtin import register as builtin_register
 from ..vall.unknown import register as unknown_register
 
+from ..vall.app_confbridge import register as app_confbridge_register
 from ..vall.app_queue import register as app_queue_register
 from ..vall.chan_sip import register as chan_sip_register
 from ..vall.func_callerid import register as func_callerid_register
@@ -14,7 +15,10 @@ from ..vall.func_global import register as func_global_register
 from ..vall.func_groupcount import register as func_groupcount_register
 from ..vall.func_logic import register as func_logic_register
 from ..vall.func_math import register as func_math_register
+from ..vall.func_rand import register as func_rand_register
+from ..vall.func_shell import register as func_shell_register
 from ..vall.func_strings import register as func_strings_register
+from ..vall.func_uri import register as func_uri_register
 from ..vall.res_fax import register as res_fax_register
 
 
@@ -22,6 +26,7 @@ def register(func_loader):
     for regfunc in (
             builtin_register,
             unknown_register,
+            app_confbridge_register,
             app_queue_register,
             chan_sip_register,
             func_callerid_register,
@@ -35,6 +40,9 @@ def register(func_loader):
             func_groupcount_register,
             func_logic_register,
             func_math_register,
+            func_rand_register,
+            func_shell_register,
             func_strings_register,
+            func_uri_register,
             res_fax_register):
         regfunc(func_loader)

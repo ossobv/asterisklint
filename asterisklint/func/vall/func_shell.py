@@ -1,9 +1,9 @@
 from ..base import FuncBase
 
 
-class FAXOPT(FuncBase):
+class SHELL(FuncBase):
     pass
 
 
 def register(func_loader):
-    func_loader.register(FAXOPT())
+    func_loader.register(SHELL())
