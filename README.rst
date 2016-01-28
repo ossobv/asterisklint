@@ -111,8 +111,11 @@ The ``dialplan-check`` comes in handy as a git commit hook, for example
 TODO
 ----
 
-* Add ``func_odbc.conf`` parsing so the E_FUNC_MISSING isn't as annoying as
-  it is now.
+* Func_odbc parsing improvements:
+  - check for missing synopsis/syntax (compare syntax to ARGn count)
+  - check for correct usage of VAL (write only) and ARG and missing SQL_ESC
+  - yield the odbc functions instead of contexts like it does now
+  (See more in func_odbc.py.)
 * Improve documentation as needed.
 * Expression parsing.
 * Function argument parsing.
@@ -120,6 +123,8 @@ TODO
 * Goto/Gosub-visiting to check for missing contexts/destinations/prios/labels.
 * Add ``app-check`` command to do dialplan checks of individual lines.
 * Add ``expr-check`` command to do expression (``$[...]``) checks.
+* Allow multiline variables using += (key=val; key+=more-val).
+* Add python2 support so you can include checks from your own project? Or not?
 * Before 1.0, start adding versioning -- including semver -- so users can
   depend on a stable API from their custom scripts. Also version the scripts
   (commands) so they won't talk to older/newer libs if that poses a problem.
@@ -133,12 +138,9 @@ BUGS
 * Multiline comments (``;-- ... --;``) are unsupported. Does anyone use those?
 * Limits aren't checked (dialplan lines are limited at 255 or 8191 bytes
   for LOW_MEMORY and normal mode respectively).
-* The function loader doesn't read func_odbc. So you may get lots of
-  ``E_FUNC_MISSING`` for your custom functions. Suppress those with
-  ``ALINT_IGNORE=E_FUNC_MISSING`` for now.
 
 
 Author
 ------
 
-Walter Doekes, OSSO B.V. 2015
+Walter Doekes, OSSO B.V. 2015,2016
