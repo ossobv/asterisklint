@@ -170,7 +170,9 @@ class SliceMixin(object):
         self.length = length
         if length is not None:
             assert length != 0
-            if self.start < 0:
+            if length < 0:
+                self._endpos = length
+            elif self.start < 0:
                 self._endpos = self.start + length
                 assert self._endpos < 0
             else:

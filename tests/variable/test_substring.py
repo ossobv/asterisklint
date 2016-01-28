@@ -41,6 +41,24 @@ class SubstringTest(ALintTestCase):
         self.assertEqual(
             var.format(foo='ABCDEF'), 'EF')
 
+    def test_var_neg1_end(self):
+        var = VarLoader().parse_variables('${foo:1:-1}', DUMMY_WHERE)
+        self.assertEqual(
+            var, Var('foo', start=1, length=-1))
+        self.assertEqual(
+            str(var), '${foo:1:-1}')
+        self.assertEqual(
+            var.format(foo='ABCDEF'), 'BCDE')
+
+    def test_var_neg2_end(self):
+        var = VarLoader().parse_variables('${foo:1:-2}', DUMMY_WHERE)
+        self.assertEqual(
+            var, Var('foo', start=1, length=-2))
+        self.assertEqual(
+            str(var), '${foo:1:-2}')
+        self.assertEqual(
+            var.format(foo='ABCDEF'), 'BCD')
+
     def test_var_endmiddle(self):
         var = VarLoader().parse_variables('${foo:-3:2}', DUMMY_WHERE)
         self.assertEqual(
@@ -84,12 +102,9 @@ class SubstringTest(ALintTestCase):
         VarLoader().parse_variables('${foo:2:0}', DUMMY_WHERE)
         self.assertLinted({'E_VAR_SUBSTR_LENGTH': 1})
 
-        # negative length
-        VarLoader().parse_variables('${foo:0:-2}', DUMMY_WHERE)
-        self.assertLinted({'E_VAR_SUBSTR_LENGTH': 1})
-
         # length as large as negative offset
         VarLoader().parse_variables('${foo:-2:1}', DUMMY_WHERE)  # ok
+        self.assertLinted({})
         VarLoader().parse_variables('${foo:-2:2}', DUMMY_WHERE)
         self.assertLinted({'E_VAR_SUBSTR_LENGTH': 1})
 
@@ -116,3 +131,8 @@ class SubstringTest(ALintTestCase):
     def test_slice_by_expression(self):
         var = VarLoader().parse_variables('${foo:$[1+1]:$[2+2]}', DUMMY_WHERE)
         self.assertEqual(str(var), '${foo:$[1+1]:$[2+2]}')
+
+    def test_sliced_function(self):
+        var = VarLoader().parse_variables(
+            '${CALLERID(num):0:-6}xxxxxx', DUMMY_WHERE)
+        self.assertEqual(str(var), '${CALLERID(num):0:-6}xxxxxx')

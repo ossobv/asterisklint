@@ -119,6 +119,7 @@ class FuncLoader(metaclass=Singleton):
         if tail:
             varname, start, length = VarLoader().split_variable_slice(
                 tail, where)
+
             if varname:
                 start = length = None
                 E_FUNC_TAIL(where, data=func_and_args)
@@ -321,7 +322,9 @@ class VarLoader(metaclass=Singleton):
             if isinstance(length, Var):
                 # We cannot determine anything more from this.
                 pass
-            elif length and length.isdigit():
+            elif (length and (
+                    length.isdigit() or
+                    (length[0] == '-' and length[1:].isdigit()))):
                 length = int(length)
                 # If we use an offset from the end, then it makes no
                 # sense to have a length that's as large or larger.
@@ -329,8 +332,8 @@ class VarLoader(metaclass=Singleton):
                     length = None
                     E_VAR_SUBSTR_LENGTH(where, length=length)
             else:
-                start = length = None
                 E_VAR_SUBSTR_LENGTH(where, length=length)
+                start = length = None
 
         # If start is 0 and there is no length, it makes no sense.
         if start == 0 and not length:
