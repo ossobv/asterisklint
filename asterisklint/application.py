@@ -170,8 +170,6 @@ class App(object):
         # SOURCE: pbx/pbx_config.c: pbx_load_config()
         if data.startswith('(') and data.endswith(')'):
             data = data[1:-1]
-        else:
-            W_APP_NEED_PARENS(self.where, app=app)
 
         # Set it and try to find a handler for it.
         self.app = app
