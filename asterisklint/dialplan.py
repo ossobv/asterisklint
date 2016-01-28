@@ -247,8 +247,9 @@ class DialplanContext(Context):
         if (extension.label and
                 any(True for i in extensions if i.label == extension.label)):
             previous = [i.where for i in extensions
-                        if i.label == extensions.label][0]
-            E_DP_LABEL_DUPE(extension.where, previous=previous)
+                        if i.label == extension.label][0]
+            E_DP_LABEL_DUPE(
+                extension.where, previous=previous, label=extension.label)
             extension.label = ''  # wipe it
 
         super(DialplanContext, self).add(extension)
