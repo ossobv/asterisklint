@@ -8,6 +8,7 @@ from collections import defaultdict
 from asterisklint import FileDialplanParser
 from asterisklint.application import E_APP_MISSING, AppLoader
 from asterisklint.defines import MessageDefManager
+from asterisklint.mainutil import UniqueStore, load_func_odbc_functions
 from asterisklint.varfun import E_FUNC_MISSING, FuncLoader
 
 
@@ -38,12 +39,19 @@ def main(args, envs):
     parser.add_argument(
         'dialplan', metavar='EXTENSIONS_CONF',
         help="path to extensions.conf")
+    parser.add_argument(
+        '--func-odbc', metavar='FUNC_ODBC_CONF', action=UniqueStore,
+        help="path to func_odbc.conf, will be read automatically if found "
+             "in same the same dir as extensions.conf; set empty to disable")
     args = parser.parse_args(args)
 
     # No messages to stderr, but do collect the E_APP_MISSING and
     # E_FUNC_MISSING errors.
     aggregator = Aggregator()
     MessageDefManager.muted = True
+
+    # Load func_odbc functions if requested.
+    load_func_odbc_functions(args.func_odbc, args.dialplan)
 
     parser = FileDialplanParser()
     parser.include(args.dialplan)

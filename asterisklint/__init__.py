@@ -2,6 +2,7 @@
 from .config import ConfigAggregator
 from .dialplan import DialplanAggregator
 from .file import FileReader
+from .func_odbc import FuncOdbcAggregator
 
 
 class FileConfigParser(ConfigAggregator, FileReader):
@@ -9,4 +10,8 @@ class FileConfigParser(ConfigAggregator, FileReader):
 
 
 class FileDialplanParser(DialplanAggregator, FileReader):
+    pass
+
+
+class FileFuncOdbcParser(FuncOdbcAggregator, FileReader):
     pass
