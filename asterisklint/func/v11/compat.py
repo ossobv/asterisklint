@@ -8,7 +8,9 @@ from ..vall.func_cdr import register as func_cdr_register
 from ..vall.func_channel import register as func_channel_register
 from ..vall.func_curl import register as func_curl_register
 from ..vall.func_cut import register as func_cut_register
+from ..vall.func_enum import register as func_enum_register
 from ..vall.func_env import register as func_env_register
+from ..vall.func_global import register as func_global_register
 from ..vall.func_groupcount import register as func_groupcount_register
 from ..vall.func_logic import register as func_logic_register
 from ..vall.func_math import register as func_math_register
@@ -27,7 +29,9 @@ def register(func_loader):
             func_channel_register,
             func_curl_register,
             func_cut_register,
+            func_enum_register,
             func_env_register,
+            func_global_register,
             func_groupcount_register,
             func_logic_register,
             func_math_register,
