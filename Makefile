@@ -25,9 +25,14 @@ test:
 	find . -name '*.py' | xargs -d\\n $(FLAKE8) || true; echo
 	$(PYTHON) -m asterisklint.alinttest discover --pattern='test_*.py'
 
+license_turds:
+	find . -name '*.py' -print0 | xargs -0 grep -L '^# Copyright (C)' | \
+	  while read f; do t=`mktemp`; \
+	  ( head -n15 setup.py; cat "$$f" ) > "$$t"; mv "$$t" "$$f"; done
+
 update_version:
 	echo '$(GIT_VERSION)' | grep -Fq '$(FILE_VERSION)'  # startswith..
 	sed -i -e "s/^version_str = .*/version_str = '$(FILE_VERSION)'/" \
 	  asterisklint/alintver.py
 
-.PHONY: FORCE default install test update_version
+.PHONY: FORCE default install test update_version license_turds
