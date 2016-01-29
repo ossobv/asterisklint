@@ -22,7 +22,9 @@ import sys
 from . import alintver
 
 
-COMMAND_RE = re.compile(r'^[a-z0-9_][a-z0-9_-]*$')
+# Don't allow leading underscores because then we'd find __init__ as
+# well.
+COMMAND_RE = re.compile(r'^[a-z0-9][a-z0-9_-]*$')
 
 
 class NoSuchCommand(ValueError):
