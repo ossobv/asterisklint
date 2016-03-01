@@ -21,7 +21,4 @@ class Read(AppBase):
 
 
 def register(app_loader):
-    for app in (
-            Read,
-            ):
-        app_loader.register(app())
+    app_loader.register(Read())
