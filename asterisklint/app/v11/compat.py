@@ -34,6 +34,7 @@ from ..vall.app_page import register as app_page_register
 from ..vall.app_playback import register as app_playback_register
 from ..vall.app_queue import register as app_queue_register
 from ..vall.app_read import register as app_read_register
+from ..vall.app_record import register as app_record_register
 from ..vall.app_sayunixtime import register as app_sayunixtime_register
 from ..vall.app_setcallerid import register as app_setcallerid_register
 from ..vall.app_stack import register as app_stack_register
@@ -70,6 +71,7 @@ def register(app_loader):
             app_playback_register,
             app_queue_register,
             app_read_register,
+            app_record_register,
             app_sayunixtime_register,
             app_setcallerid_register,
             app_stack_register,
