@@ -109,8 +109,10 @@ class ALintTestResult(TextTestResult):
         if hasattr(test, 'linted_counts'):
             for id_, count in test.linted_counts.items():
                 self.linted_counts[id_] += count
-        elif test.__class__.__name__ == 'ModuleImportFailure':
+        elif (test.__class__.__name__ == 'ModuleImportFailure' or
+              test.__class__.__name__ == '_FailedTest'):
             # Happens if we get module import errors during test load.
+            # (ModuleImportFailure on python 3.4, _FailedTest on 3.5.)
             pass
         else:
             # Otherwise, this is probably a test, and that means that
