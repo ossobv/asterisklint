@@ -178,6 +178,26 @@ class Var(object):
 
         return split_up
 
+    def strip(self):
+        if self.name:
+            return self  # no (deep)copy?
+
+        new_list = self._list[:]
+        if isinstance(new_list[0], str) and new_list[0].strip() == '':
+            new_list = new_list[1:]
+        if (new_list and isinstance(new_list[-1], str) and
+                new_list[-1].strip() == ''):
+            new_list = new_list[0:-1]
+
+        if len(new_list) == len(self._list):
+            return self  # no (deep)copy?
+        if len(new_list) == 1:
+            return new_list[0]
+
+        v = Var()
+        v._list = new_list  # no deepcopy..
+        return v
+
 
 class SliceMixin(object):
     def __init__(self, *args, start=None, length=None, **kwargs):

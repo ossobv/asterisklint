@@ -38,6 +38,13 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_APP_ARG_DUPEOPT(ErrorDef):
         message = 'duplicate options {opts!r} in arg {argno} for app {app!r}'
 
+    class E_APP_ARG_IFCONST(ErrorDef):
+        message = ("apparent constant in If-condition; app {app!r}, "
+                   "data '{data}' and cond '{cond}'")
+
+    class E_APP_ARG_IFEMPTY(ErrorDef):
+        message = "empty If-condition; app {app!r}, data '{data}'"
+
     class E_APP_ARG_IFSTYLE(ErrorDef):
         message = ("{app!r} takes the form <cond>?<iftrue>[:<iffalse>] "
                    "but data is '{data}', cond '{cond}', args '''{args}'''")
@@ -45,6 +52,10 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_APP_ARG_PIPEDELIM(ErrorDef):
         message = ('the application delimiter is now the comma, not '
                    'the pipe; see app {app!r} and data {data!r}')
+
+    class E_APP_ARG_SYNTAX(ErrorDef):
+        message = ('generic application syntax error; app {app!r} and '
+                   'data {data!r}')
 
 
 class AppArg(object):
@@ -307,30 +318,65 @@ class IfStyleApp(DelimitedArgsMixin, AppBase):
 
     def split_args(self, data, where):
         args = super().split_args(data, where)
-        if len(args) == 1:
+
+        if len(args) >= 2:
+            if len(args) > 2:
+                # This is no good either, with too many results.
+                E_APP_ARG_MANY(where, app=self.name, data=data, max_args=2)
+
+            # BEWARE: GosubIf and ExecIf use this method, while GotoIf
+            # uses a simpler split. In the majority of cases the result
+            # would be the same (barring crazy backslash usage).
+            cond = args[0]
+            actions = self.separate_args(
+                args[1], delimiter=':', remove_quotes_backslashes=False)
+            if len(actions) == 1:
+                iftrue, iffalse = actions[0], None
+            else:
+                # We simply drop excess args here.
+                assert len(actions) >= 2, actions
+                iftrue, iffalse = actions[0], actions[1]
+
+        else:
+            assert len(args) == 1, args
+
             # Attempt to separate the arguments the old fashioned way.
             args = self.separate_args(
                 data, ',', remove_quotes_backslashes=False)
-            E_APP_ARG_IFSTYLE(where, app=self.name, data=data, cond=args[0],
-                              args=args[1:])
-            return args[0], args[1:], None
-        elif len(args) > 2:
-            # This is no good either, with too many results.
-            E_APP_ARG_IFSTYLE(where, app=self.name, data=data, cond=args[0],
-                              args=args[1:])
-            return args
+            cond = args[0]
+            iftrue = args[1:]
+            if len(iftrue):
+                E_APP_ARG_IFSTYLE(where, app=self.name, data=data,
+                                  cond=args[0], args=args[1:])
+            else:
+                E_APP_ARG_FEW(where, app=self.name, data=data, min_args=2)
 
-        # BEWARE: GosubIf and ExecIf use this method, while GotoIf
-        # uses a simpler split. In the majority of cases the result
-        # would be the same (barring crazy backslash usage).
-        cond = args[0]
-        actions = self.separate_args(
-            args[1], delimiter=':', remove_quotes_backslashes=False)
-        if len(actions) == 1:
-            iftrue, iffalse = actions[0], None
-        elif len(actions) == 2:
-            iftrue, iffalse = actions[0], actions[1]
-        else:
-            return None
+            # Observe that iftrue is already split this time.
+            cond, iftrue, iffalse = args[0], args[1:], None
+
+        # Trim space from the sides of cond.
+        cond = cond.strip()
+        if cond == '':
+            E_APP_ARG_IFEMPTY(where, app=self.name, data=data)
+
+        return cond, iftrue, iffalse
+
+
+class VarCondIfStyleApp(IfStyleApp):
+    """
+    Like IfStyleApp it takes the form <cond>?<iftrue>:<iffalse>, but
+    the condition cannot contain constants.
+
+    Use this for GotoIf/ExecIf.
+    """
+    def split_args(self, data, where):
+        cond, iftrue, iffalse = super().split_args(data, where)
+
+        # Check whether cond is a constant.
+        if (cond != '' and  # already checked with E_APP_ARG_IFEMPTY
+                (isinstance(cond, str) or
+                 any(isinstance(i, str) for i in cond))):
+            E_APP_ARG_IFCONST(where, app=self.name, data=data,
+                              cond=cond)
 
         return cond, iftrue, iffalse

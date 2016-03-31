@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ..base import AppBase, IfStyleApp
+from ..base import AppBase, VarCondIfStyleApp
 
 # In the following commit -- between Asterisk 1.4 and Asterisk 1.6.x --
 # not only did the default App argument delimiter change from pipe (|)
@@ -40,7 +40,7 @@ class Exec(AppBase):
     pass
 
 
-class ExecIf(IfStyleApp):
+class ExecIf(VarCondIfStyleApp):
     pass
 
 

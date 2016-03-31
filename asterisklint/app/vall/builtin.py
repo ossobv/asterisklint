@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ..base import AppBase, IfStyleApp
+from ..base import AppBase, IfStyleApp, VarCondIfStyleApp
 
 
 class _Builtin(object):
@@ -48,7 +48,7 @@ class Goto(BuiltinAppBase):
     pass
 
 
-class GotoIf(_Builtin, IfStyleApp):
+class GotoIf(_Builtin, VarCondIfStyleApp):
     pass
 
 
