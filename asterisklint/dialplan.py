@@ -173,6 +173,7 @@ class DialplanContext(Context):
         super().__init__(*args, **kwargs)
         self.includes = []
         self.context_last_prio = None
+        self.pattern_cache = {}
 
     def update(self, othercontext):
         assert not othercontext.includes
@@ -248,23 +249,39 @@ class DialplanContext(Context):
         self.dialplan.last_prio = extension.prio
         self.context_last_prio = extension.prio
 
-        # Check duplicate priorities.
-        extensions = [i for i in self if i.pattern == extension.pattern]
-        if any(i.prio == extension.prio for i in extensions):
-            previous = [i.where for i in extensions
-                        if i.prio == extension.prio][0]
-            E_DP_PRIO_DUPE(
-                extension.where, previous=previous, prio=extension.prio)
-            return
+        # Check pattern cache for duplicates.
+        canonical_pattern = extension.pattern.canonical_pattern
+        try:
+            pattern_cache = self.pattern_cache[canonical_pattern]
+        except KeyError:
+            pattern_cache = {
+                'labels': {},
+                'prios': {extension.prio: extension},
+            }
+            if extension.label:
+                pattern_cache['labels'] = {extension.label: extension}
+            self.pattern_cache[canonical_pattern] = pattern_cache
+        else:
+            # Check duplicate priorities.
+            previous_with_prio = pattern_cache['prios'].get(extension.prio)
+            if previous_with_prio:
+                E_DP_PRIO_DUPE(
+                    extension.where, previous=previous_with_prio,
+                    prio=extension.prio)
+                return  # don't insert this one
+            pattern_cache['prios'][extension.prio] = extension
 
-        # Check duplicate labels.
-        if (extension.label and
-                any(True for i in extensions if i.label == extension.label)):
-            previous = [i.where for i in extensions
-                        if i.label == extension.label][0]
-            E_DP_LABEL_DUPE(
-                extension.where, previous=previous, label=extension.label)
-            extension.label = ''  # wipe it
+            # Check duplicate labels.
+            if extension.label:
+                previous_with_label = pattern_cache['labels'].get(
+                    extension.label)
+                if previous_with_label:
+                    E_DP_LABEL_DUPE(
+                        extension.where, previous=previous_with_label,
+                        label=extension.label)
+                    extension.label = ''  # wipe it
+                else:
+                    pattern_cache['labels'][extension.label] = extension
 
         super(DialplanContext, self).add(extension)
 
