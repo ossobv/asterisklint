@@ -18,6 +18,7 @@ from .config import ConfigAggregator, Context, Varset
 from .config import E_CONF_CTX_MISSING, E_CONF_KEY_INVALID, W_CONF_CTX_DUPE
 from .defines import ErrorDef, WarningDef, HintDef, DupeDefMixin
 from .pattern import H_PAT_NON_CANONICAL, Pattern
+from .varfun import Var
 from .where import Where
 
 
@@ -66,6 +67,21 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_DP_PRIO_BAD(ErrorDef):
         message = 'cannot match priority for pattern {pat!r}'
 
+    class E_DP_GOTO_CONTEXT_NOLABEL(ErrorDef):
+        message = ('label not found in context for goto to {context}, '
+                   '{exten}, {label}')
+
+    class E_DP_GOTO_NOCONTEXT(ErrorDef):
+        message = 'context not found for goto to {context}, {exten}, {prio}'
+
+    class E_DP_GOTO_NOLABEL(ErrorDef):
+        message = ('label not found anywhere for goto to {context}, '
+                   '{exten}, {label}')
+
+    class W_DP_GOTO_CONTEXT_NOEXTEN(WarningDef):
+        message = ('possibly non-existent extension/pattern for goto to '
+                   '{context}, {exten}, {prio}')
+
     class W_DP_PRIO_BADORDER(WarningDef):
         message = 'bad priority order for pattern {pat!r} and prio {prio}'
 
@@ -75,13 +91,20 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class H_DP_GLOBALS_MISPLACED(HintDef):
         message = '[globals] context not found or not at position two'
 
+    class H_DP_GOTO_CONTEXT_VARPRIO(HintDef):
+        message = ('possibly non-existent label/prio for goto to '
+                   '{context}, {exten}, {prio}')
+
 
 class Dialplan(object):
     def __init__(self):
         self._general = None
         self._globals = None
         self.contexts = []
+        self.contexts_by_name = {}
         self.last_prio = None  # used by the DialplanContext
+        self.jump_destinations = []
+        self.all_labels = set()  # used when checking jump_destinations
 
     @property
     def general(self):
@@ -114,6 +137,66 @@ class Dialplan(object):
             if not self._general or self.contexts:
                 H_DP_GLOBALS_MISPLACED(globals_.where)
             self._globals = globals_
+
+    def has_label(self, label):
+        return (label in self.all_labels)
+
+    def get_context(self, name):
+        return self.contexts_by_name[name]
+
+    def add_jump_destination(self, context, extension, priority, where):
+        self.jump_destinations.append((context, extension, priority, where))
+
+    def walk_jump_destinations(self):
+        """
+        When the entire dialplan has loaded we can walk over all Goto
+        destinations and check for their existence.
+        """
+        valid_destinations = []
+
+        for context, extension, priority, where in self.jump_destinations:
+            if isinstance(context, Var):
+                # We won't look up the context if it's build up from a
+                # variable. We can however proceed and check whether
+                # the label exists.
+                if isinstance(priority, str):
+                    if not self.has_label(priority):
+                        E_DP_GOTO_NOLABEL(
+                            where, context=context, exten=extension,
+                            label=priority)
+            else:
+                try:
+                    found_context = self.get_context(context)
+                except KeyError:
+                    E_DP_GOTO_NOCONTEXT(
+                        where, context=context, exten=extension, prio=priority)
+                else:
+                    if isinstance(extension, Var):
+                        # We don't look up the extension if it's a
+                        # variable (other than EXTEN, which we patched
+                        # in before we got here). We can look up the label.
+                        if isinstance(priority, str):
+                            if not found_context.has_label(priority):
+                                E_DP_GOTO_CONTEXT_NOLABEL(
+                                    where, context=context, exten=extension,
+                                    label=priority)
+                    else:
+                        found_extension = found_context.match_pattern(
+                            extension, priority)
+                        if found_extension:
+                            valid_destinations.append(found_extension)
+                        elif found_extension == ():
+                            # Special case of $VAR priority but valid
+                            # context+exten. We may choose to accept
+                            # this as valid.
+                            H_DP_GOTO_CONTEXT_VARPRIO(
+                                where, context=context, exten=extension,
+                                prio=priority)
+                        else:
+                            # Exten with prio not found.
+                            W_DP_GOTO_CONTEXT_NOEXTEN(
+                                where, context=context, exten=extension,
+                                prio=priority)
 
     def get_where(self):
         where = None
@@ -191,6 +274,65 @@ class DialplanContext(Context):
             ret.extend(i for i in self if i.pattern == pattern)
         return ret
 
+    def has_label(self, label):
+        """
+        Check whether the label is used anywhere in this context.
+        """
+        return any(label in i['labels'] for i in self.pattern_cache.values())
+
+    def match_pattern(self, extension, priority):
+        """
+        Find the best matching extension for the priority.
+        """
+        # FIXME: We should sort once, not always...
+        # Sorted patterns.
+        patterns = sorted(list(set(i.pattern for i in self)))
+        # Matching patterns only.
+        for pattern in patterns:
+            if pattern.matches_extension(extension):
+                extens = [i for i in self if i.pattern == pattern]
+                for exten in extens:
+                    if isinstance(priority, int):
+                        if exten.prio == priority:
+                            return exten
+                    elif isinstance(priority, str):
+                        if exten.label == priority:
+                            return exten
+                    else:
+                        # Here we *do* know that the pattern is found:
+                        # better than nothing...
+                        return ()  # special False value
+
+        # Nothing? Try our includes, but only for integral priorities.
+        if isinstance(priority, int):
+            for include in self.includes:
+                context = self.dialplan.get_context(include.context_name)
+                ret = context.match_pattern(extension, priority)
+                if ret:
+                    return ret
+
+        # > If the location that is put into the channel
+        # > information is bogus, and asterisk cannot find that
+        # > location in the dialplan, then the execution engine
+        # > will try to find and execute the code in the
+        # > 'i' (invalid) extension in the current context.
+        # ...
+        # > What this means is that, for example, you specify a
+        # > context that does not exist, then it will not be
+        # > possible to find the 'h' or 'i' extensions, and the
+        # > call will terminate!
+        #
+        # So, for this context, we can look into 'i' extensions,
+        # but we shouldn't look for any if a non-existing context
+        # was addressed.
+        if extension != 'i':
+            # There is no clemency for non-existent labels, only for
+            # non-existent priorities.
+            if isinstance(priority, int):
+                return self.match_pattern('i', 1)
+
+        return None
+
     def add(self, extension):
         # - If extension.pattern is None ("same") then take previous.
         #   Error if there is none.
@@ -260,6 +402,7 @@ class DialplanContext(Context):
             }
             if extension.label:
                 pattern_cache['labels'] = {extension.label: extension}
+                self.dialplan.all_labels.add(extension.label)
             self.pattern_cache[canonical_pattern] = pattern_cache
         else:
             # Check duplicate priorities.
@@ -282,6 +425,26 @@ class DialplanContext(Context):
                     extension.label = ''  # wipe it
                 else:
                     pattern_cache['labels'][extension.label] = extension
+                    self.dialplan.all_labels.add(extension.label)
+
+        # The app may have collected Goto-destinations for us. We must
+        # add missing pieces and forward it to a central collector.
+        for (g_context, g_exten, g_prio
+             ) in extension.app.jump_destinations:
+            if not g_context:
+                g_context = self.name
+            if not g_exten:
+                g_exten = extension.pattern.example
+            elif isinstance(g_exten, Var):
+                try:
+                    g_exten = g_exten.format(EXTEN=extension.pattern.example)
+                except KeyError:
+                    # Never mind.
+                    pass
+            if isinstance(g_prio, str) and g_prio.isdigit():
+                g_prio = int(g_prio)
+            self.dialplan.add_jump_destination(
+                g_context, g_exten, g_prio, extension.where)
 
         super(DialplanContext, self).add(extension)
 
@@ -440,6 +603,8 @@ class DialplanAggregator(ConfigAggregator):
         else:
             self._prevcontexts[dialplancontext.name] = dialplancontext
             self._dialplan.contexts.append(dialplancontext)
+            self._dialplan.contexts_by_name[dialplancontext.name] = (
+                dialplancontext)
             self._curcontext = dialplancontext
 
     def on_dialplanvarset(self, dialplanvarset):

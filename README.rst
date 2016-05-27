@@ -120,7 +120,12 @@ TODO
 * Expression parsing.
 * Function argument parsing.
 * Recursive includes probably make asterisklint run out of stack.
-* Goto/Gosub-visiting to check for missing contexts/destinations/prios/labels.
+* For the Goto/Gosub-visiting:
+  - Attempt to match contexts by regex if there are $VARs involved?
+  - Attempt to match labels if there are VARs.
+  - Allow a "noqa" style exception to be placed in a comment?
+  - Parse/strip the Gosub-args.
+* Remove python2-style super() calls.
 * Add ``app-check`` command to do dialplan checks of individual lines.
 * Add ``expr-check`` command to do expression (``$[...]``) checks.
 * Allow multiline variables using += (key=val; key+=more-val).

@@ -86,14 +86,14 @@ class Pattern(object):
         # pattern) and the second value is a single integral value as
         # mentioned in the pattern value-list above.
         #
-        # 100     = (0, 0x31, 0x030, 0x30, 0x30000)
-        # _20     = (1, 0x32, 0x031, 0x30000)
-        # _2[0-2] = (1, 0x32, 0x330, 0x30000)
+        # 100     = (0, 0x131, 0x130, 0x130, 0x30000)
+        # _20     = (1, 0x132, 0x131, 0x30000)
+        # _2[0-2] = (1, 0x132, 0x330, 0x30000)
         #
         # Unless the pattern has gaps, in which case we store it as a
         # tuple instead.
         #
-        # _2[013] = (1, (0x32,), (0x330, b'013'), (0x4000,))
+        # _2[013] = (1, (0x132,), (0x330, b'013'), (0x30000,))
         #
         # This would require us to marshal patterns to the same type
         # before comparing the values. And that complicates things.
@@ -323,6 +323,60 @@ class Pattern(object):
                 0x61 <= range_[0] <= 0x7a):
             return range_[0]
         return range_[0] + 0x100
+
+    @property
+    def example(self):
+        """
+        Generate an example value that matches pattern.
+        """
+        ret = []
+        if self.values[0] == Pattern.NOT_A_PATTERN:
+            for value in self.values[1:]:
+                assert len(value) == 1, self.values
+                ret.append(chr(value[0] & 0xff))
+        elif self.values[0] == Pattern.IS_A_PATTERN:
+            for value in self.values[1:]:
+                if value[0] == 0x18000:
+                    ret.append('0-123456789-333')  # 1+ chars
+                elif value[0] == 0x28000:
+                    ret.append('-123456789-333')  # 0+ chars
+                elif value[0] == 0x30000:
+                    pass  # ignore
+                else:
+                    ret.append(chr(value[0] & 0xff))
+        else:
+            assert False, self.values  # what pattern?
+
+#        print(self.raw, ' => ', ret, ' <-- HIER')
+        return ''.join(ret)
+
+    def matches_extension(self, extension):
+        """
+        Check if the extension matches this pattern.
+        """
+        for i, char in enumerate(extension.encode('latin1')):
+            try:
+                value = self.values[i + 1]
+            except IndexError:
+                return False  # extension is longer than pattern
+
+            if value[0] in (0x18000, 0x28000, 0x30000):
+                return True
+            elif len(value) == 2:
+                if char not in value[1]:
+                    return False
+            else:
+                rangelen = (value[0] >> 8) & 0xff
+                rangestart = value[0] & 0xff
+                if not (rangestart <= char < rangestart + rangelen):
+                    return False
+
+        # No more characters, but perhaps the pattern is not done yet.
+        try:
+            value = self.values[i + 2]
+        except IndexError:
+            return True
+        return value[0] in (0x28000, 0x30000)
 
     def matches_same(self, other):
         """

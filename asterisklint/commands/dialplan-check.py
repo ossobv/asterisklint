@@ -45,6 +45,7 @@ def main(args, envs):
     parser = FileDialplanParser()
     parser.include(args.dialplan)
     dialplan = next(iter(parser))
+    dialplan.walk_jump_destinations()
     del dialplan
 
     # MessageDefManager.raised is a dict of messages ordered by message

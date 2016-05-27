@@ -94,7 +94,11 @@ class AppBase(object):
     def module(self):
         return self.__module__.rsplit('.', 1)[-1]
 
-    def __call__(self, data, where):
+    def __call__(self, data, where, jump_destinations):
+        """
+        Subclasses may implement something that populates
+        jump_destinations.
+        """
         try:
             self.check_balance(data)
         except ValueError:
@@ -238,7 +242,7 @@ class DelimitedArgsMixin(object):
             data, delimiter=self._arg_delimiter,
             remove_quotes_backslashes=self._arg_raw)
 
-    def __call__(self, data, where):
+    def __call__(self, data, where, jump_destinations):
         return self.split_args(data, where)
 
 

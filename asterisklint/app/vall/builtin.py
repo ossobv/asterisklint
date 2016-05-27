@@ -13,7 +13,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ..base import AppBase, IfStyleApp, VarCondIfStyleApp
+from ..base import (
+    AppBase, DelimitedArgsMixin, IfStyleApp, MinMaxArgsMixin,
+    NoPipeDelimiterMixin, VarCondIfStyleApp)
 
 
 class _Builtin(object):
@@ -44,12 +46,37 @@ class Congestion(BuiltinAppBase):
     pass
 
 
-class Goto(BuiltinAppBase):
-    pass
+class Goto(_Builtin, NoPipeDelimiterMixin, MinMaxArgsMixin, DelimitedArgsMixin,
+           AppBase):
+    def __init__(self, **kwargs):
+        super().__init__(min_args=1, max_args=3, **kwargs)
+
+    def __call__(self, data, where, jump_destinations):
+        args = super().__call__(data, where, jump_destinations)
+
+        jumpdest = args[:]
+        while len(jumpdest) != 3:
+            jumpdest.insert(0, None)
+        assert len(jumpdest) == 3
+        jump_destinations.append(tuple(jumpdest))
+
+        return args
 
 
 class GotoIf(_Builtin, VarCondIfStyleApp):
-    pass
+    def __call__(self, data, where, jump_destinations):
+        cond, iftrue, iffalse = super().__call__(
+            data, where, jump_destinations)
+
+        for args in (iftrue, iffalse):
+            if args:
+                jumpdest = self.separate_args(args)
+                while len(jumpdest) != 3:
+                    jumpdest.insert(0, None)
+                assert len(jumpdest) == 3
+                jump_destinations.append(tuple(jumpdest))
+
+        return cond, iftrue, iffalse
 
 
 class GotoIfTime(_Builtin, IfStyleApp):

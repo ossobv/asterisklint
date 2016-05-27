@@ -114,6 +114,7 @@ class App(object):
     def __init__(self, app, where):
         self.raw = app
         self.where = where
+        self.jump_destinations = []  # [(context, exten, prio)]
 
         # Attempt to parse the app + data.
         self.parse()
@@ -148,7 +149,8 @@ class App(object):
                 W_APP_BAD_CASE(self.where, app=self.app, proper=app.name)
 
         # Run data through app.
-        app(self.data, where=self.where)
+        app(self.data, where=self.where,
+            jump_destinations=self.jump_destinations)
 
     def parse_inner(self, data):
         """

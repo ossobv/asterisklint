@@ -148,8 +148,8 @@ class Var(object):
         if token != ':':
             raise TypeError('expected split on colon, got {!r}'.format(token))
 
-        assert not self.name
-        assert len(self._list) >= 2
+        assert not self.name, self.name
+        assert len(self._list) >= 2, self._list
         ret = self._list[0].split(token)
         assert len(ret) > 1, ret
 
