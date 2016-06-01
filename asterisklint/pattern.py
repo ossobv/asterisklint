@@ -347,14 +347,13 @@ class Pattern(object):
         else:
             assert False, self.values  # what pattern?
 
-#        print(self.raw, ' => ', ret, ' <-- HIER')
         return ''.join(ret)
 
     def matches_extension(self, extension):
         """
         Check if the extension matches this pattern.
         """
-        for i, char in enumerate(extension.encode('latin1')):
+        for i, char in enumerate(extension.replace('-', '').encode('latin1')):
             try:
                 value = self.values[i + 1]
             except IndexError:
