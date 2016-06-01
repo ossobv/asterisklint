@@ -95,7 +95,8 @@ class AppBaseCallTest(ALintTestCase):
         where = DUMMY_WHERE
         app = appclass()
         var = VarLoader().parse_variables(data, where)
-        app(var, where)
+        ignored = []
+        app(var, jump_destinations=ignored, where=where)
 
     def test_abcdefghi(self):
         self.call_app(AppBase, 'abc,def,ghi')

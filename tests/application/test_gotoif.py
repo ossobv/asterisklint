@@ -23,7 +23,8 @@ class GotoIfArgsTest(ALintTestCase):
     def funcarg(self, arg):
         func = GotoIf()
         parsed = VarLoader().parse_variables(arg, DUMMY_WHERE)
-        func(parsed, DUMMY_WHERE)
+        ignored = []
+        func(parsed, jump_destinations=ignored, where=DUMMY_WHERE)
 
     def test_proper_goto(self):
         self.funcarg('$["${foo}"="1"]?new_context,${EXTEN},1')
