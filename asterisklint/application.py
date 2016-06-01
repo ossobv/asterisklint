@@ -32,7 +32,7 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
         message = 'app {app!r} arguments {args!r} raise a parse error'
 
     class W_APP_BALANCE(WarningDef):
-        message = ('app data {data!r} looks like unbalanced'
+        message = ('app data {data!r} looks like unbalanced '
                    'parentheses/quotes/curlies')
 
     class W_APP_BAD_CASE(WarningDef):

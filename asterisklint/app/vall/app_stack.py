@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from ...application import W_APP_BALANCE
 from ..base import (
     AppBase, DelimitedArgsMixin, MinMaxArgsMixin, NoPipeDelimiterMixin,
     VarCondIfStyleApp)
@@ -20,6 +21,25 @@ from ..base import (
 
 class Gosub(NoPipeDelimiterMixin, MinMaxArgsMixin, DelimitedArgsMixin,
             AppBase):
+    @classmethod
+    def split_gosub_prio_args(self, prio, where):
+        """
+        Split off the (<args>) from from <prio>(<args>).
+        """
+        args = None
+        for i, token in enumerate(prio):
+            if token == '(':
+                if prio[-1] != ')':
+                    W_APP_BALANCE(where, data=prio)
+                    args = prio[(i + 1):]
+                else:
+                    args = prio[(i + 1):-1]
+                prio = prio[0:i]
+                break
+
+        # FYI: The args are parsed by Asterisk using AST_STANDARD_RAW_ARGS.
+        return prio, args
+
     def __init__(self, **kwargs):
         super().__init__(min_args=1, max_args=3, **kwargs)
 
@@ -30,6 +50,8 @@ class Gosub(NoPipeDelimiterMixin, MinMaxArgsMixin, DelimitedArgsMixin,
         while len(jumpdest) != 3:
             jumpdest.insert(0, None)
         assert len(jumpdest) == 3
+        # Quickly drop the Gosub-ARGn for now.
+        jumpdest[2] = Gosub.split_gosub_prio_args(jumpdest[2], where)[0]
         jump_destinations.append(tuple(jumpdest))
 
         return args
@@ -46,6 +68,9 @@ class GosubIf(VarCondIfStyleApp):
                 while len(jumpdest) != 3:
                     jumpdest.insert(0, None)
                 assert len(jumpdest) == 3
+                # Quickly drop the Gosub-ARGn for now.
+                jumpdest[2] = Gosub.split_gosub_prio_args(
+                    jumpdest[2], where)[0]
                 jump_destinations.append(tuple(jumpdest))
 
         return cond, iftrue, iffalse
