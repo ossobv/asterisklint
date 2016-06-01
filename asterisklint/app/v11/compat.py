@@ -16,6 +16,7 @@
 from ..vall.builtin import register as builtin_register
 from ..vall.unknown import register as unknown_register
 
+from ..vall.app_cdr import register as app_cdr_register
 from ..vall.app_celgenuserevent import register as app_celgenuserevent_register
 from ..vall.app_chanisavail import register as app_chanisavail_register
 from ..vall.app_channelredirect import register as app_channelredirect_register
@@ -53,6 +54,7 @@ def register(app_loader):
     for regfunc in (
             builtin_register,
             unknown_register,
+            app_cdr_register,
             app_celgenuserevent_register,
             app_chanisavail_register,
             app_channelredirect_register,
