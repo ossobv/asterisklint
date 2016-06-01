@@ -23,12 +23,15 @@ changing the pattern from the current form to the expected form.
 from collections import defaultdict, namedtuple
 import os
 import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from asterisklint import FileDialplanParser
-from asterisklint.defines import MessageDefManager
-from asterisklint.helper.mutator import FileMutatorBase
-from asterisklint.pattern import H_PAT_NON_CANONICAL
+if True:
+    # Indented to flake8-ignore E402 (module level import not at top).
+    sys.path.insert(
+        0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from asterisklint import FileDialplanParser
+    from asterisklint.defines import MessageDefManager
+    from asterisklint.helper.mutator import FileMutatorBase
+    from asterisklint.pattern import H_PAT_NON_CANONICAL
 
 
 Replacement = namedtuple('Replacement', 'lineno needle replacement')

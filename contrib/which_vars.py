@@ -19,10 +19,13 @@ Show which variables are used by the dialplan.
 """
 import os
 import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from asterisklint import FileDialplanParser
-from asterisklint.varfun import VarLoader
+if True:
+    # Indented to flake8-ignore E402 (module level import not at top).
+    sys.path.insert(
+        0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from asterisklint import FileDialplanParser
+    from asterisklint.varfun import VarLoader
 
 
 loader = VarLoader()
