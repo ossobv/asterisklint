@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Report similarly named variables. Takes 'extensions.conf' as argument.
-All parse errors are suppressed.
+Report similarly named contexts, labels and variables. Takes
+'extensions.conf' as argument. All parse errors are suppressed.
 """
 import argparse
 
@@ -30,15 +30,14 @@ except ImportError:
 
 
 def main(args, envs):
-    # TODO: We'd like to report similarly named contexts and labels too.
     parser = argparse.ArgumentParser(
         description=(
-            'Report similarly named variables. '
+            'Report similarly named contexts, labels and variables. '
             'All parse errors are suppressed. Returns 1 if any potential '
             'issue was reported.'))
     parser.add_argument(
         '-v', '--verbose', action='store_true',
-        help='show a listing of variables encountered')
+        help='list all identifiers first before reporting similarities')
     parser.add_argument(
         'extensions', metavar='EXTENSIONS_CONF',
         help='path to extensions.conf')
@@ -50,15 +49,26 @@ def main(args, envs):
     parser = FileDialplanParser()
     parser.include(args.extensions)
     dialplan = next(iter(parser))
-    del dialplan
 
+    contexts_by_name = list(sorted(
+        (context.name for context in dialplan.contexts),
+        key=(lambda x: x.lower())))
+    # TODO: dialplan.all_labels is not a public interface..
+    labels_by_name = list(sorted(
+        dialplan.all_labels, key=(lambda x: x.lower())))
     # TODO: loader._variables is *not* a public interface..
     varlist_by_name = list(sorted(
         loader._variables.items(), key=(lambda x: x[0].lower())))
-    varlist_by_len = list(sorted(
-        varlist_by_name, key=(lambda x: (len(x[0]), x[0].lower()))))
 
     if args.verbose:
+        print('Contexts encountered:')
+        for context in contexts_by_name:
+            print('  {}'.format(context))
+        print()
+        print('Labels encountered:')
+        for label in labels_by_name:
+            print('  {}'.format(label))
+        print()
         print('Variables encountered:')
         for variable, occurrences in varlist_by_name:
             print('  {:32}  [{} times in {} files]'.format(
@@ -66,32 +76,40 @@ def main(args, envs):
                 len(set(i.filename for i in occurrences))))
         print()
 
-    # Levenshtein distance.
+    # Calculate Levenshtein distance.
     if editdistance:
+        identifiers = (
+            contexts_by_name +
+            labels_by_name +
+            [i[0] for i in varlist_by_name])
+        id_by_name = sorted(identifiers, key=(lambda x: x.lower()))
+        id_by_len = sorted(identifiers, key=(lambda x: (len(x), x.lower())))
+
         similar = set()
-        for list_of_variables in (varlist_by_name, varlist_by_len):
+
+        for id_list in (id_by_name, id_by_len):
             prev = None
-            for variable, occurrences in list_of_variables:
+            for cur in id_list:
                 if prev:
-                    lodiff = editdistance.eval(prev.lower(), variable.lower())
+                    lodiff = editdistance.eval(prev.lower(), cur.lower())
                     if (lodiff == 0 and (
-                                (prev.isupper() and variable.islower()) or
-                                (prev.islower() and variable.isupper()))):
+                            (prev.isupper() and cur.islower()) or
+                            (prev.islower() and cur.isupper()))):
                         pass
-                    elif (prev.startswith('ARG') and variable.startswith('ARG') and
-                            prev[3:].isdigit() and variable[3:].isdigit()):
+                    elif (prev.startswith('ARG') and cur.startswith('ARG') and
+                            prev[3:].isdigit() and cur[3:].isdigit()):
                         # ARG1..n as passed to a Gosub() routine.
                         pass
                     elif (lodiff <= 2 and lodiff < len(prev) and
-                            lodiff < len(variable)):
+                            lodiff < len(cur)):
                         similar.add(prev)
-                        similar.add(variable)
-                prev = variable
+                        similar.add(cur)
+                prev = cur
 
         if similar:
-            print('Variables with similar names include:')
-            for variable in sorted(similar, key=(lambda x: x.lower())):
-                print('  {}'.format(variable))
+            print('Identifiers with similar names include:')
+            for identifier in sorted(similar, key=(lambda x: x.lower())):
+                print('  {}'.format(identifier))
             print()
             return 1
 
