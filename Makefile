@@ -7,7 +7,7 @@ Makefile.version: FORCE
 	@echo "FILE_VERSION = `sed -e 's/ .*//;1q' CHANGES.rst`" \
 	  > Makefile.version.tmp
 	@echo "GIT_VERSION = `git describe --tags --match \
-	  'v[0-9]*' --abbrev=4 HEAD 2>/dev/null | sed -e s/^v//`" \
+	  'v[0-9]*' --abbrev=4 HEAD 2>/dev/null | sed -e 's/^v//;s/-/+/'`" \
 	  >> Makefile.version.tmp
 	@cmp Makefile.version Makefile.version.tmp >/dev/null || \
 	  mv Makefile.version.tmp Makefile.version
