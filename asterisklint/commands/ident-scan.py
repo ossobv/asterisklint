@@ -18,6 +18,7 @@ Report similarly named contexts, labels and variables. Takes
 'extensions.conf' as argument. All parse errors are suppressed.
 """
 import argparse
+from collections import defaultdict
 
 from asterisklint import FileDialplanParser
 from asterisklint.defines import MessageDefManager
@@ -78,15 +79,14 @@ def main(args, envs):
 
     # Calculate Levenshtein distance.
     if editdistance:
-        identifiers = (
-            contexts_by_name +
-            labels_by_name +
-            [i[0] for i in varlist_by_name])
+        identifiers = set()
+        identifiers.update(contexts_by_name)
+        identifiers.update(labels_by_name)
+        identifiers.update([i[0] for i in varlist_by_name])
         id_by_name = sorted(identifiers, key=(lambda x: x.lower()))
         id_by_len = sorted(identifiers, key=(lambda x: (len(x), x.lower())))
 
-        similar = set()
-
+        similar = defaultdict(set)
         for id_list in (id_by_name, id_by_len):
             prev = None
             for cur in id_list:
@@ -100,16 +100,19 @@ def main(args, envs):
                             prev[3:].isdigit() and cur[3:].isdigit()):
                         # ARG1..n as passed to a Gosub() routine.
                         pass
-                    elif (lodiff <= 2 and lodiff < len(prev) and
-                            lodiff < len(cur)):
-                        similar.add(prev)
-                        similar.add(cur)
+                    elif (lodiff <= 2 and (lodiff + 1) < len(prev) and
+                            (lodiff + 1) < len(cur)):
+                        similar[prev].add(cur)
+                        similar[cur].add(prev)
                 prev = cur
 
         if similar:
             print('Identifiers with similar names include:')
-            for identifier in sorted(similar, key=(lambda x: x.lower())):
-                print('  {}'.format(identifier))
+            for identifier in sorted(
+                    similar.keys(), key=(lambda x: x.lower())):
+                similar_to = ', '.join(sorted(similar[identifier]))
+                print('  {:32}  [similar to: {}]'.format(
+                    identifier, similar_to))
             print()
             return 1
 
