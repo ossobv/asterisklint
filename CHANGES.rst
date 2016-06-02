@@ -1,3 +1,16 @@
+0.3.0 (2016-06-02)
+~~~~~~~~~~~~~~~~~~
+
+* Add preliminary Goto/Gosub scanning: the dialplan-check now tries to
+  find non-existent goto destinations.
+* Add new command: ident-scan. It lists used contexts, labels and
+  variables and does a poor attempt at finding typo's by comparing
+  them against each other.
+* Add new error classes: E_APP_ARG_IFCONST, E_APP_ARG_IFEMPTY,
+  E_APP_ARG_SYNTAX.
+* Add Asterisk apps: NoCDR, Record.
+* Python3.5 testcase compatibility fix.
+
 0.2.1 (2016-01-29)
 ~~~~~~~~~~~~~~~~~~
 
