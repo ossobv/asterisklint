@@ -93,7 +93,7 @@ class EncodingReader(object):
     Decodes lines from UTF-8, the one true encoding.
     """
     def __iter__(self):
-        for where, data in super(EncodingReader, self).__iter__():
+        for where, data in super().__iter__():
             try:
                 data = data.decode('utf-8')
             except UnicodeDecodeError:
@@ -113,7 +113,7 @@ class NoCtrlReader(object):
                   '\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f')
 
     def __iter__(self):
-        for where, data in super(NoCtrlReader, self).__iter__():
+        for where, data in super().__iter__():
             charset = set(data)
             union = charset & self.illegal
             if union:
@@ -139,7 +139,7 @@ class FileformatReader(object):
         # includes, so check file endings.
         fileinfo = []  # [[filename, is_dos], ...]
 
-        for where, data in super(FileformatReader, self).__iter__():
+        for where, data in super().__iter__():
             # Keep track of includes.
             if not fileinfo or fileinfo[-1][0] != where.filename:
                 # Where we in here already? Then we're backing out of an
@@ -198,7 +198,7 @@ class AsteriskCommentReader(object):
         return data[0:i], data[i:]
 
     def __iter__(self):
-        for where, data in super(AsteriskCommentReader, self).__iter__():
+        for where, data in super().__iter__():
             # We cannot escape whitespace, so no need to keep this
             # around.
             if data.endswith(tuple(' \t')):

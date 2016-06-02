@@ -90,7 +90,7 @@ class OdbcFunction(Context):
             # - prefix should be uppercase
             # - check SQL syntax?
 
-            return super(OdbcFunction, self).add(varset)
+            return super().add(varset)
 
     def update(self, context):
         raise NotImplementedError('when? how? what?')
@@ -155,7 +155,7 @@ class FuncOdbcAggregator(ConfigAggregator):
     FUNC_NAME_RE = re.compile(r'^[A-Z0-9](_?[A-Z0-9])*$')
 
     def on_yield(self):
-        for function in super(FuncOdbcAggregator, self).on_yield():
+        for function in super().on_yield():
             function.finalize()
             yield function
 
@@ -168,8 +168,8 @@ class FuncOdbcAggregator(ConfigAggregator):
             W_ODBC_BADTOKENS(context.where, name=context.name)
 
         context = OdbcFunction.from_context(context)
-        return super(FuncOdbcAggregator, self).on_context(context)
+        return super().on_context(context)
 
     def on_varset(self, varset):
         assert not varset.arrow  # W_ARROW
-        return super(FuncOdbcAggregator, self).on_varset(varset)
+        return super().on_varset(varset)

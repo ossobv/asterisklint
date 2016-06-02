@@ -121,7 +121,7 @@ class ALintTestResult(TextTestResult):
                 'Did you forget to call super().setUp() on {!r}?'.format(
                     test.__class__.__name__))
 
-        super(ALintTestResult, self).stopTest(test)
+        super().stopTest(test)
 
     def print_untested(self):
         tested = set(self.linted_counts.keys())
@@ -142,7 +142,7 @@ class ALintTestRunner(TextTestRunner):
 
 class NamedBytesIO(BytesIO):
     def __init__(self, name, data):
-        super(NamedBytesIO, self).__init__(data)
+        super().__init__(data)
         self.name = name
 
 

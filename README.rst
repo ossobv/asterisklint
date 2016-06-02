@@ -25,6 +25,12 @@ Invocation
                             as argument. Suppress error classes using ALINT_IGNORE.
       dialplan-show         Show dialplan like Asterisk does with CLI command
                             "dialplan show". Takes 'extensions.conf' as argument.
+      func_odbc-check       Do sanity checks on func_odbc.conf. Takes
+                            'func_odbc.conf' as argument. Suppress error classes
+                            using ALINT_IGNORE.
+      ident-scan            Report similarly named contexts, labels and variables.
+                            Takes 'extensions.conf' as argument. All parse errors
+                            are suppressed.
       modules-show          Show which modules, apps and functions are used by the
                             dialplan. Takes 'extensions.conf' as argument.
 
@@ -45,8 +51,9 @@ Now run the ``dialplan-check`` command on it:
     $ ALINT_IGNORE=H_DP_ asterisklint dialplan-check extensions.conf
     extensions.conf:2 H_PAT_NON_CANONICAL: pattern '_8[2-9]x' is not in the canonical form '_8NX'
     extensions.conf:3 W_APP_BAD_CASE: app 'GoSub' does not have the proper Case 'Gosub'
-    extensions.conf:3 W_APP_BALANCE: app data 'somewhere,1,s(argument1,argument2' looks like unbalanced parentheses/quotes/curlies
+    extensions.conf:3 W_APP_BALANCE: app data '1(argument1,argument2' looks like unbalanced parentheses/quotes/curlies
     extensions.conf:4 E_APP_MISSING: app 'Payback' does not exist, dialplan will halt here!
+    extensions.conf:3 E_DP_GOTO_NOCONTEXT: context not found for goto to somewhere, s, 1
 
 It had a lot to complain about that little snippet. But it was right. We
 even suppressed two hints about a missing ``[general]`` and ``[global]``
@@ -119,16 +126,15 @@ TODO
 * Improve documentation as needed.
 * Expression parsing.
 * Function argument parsing.
-* Recursive includes probably make asterisklint run out of stack.
+* Recursive #includes probably make asterisklint run out of stack.
+* Add checks for recursive dialplan-includes.
 * For the Goto/Gosub-visiting:
   - Attempt to match contexts by regex if there are $VARs involved?
   - Attempt to match labels if there are VARs.
-  - Allow a "noqa" style exception to be placed in a comment?
-* Remove python2-style super() calls.
+  - Allow a "noqa" style exceptions to be placed in a comment?
 * Add ``app-check`` command to do dialplan checks of individual lines.
 * Add ``expr-check`` command to do expression (``$[...]``) checks.
 * Allow multiline variables using += (key=val; key+=more-val).
-* Add python2 support so you can include checks from your own project? Or not?
 * Before 1.0, start adding versioning -- including semver -- so users can
   depend on a stable API from their custom scripts. Also version the scripts
   (commands) so they won't talk to older/newer libs if that poses a problem.
@@ -142,6 +148,9 @@ BUGS
 * Multiline comments (``;-- ... --;``) are unsupported. Does anyone use those?
 * Limits aren't checked (dialplan lines are limited at 255 or 8191 bytes
   for LOW_MEMORY and normal mode respectively).
+* The library/suite is Python3 only. Right now the effort to make it Python2
+  compatible is larger than the demand. In the future Python2 compatibility
+  will become even less relevant.
 
 
 Author

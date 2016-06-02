@@ -141,4 +141,4 @@ class DupeDefMixin(object):
         if not kwargs.get('previous'):
             raise TypeError("{} requires a ``previous'' argument".format(
                 self.__class__.__name__))
-        super(DupeDefMixin, self).__init__(where, **kwargs)
+        super().__init__(where, **kwargs)

@@ -446,7 +446,7 @@ class DialplanContext(Context):
             self.dialplan.add_jump_destination(
                 g_context, g_exten, g_prio, extension.where)
 
-        super(DialplanContext, self).add(extension)
+        super().add(extension)
 
     def add_include(self, include):
         assert isinstance(include, Include)

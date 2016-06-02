@@ -104,7 +104,7 @@ class ConfigParser(object):
     )
 
     def __iter__(self):
-        for where, data, comment in super(ConfigParser, self).__iter__():
+        for where, data, comment in super().__iter__():
             for regex, func in self.regexes:
                 match = regex.match(data)
                 if match:
@@ -178,7 +178,7 @@ class ConfigAggregator(VerticalSpaceWarner, ConfigParser):
     def __iter__(self):
         self.on_begin()
 
-        for element in super(ConfigAggregator, self).__iter__():
+        for element in super().__iter__():
             try:
                 if isinstance(element, Context):
                     self.on_context(element)
