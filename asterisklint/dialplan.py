@@ -91,10 +91,6 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class H_DP_GLOBALS_MISPLACED(HintDef):
         message = '[globals] context not found or not at position two'
 
-    class H_DP_GOTO_CONTEXT_VARPRIO(HintDef):
-        message = ('possibly non-existent label/prio for goto to '
-                   '{context}, {exten}, {prio}')
-
 
 class Dialplan(object):
     def __init__(self):
@@ -185,13 +181,6 @@ class Dialplan(object):
                             extension, priority)
                         if found_extension:
                             valid_destinations.append(found_extension)
-                        elif found_extension == ():
-                            # Special case of $VAR priority but valid
-                            # context+exten. We may choose to accept
-                            # this as valid.
-                            H_DP_GOTO_CONTEXT_VARPRIO(
-                                where, context=context, exten=extension,
-                                prio=priority)
                         else:
                             # Exten with prio not found.
                             W_DP_GOTO_CONTEXT_NOEXTEN(
@@ -298,10 +287,11 @@ class DialplanContext(Context):
                     elif isinstance(priority, str):
                         if exten.label == priority:
                             return exten
-                    else:
-                        # Here we *do* know that the pattern is found:
-                        # better than nothing...
-                        return ()  # special False value
+                    # Is it a variable? Then format all unknowns as .*
+                    # and attempt a regex match.
+                    elif (priority.could_match(exten.prio) or
+                            priority.could_match(exten.label)):
+                        return exten
 
         # Nothing? Try our includes, but only for integral priorities.
         if isinstance(priority, int):

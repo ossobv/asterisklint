@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import re
 
 
 class Var(object):
@@ -59,6 +60,25 @@ class Var(object):
 
     def __init__(self, name=None, start=None, length=None):
         self.name = name
+
+    def could_match(self, value):
+        """
+        Check if this variable could match the value passed if the
+        circumstances (the inner variables) are right.
+
+        Examples::
+
+            Var('${number}23').could_match('123') == True
+            Var('${user}@${domain}').could_match('somelabel') == False
+        """
+        if self.name:  # this is a plain variable, it could match anything
+            return True
+
+        re_joined = ''.join(
+            ['^'] +
+            [(re.escape(i) if isinstance(i, str) else '.*') for i in self] +
+            ['$'])
+        return re.match(re_joined, str(value))
 
     def format(self, **kwargs):
         if self.name is None:

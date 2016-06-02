@@ -135,7 +135,6 @@ TODO
 * Add checks for recursive dialplan-includes.
 * For the Goto/Gosub-visiting:
   - Attempt to match contexts by regex if there are $VARs involved?
-  - Attempt to match labels if there are VARs.
   - Allow a "noqa" style exceptions to be placed in a comment?
 * Add ``app-check`` command to do dialplan checks of individual lines.
 * Add ``expr-check`` command to do expression (``$[...]``) checks.
