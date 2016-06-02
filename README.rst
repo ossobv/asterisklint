@@ -70,17 +70,22 @@ All commands show help if asked:
 .. code-block:: console
 
     $ asterisklint modules-show --help
-    usage: asterisklint modules-show [-h] EXTENSIONS_CONF
+    usage: asterisklint modules-show [-h] [--func-odbc FUNC_ODBC_CONF]
+                                     [EXTENSIONS_CONF]
 
     Show which modules, apps and functions are used by the dialplan. Useful when
     you use autoload=no in your modules.conf. Beware that you do need more modules
     than just these listed.
 
     positional arguments:
-      EXTENSIONS_CONF  path to extensions.conf
+      EXTENSIONS_CONF       path to extensions.conf
 
     optional arguments:
-      -h, --help       show this help message and exit
+      -h, --help            show this help message and exit
+      --func-odbc FUNC_ODBC_CONF
+                            path to func_odbc.conf, will be read automatically if
+                            found in same the same dir as extensions.conf; set
+                            empty to disable
 
 
 Installation

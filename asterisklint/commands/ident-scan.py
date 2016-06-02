@@ -40,7 +40,8 @@ def main(args, envs):
         '-v', '--verbose', action='store_true',
         help='list all identifiers first before reporting similarities')
     parser.add_argument(
-        'extensions', metavar='EXTENSIONS_CONF',
+        'dialplan', metavar='EXTENSIONS_CONF', nargs='?',
+        default='./extensions.conf',
         help='path to extensions.conf')
     args = parser.parse_args(args)
 
@@ -48,7 +49,7 @@ def main(args, envs):
 
     loader = VarLoader()
     parser = FileDialplanParser()
-    parser.include(args.extensions)
+    parser.include(args.dialplan)
     dialplan = next(iter(parser))
 
     contexts_by_name = list(sorted(

@@ -30,8 +30,9 @@ def main(args, envs):
             '"dialplan show". Useful for testing whether asterisklint '
             'parser the input properly.'))
     parser.add_argument(
-        'dialplan', metavar='EXTENSIONS_CONF',
-        help="path to extensions.conf")
+        'dialplan', metavar='EXTENSIONS_CONF', nargs='?',
+        default='./extensions.conf',
+        help='path to extensions.conf')
     parser.add_argument(
         '--reverse', action='store_true',
         help="some versions of Asterisk output the dialplan file in reverse")

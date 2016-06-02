@@ -52,8 +52,9 @@ def main(args, envs):
             "Useful when you use autoload=no in your modules.conf. Beware "
             "that you do need more modules than just these listed."))
     parser.add_argument(
-        'dialplan', metavar='EXTENSIONS_CONF',
-        help="path to extensions.conf")
+        'dialplan', metavar='EXTENSIONS_CONF', nargs='?',
+        default='./extensions.conf',
+        help='path to extensions.conf')
     parser.add_argument(
         '--func-odbc', metavar='FUNC_ODBC_CONF', action=UniqueStore,
         help="path to func_odbc.conf, will be read automatically if found "

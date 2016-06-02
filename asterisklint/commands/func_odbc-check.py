@@ -30,7 +30,8 @@ def main(args, envs):
             'error classes through the ALINT_IGNORE environment variable. '
             'Returns 1 if any issue was reported.'))
     parser.add_argument(
-        'func_odbc', metavar='FUNC_ODBC_CONF',
+        'func_odbc', metavar='FUNC_ODBC_CONF', nargs='?',
+        default='./func_odbc.conf',
         help="path to func_odbc.conf")
     args = parser.parse_args(args)
 
