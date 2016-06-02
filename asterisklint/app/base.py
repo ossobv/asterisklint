@@ -380,6 +380,11 @@ class VarCondIfStyleApp(IfStyleApp):
         if (cond != '' and  # already checked with E_APP_ARG_IFEMPTY
                 (isinstance(cond, str) or
                  any(isinstance(i, str) for i in cond))):
+            # NOTE: The resultant value is parsed with sscanf, and the
+            # remainder is discarded. For example, something that
+            # evaluates to "1&0" is parsed as "1" => "$[1=1]&$[0=0]"
+            # (which should have been written as "$[1=1&0=0]") would
+            # evaluate to True.
             E_APP_ARG_IFCONST(where, app=self.name, data=data,
                               cond=cond)
 
