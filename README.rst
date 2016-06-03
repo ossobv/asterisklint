@@ -132,6 +132,10 @@ TODO
 * Expression parsing.
 * Function argument parsing.
 * Recursive #includes probably make asterisklint run out of stack.
+* Trim CALLERID match (as used in FreePBX dialplan).
+* Add functions DB, DB_EXISTS, MD5 (as used in FreePBX dialplan).
+* Add apps Authenticate, AGI (as used in FreePBX dialplan).
+* Scan for missing dialplan-includes.
 * Add checks for recursive dialplan-includes.
 * For the Goto/Gosub-visiting:
   - Attempt to match contexts by regex if there are $VARs involved?
@@ -139,6 +143,7 @@ TODO
 * Add ``app-check`` command to do dialplan checks of individual lines.
 * Add ``expr-check`` command to do expression (``$[...]``) checks.
 * Allow multiline variables using += (key=val; key+=more-val).
+* Investigate whether exten=>s,n(label)... exten=>s,label+10... is valid.
 * Before 1.0, start adding versioning -- including semver -- so users can
   depend on a stable API from their custom scripts. Also version the scripts
   (commands) so they won't talk to older/newer libs if that poses a problem.
