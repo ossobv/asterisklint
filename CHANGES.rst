@@ -1,4 +1,4 @@
-0.3.0 (2016-06-02)
+0.3.0 (2016-06-08)
 ~~~~~~~~~~~~~~~~~~
 
 * Add preliminary Goto/Gosub scanning: the dialplan-check now tries to
