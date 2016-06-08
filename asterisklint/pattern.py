@@ -353,6 +353,7 @@ class Pattern(object):
         """
         Check if the extension matches this pattern.
         """
+        i = -1
         for i, char in enumerate(extension.replace('-', '').encode('latin1')):
             try:
                 value = self.values[i + 1]
