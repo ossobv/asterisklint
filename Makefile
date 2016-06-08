@@ -22,10 +22,6 @@ Makefile.version: FORCE
 install: Makefile.version
 	$(PYTHON) setup.py install
 
-# upload:
-#	##python setup.py register # only needed once
-#	#python setup.py sdist upload
-
 test:
 	find . -name '*.py' | xargs -d\\n $(FLAKE8) || true; echo
 	$(PYTHON) -m asterisklint.alinttest discover --pattern='test_*.py'
@@ -35,9 +31,15 @@ license_turds:
 	  while read f; do t=`mktemp`; \
 	  ( head -n15 setup.py; cat "$$f" ) > "$$t"; mv "$$t" "$$f"; done
 
+pypi_upload: update_version
+	# Call `make pypi_upload` to ensure that the version is correctly set.
+	echo -n 'Continue uploading to PyPI? ' && read x && test "$$x" = y
+	#python setup.py register # only needed once
+	python setup.py sdist upload
+
 update_version:
 	echo '$(GIT_VERSION)' | grep -Fq '$(FILE_VERSION)'  # startswith..
 	sed -i -e "s/^version_str = .*/version_str = '$(FILE_VERSION)'/" \
 	  asterisklint/alintver.py
 
-.PHONY: FORCE default install test update_version license_turds
+.PHONY: FORCE default install test pypi_upload update_version license_turds
