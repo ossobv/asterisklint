@@ -41,7 +41,9 @@ if __name__ == '__main__':
         long_descriptions.append(file.read())
     with open(join(dirname(__file__), 'CHANGES.rst')) as file:
         long_descriptions.append(file.read())
-    version = long_descriptions[-1].strip().split(' ', 1)[0]
+    # We keep '~' in the version for debian-accepted "~rc1", but PEP440
+    # does not like it. Drop it here.
+    version = long_descriptions[-1].strip().split(' ', 1)[0].replace('~', '')
 
     setup(
         name='asterisklint',

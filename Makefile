@@ -4,14 +4,19 @@ PYTHON = python3
 default: update_version test
 
 Makefile.version: FORCE
+	# DEB/FILE version:     0.3.0~rc2 <-- canonical
+	# GIT tag version:      v0.3.0_rc2
+	# PyPI/PEP440 version:  0.3.0rc2
 	@echo "FILE_VERSION = `sed -e 's/ .*//;1q' CHANGES.rst`" \
 	  > Makefile.version.tmp
 	@echo "GIT_VERSION = `git describe --tags --match \
-	  'v[0-9]*' --abbrev=4 HEAD 2>/dev/null | sed -e 's/^v//;s/-/+/'`" \
+	  'v[0-9]*' --abbrev=4 HEAD 2>/dev/null | \
+	  sed -e 's/^v//;s/_/~/;s/-/+/'`" \
 	  >> Makefile.version.tmp
 	@cmp Makefile.version Makefile.version.tmp >/dev/null || \
 	  mv Makefile.version.tmp Makefile.version
 	@$(RM) -f Makefile.version.tmp
+	@cat Makefile.version
 -include Makefile.version
 
 install: Makefile.version
