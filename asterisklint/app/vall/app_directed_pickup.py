@@ -20,8 +20,23 @@ class Pickup(AppBase):
     pass
 
 
+class PickupChan(AppBase):
+    pass
+
+
+class PickupOld1v4(AppBase):
+    """
+    This is not in any main Asterisk branch. Quickest fix was to add
+    here for now.
+
+    NOTE: https://issues.asterisk.org/jira/browse/ASTERISK-26464
+    """
+    pass
+
+
 def register(app_loader):
     for app in (
             Pickup,
-            ):
+            PickupChan,
+            PickupOld1v4):
         app_loader.register(app())
