@@ -1,0 +1,18 @@
+# https://bettercodehub.com
+
+# Search for project directories in the subdirs too (level 2).
+component_depth: 2
+
+languages:
+  - name: python
+
+    production:
+      include:
+        - /scripts/asterisklint
+      exclude:
+        - /setup.py
+        - /tests/.*
+
+    test:
+      include:
+        - /tests/.*
