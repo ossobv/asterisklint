@@ -17,8 +17,6 @@ TODO
   * Error descriptions formatted; in small warning/info/error boxes?
   * Linenumbers?
 
-* Warn user about uploading sensitive data.
-
 * On server response error we want notification to user.
 
 * Store dialplans for future viewing. (Optional.)
