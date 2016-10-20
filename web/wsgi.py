@@ -33,7 +33,8 @@ def collect_messages():
     ret = []
     for msgtype, msgs in MessageDefManager.raised.items():
         ret.extend(msgs)
-    ret.sort(key=(lambda x: (x.where.filename, x.where.lineno)))
+    ret.sort(key=(lambda x: (
+        x.where.filename, x.where.lineno, type(x).__name__)))
     MessageDefManager.reset()  # very thread-unsafe, this!
     return ret
 

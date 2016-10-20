@@ -104,6 +104,10 @@
       <form>
         <div class="form-group">
           <textarea class="form-control" rows="20">
+[general]
+
+[globals]
+
 [default]
 exten =&gt; _8[2-9]x,1,NoOp
  same =&gt; n,Set(CALLERID(name)=incoming)
@@ -117,8 +121,7 @@ exten =&gt; s,n(menu),Playback(acme/vm-brief-menu)
 exten =&gt; s,n(exten),Background(vm-enter-num-to-call)
 exten =&gt; s,n,WaitExten(5)
 exten =&gt; s,n(goodbye),Playback(vm-goodbye)
-exten =&gt; s,n(end),Hangup()
-          </textarea>
+exten =&gt; s,n(end),Hangup()</textarea>
         </div>
         <button type="submit" class="btn btn-primary">Evaluate</button>
       </form>
