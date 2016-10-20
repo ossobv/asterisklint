@@ -86,19 +86,24 @@
       </div>
 
       <p>
-        Paste your dialplan here and click on "Evaluate".
+        Paste your dialplan below and click on <strong>Evaluate</strong>.
       </p>
 
       <div class="alert alert-info" role="alert">
         <strong>Beware!</strong> Be sure not to upload sensitive data
-        like passwords. The evaluation is done server-side.
+        like passwords; the evaluation is done server-side.
+        And if you want to check larger dialplans, with <code>#include</code>'s
+        you should use the <em>asterisklint</em> CLI interface instead;
+        fetch it from <a class="alert-link" href="https://github.com/ossobv/asterisklint">github</a>
+        or through <a class="alert-link" href="https://pypi.python.org/pypi/asterisklint/">pip</a>.
       </div>
 
       <div id="results"></div>
 
+      <h2>Input</h2>
       <form>
         <div class="form-group">
-          <textarea class="form-control" rows="10">
+          <textarea class="form-control" rows="20">
 [default]
 exten =&gt; _8[2-9]x,1,NoOp
  same =&gt; n,Set(CALLERID(name)=incoming)
