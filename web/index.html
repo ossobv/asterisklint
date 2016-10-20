@@ -102,9 +102,11 @@
         or through <a class="alert-link" href="https://pypi.python.org/pypi/asterisklint/">pip</a>.
       </p>
       <p>
-        <em>2016-10-20: Note that Chromium 51 appears to have an issue with pasting larger dialplans into
-        the textarea. I have no idea what that's about. Firefox seems to behave just fine.
-        Reproduce with <kbd>python -c 'print "A\n" * 1999' | xsel -ib</kbd> &mdash; at 2*2000 it stalls.
+        <em>2016-10-20: Note that if you use <kbd>xsel</kbd> and Chromium 51, you may run into
+        <a href="https://bugs.chromium.org/p/chromium/issues/detail?id=515401">chromium bug 515401</a>
+        which is apparently an xsel(1) bug which has been <a
+        href="https://github.com/kfish/xsel/commit/b1a9e3da61f816ac560f3f5af95950e507967ad9">fixed in master</a>.
+        Firefox 48 does not have a problem with the xsel(1) copied text.</em>
       </p>
 
       <div id="results"></div>
