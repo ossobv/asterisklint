@@ -11,12 +11,6 @@ Web frontend
 TODO
 ----
 
-* Prettify output.
-  * Smaller code font
-  * Highlight errors with red line.
-  * Error descriptions formatted; in small warning/info/error boxes?
-  * Linenumbers?
-
 * On server response error we want notification to user.
 
 * Store dialplans for future viewing. (Optional.)

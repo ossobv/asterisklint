@@ -38,23 +38,23 @@
       }
       /* Custom styles
       -------------------------------------------------- */
-      textarea {
+      textarea, .code {
+        font-size: 0.8em !important;
         font-family: monospace;
       }
       .code {
         margin-bottom: 20px;
-        font-family: monospace;
       }
-      .ok {
-        background-color: #efe;
+      .code li {
+        background-color: #f8fff8;
       }
-      .bad {
-        background-color: #fee;
-      }
-      .bad ul, .bad li {
-        font-size: 11px;
-        margin: 0;
-        padding: 0 0 0 12px;
+      /*.code li.bad {
+        border-top: 2px solid ;
+        background-color: #fff8f8;
+      }*/
+      .code .alert {
+        padding: 0.2em 1em;
+        margin: 0.2em 4em;
       }
     </style>
   </head>
@@ -150,54 +150,60 @@ exten =&gt; s,n(end),Hangup()
         return $('textarea').val().replace(/\r/g, '').replace(/\s*$/, '\n');
       }
       function logInput(results) {
-        var output = [];
+        var output = ['<ol class="source">'];
         var input = getTextarea().replace(/\s+$/, '').split('\n');
         var problemPtr = 0;
-        var divOpen = false;
         for (var lineno = 1; lineno <= input.length; ++lineno) {
           var line = input[lineno - 1];
           if (problemPtr < results.length && results[problemPtr].line == lineno) {
-            if (divOpen) {
-              output.push('</div>');
-              divOpen = false;
-            }
-            output.push('<div class="bad">' + $('<div/>').text(line).html());
-            output.push('<ul>');
+            output.push('<li class="bad">' + htmlEsc(line));
             while (problemPtr < results.length && results[problemPtr].line == lineno) {
-              output.push('<li>' + JSON.stringify(results[problemPtr]) + '</li>');
-              ++problemPtr;
+              output.push(newMessage(results[problemPtr++]));
             }
-            output.push('</ul></div>');
+            output.push('</li>');
           } else {
-            if (!divOpen) {
-              output.push('<div class="ok">');
-              divOpen = true;
-            }
-            output.push($('<div/>').text(line).html() + '<br/>');
+            output.push('<li>' + htmlEsc(line) + '</li>');
           }
         }
-        if (divOpen) {
-          output.push('</div>');
-          divOpen = false;
-        }
+        output.push('</ol>');
         $('#results').append('<div class="code">' + output.join('') + '</div>');
       }
       function logJoy() {
-        $('#results').html('<h2>Results</h2><div class="alert alert-success" role="alert"><p>0 warnings/errors</p></div>');
+        $('#results').html('<h2>Results</h2><div class="alert alert-success" role="alert">The dialplan looks good!</strong></div>');
       }
       function logSadness(results) {
+        var output = [];
         var lineZero = [];
         var count = results.length;
         while (results.length && results[0].line == 0) {
           lineZero.push(results[0]);
           results.splice(0, 1);
         }
-        var html = '<h2>Results</h2><div class="alert alert-warning" role="alert"><p>' + count + ' warnings/errors';
+        output.push('<h2>Results</h2>');
+        output.push('<div class="alert alert-info" role="alert"><strong>' + count + ' issues</strong> found in dialplan!</div>');
+        output.push('<div class="code">');
         for (var i = 0; i < lineZero.length; ++i) {
-          html += '</p><p>' + JSON.stringify(lineZero[i]);
+          output.push(newMessage(lineZero[i]));
         }
-        html += '</p></div>';
-        $('#results').html(html);
+        output.push('</div>');
+        $('#results').html(output.join(''));
+      }
+      function newMessage(item) {
+        if (item['class'][0] == 'H') {
+          class_ = "alert-info";
+        } else if (item['class'][0] == 'W') {
+          class_ = "alert-warning";
+        } else {
+          class_ = "alert-danger";
+        }
+        return (
+          '<div class="alert ' + class_ + '" role="alert">' +
+          item['class'] + ': ' + htmlEsc(item.desc) + '</div>');
+      }
+      function htmlEsc(text) {
+        //return $('<div/>').text(text).html(); // breaks spaces
+        return (text.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/\s/g, '&nbsp'));
       }
       function onSuccess(data) {
         var res = data['results']['extensions.conf'];
@@ -207,6 +213,7 @@ exten =&gt; s,n(end),Hangup()
           logJoy();
         }
         logInput(res);
+        $('#results h2').focus(); // focus on top
       }
       $('form').on('submit', function() {
         data = JSON.stringify({'files': {'extensions.conf': getTextarea()}});
