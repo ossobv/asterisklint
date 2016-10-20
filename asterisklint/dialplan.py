@@ -196,10 +196,14 @@ class Dialplan(object):
         return where
 
     def on_complete(self):
-        if not self._general:
-            H_DP_GENERAL_MISPLACED(self.get_where())
-        if not self._globals:
-            H_DP_GLOBALS_MISPLACED(self.get_where())
+        if not self._general or not self._globals:
+            # We don't want messages with an empty where.
+            where = self.get_where()
+            if where:
+                if not self._general:
+                    H_DP_GENERAL_MISPLACED(where)
+                if not self._globals:
+                    H_DP_GLOBALS_MISPLACED(where)
 
     def format_as_dialplan_show(self, reverse=True):
         # Okay; please explain the reverse madness to me? I've seen
