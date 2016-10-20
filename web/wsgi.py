@@ -1,6 +1,5 @@
 import falcon
 import json
-from datetime import datetime
 from io import BufferedWriter, BytesIO
 from os import path
 from wsgiref.handlers import SimpleHandler
@@ -10,13 +9,19 @@ from asterisklint import FileDialplanParser
 from asterisklint.defines import MessageDefManager
 
 
+class HttpNotImplementedError(falcon.HTTPBadRequest):
+    "Instead of NotImplementedError; for better feedback."
+    def __init__(self, description):
+        super().__init__('Feature Not Implemented', description)
+
+
 class NamedBytesIO(BytesIO):
     def __init__(self, name, data):
         self.name = name
         super().__init__(data)
 
 
-class UploadedFileOpener(object):
+class UploadedFileOpener:
     def __init__(self, filename, filedata):
         self.name = filename
         assert isinstance(filedata, bytes)
@@ -24,7 +29,8 @@ class UploadedFileOpener(object):
 
     def __call__(self, filename):
         if self.name != filename:
-            raise NotImplementedError('include files are not supported!')
+            raise HttpNotImplementedError(
+                'Include files are not supported in the web interface.')
 
         return NamedBytesIO(self.name, self.data)
 
@@ -42,9 +48,9 @@ def collect_messages():
 class EnvironmentCheckMiddleware:
     def process_request(self, req, resp):
         if req.env['wsgi.multithread']:
-            raise NotImplementedError(
-                'asterisklint is single-threaded; '
-                'make sure your wsgi daemon is too')
+            raise HttpNotImplementedError(
+                'Asterisklint is single-threaded; '
+                'make sure your wsgi daemon is too.')
 
 
 # class DebugLogMiddleware:
@@ -134,23 +140,20 @@ class DialplanCheck:
         req.context['result'] = {'results': issues}
 
 
-def get_app(debug=False):
-    MessageDefManager.muted = True  # no messages to stderr
+MessageDefManager.muted = True  # no messages to stderr
 
-    middleware = [EnvironmentCheckMiddleware(), JsonTranslator()]
-    # if debug:
-    #     middleware.insert(0, DebugLogMiddleware())
+middleware = [EnvironmentCheckMiddleware(), JsonTranslator()]
 
-    app = falcon.API(middleware=middleware)
-    app.add_route('/', Index())
-    app.add_route('/dialplan-check/', DialplanCheck())
-    return app
+application = falcon.API(middleware=middleware)
+application.add_route('/', Index())
+application.add_route('/dialplan-check/', DialplanCheck())
 
 
 if __name__ == '__main__':
     class MySimpleHandler(SimpleHandler):
         def close(self):
             try:
+                # Add request logging.
                 self.request_handler.log_request(
                     self.status.split(' ', 1)[0], self.bytes_sent)
             finally:
@@ -188,8 +191,5 @@ if __name__ == '__main__':
 
     # Spawn server.
     httpd = make_server(
-        '0.0.0.0', 8000, get_app(debug=True),
-        handler_class=MyWSGIRequestHandler)
+        '0.0.0.0', 8000, application, handler_class=MyWSGIRequestHandler)
     httpd.serve_forever()
-else:
-    app = get_app(debug=False)

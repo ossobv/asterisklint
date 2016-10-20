@@ -86,17 +86,20 @@
       </div>
 
       <p>
-        Paste your dialplan below and click on <strong>Evaluate</strong>.
+        Paste your dialplan in the textarea below and click on <strong>Evaluate</strong>.
       </p>
 
       <div class="alert alert-info" role="alert">
         <strong>Beware!</strong> Be sure not to upload sensitive data
         like passwords; the evaluation is done server-side.
-        And if you want to check larger dialplans, with <code>#include</code>'s
+      </div>
+
+      <p>
+        Note that if you want to check larger dialplans (e.g. with <code>#include</code>'s)
         you should use the <em>asterisklint</em> CLI interface instead;
         fetch it from <a class="alert-link" href="https://github.com/ossobv/asterisklint">github</a>
         or through <a class="alert-link" href="https://pypi.python.org/pypi/asterisklint/">pip</a>.
-      </div>
+      </p>
 
       <div id="results"></div>
 
@@ -216,11 +219,20 @@ exten =&gt; s,n(end),Hangup()</textarea>
           logJoy();
         }
         logInput(res);
-        $('#results h2').focus(); // focus on top
+        // Scroll to top
+        $('html, body').animate({
+          scrollTop: $("#results").offset().top - 75
+        }, 800);
+      }
+      function onFail(data) {
+        $('#results').html(
+          '<h2>Error</h2><div class="alert alert-danger" role="alert"><strong>' +
+          data.status + ' ' + htmlEsc(data.statusText) + '</strong><br/><br/>' +
+          htmlEsc(data.responseText) + '</div>');
       }
       $('form').on('submit', function() {
         data = JSON.stringify({'files': {'extensions.conf': getTextarea()}});
-        jQuery.post('/dialplan-check/', data, onSuccess);
+        jQuery.post('/dialplan-check/', data, onSuccess).fail(onFail);
         return false;
       });
     </script>

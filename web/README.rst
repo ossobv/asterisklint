@@ -11,6 +11,4 @@ Web frontend
 TODO
 ----
 
-* On server response error we want notification to user.
-
 * Store dialplans for future viewing. (Optional.)
