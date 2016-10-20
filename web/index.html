@@ -47,6 +47,7 @@
       }
       .code li {
         background-color: #f8fff8;
+        white-space: pre; /* keep blanks and tabs */
       }
       /*.code li.bad {
         border-top: 2px solid ;
@@ -102,7 +103,8 @@
       </p>
       <p>
         <em>2016-10-20: Note that Chromium 51 appears to have an issue with pasting larger dialplans into
-        the textarea. I have no idea what that's about. Firefox seems to behave just fine.</em>
+        the textarea. I have no idea what that's about. Firefox seems to behave just fine.
+        Reproduce with <kbd>python -c 'print "A\n" * 1999' | xsel -ib</kbd> &mdash; at 2*2000 it stalls.
       </p>
 
       <div id="results"></div>
@@ -215,7 +217,7 @@ exten =&gt; s,n(end),Hangup()</textarea>
       function htmlEsc(text) {
         //return $('<div/>').text(text).html(); // breaks spaces
         return (text.replace(/&/g, '&amp;').replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;').replace(/\s/g, '&nbsp'));
+                .replace(/>/g, '&gt;'));
       }
       function onSuccess(data) {
         var res = data['results']['extensions.conf'];
