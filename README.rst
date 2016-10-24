@@ -1,6 +1,8 @@
 Asterisk PBX configuration syntax checker
 =========================================
 
+.. image:: https://bettercodehub.com/edge/badge/ossobv/asterisklint
+
 Asterisklint is a suite of tools to check syntax of your Asterisk PBX
 configuration files.
 
