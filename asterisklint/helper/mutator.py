@@ -60,10 +60,16 @@ class FileMutatorBase(object):
             self.process_file(filename)
 
     def process_file(self, filename):
+        # If filename is a symlink, process the target.
+        try:
+            disk_filename = os.readlink(filename)
+        except OSError:
+            disk_filename = filename
+
         # Place the tempfile in the same dir, so renaming works
         # (same device).
         tempout = NamedTemporaryFile(
-            dir=os.path.dirname(filename), mode='wb', delete=False)
+            dir=os.path.dirname(disk_filename), mode='wb', delete=False)
 
         issues = self.issues_per_file[filename]
         try:
@@ -104,8 +110,8 @@ class FileMutatorBase(object):
         if srcstat.st_mode != dststat.st_mode:
             os.chmod(tempout.name, dststat.st_mode)
 
-        print('Overwriting', filename, '...')
-        os.rename(tempout.name, filename)
+        print('Overwriting', disk_filename, '...')
+        os.rename(tempout.name, disk_filename)
 
     def process_issue(self, issue, inline, outfile):
         raise NotImplementedError()
