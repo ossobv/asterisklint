@@ -18,9 +18,10 @@ from asterisklint.application import App
 from asterisklint.where import DUMMY_WHERE
 
 APPLICATION_LIST = (
-    'AddQueueMember', 'Answer', 'Background',
+    'AGI', 'AddQueueMember', 'Answer', 'Authenticate', 'Background',
     'Busy', 'CELGenUserEvent', 'ChanIsAvail',
     'ChanSpy', 'ChannelRedirect', 'ConfBridge', 'Congestion',
+    'ControlPlayback',
     'DateTime', 'Dial', 'DumpChan', 'Echo', 'Exec',
     'ExtenSpy', 'ForkCDR', 'Gosub', 'Goto',
     'Hangup', 'ImportVar', 'Log', 'Macro',
@@ -37,7 +38,8 @@ APPLICATION_LIST = (
     'StackPop', 'StartMusicOnHold', 'StopMixMonitor', 'StopMusicOnHold',
     'StopPlayTones', 'System', 'TryExec', 'TrySystem', 'Unknown',
     'UnpauseQueueMember', 'UserEvent', 'VMAuthenticate', 'Verbose',
-    'VoiceMail', 'VoiceMailMain', 'Wait', 'WaitExten',
+    'VMSayName', 'VoiceMail', 'VoiceMailMain', 'VoiceMailPlayMsg',
+    'Wait', 'WaitExten',
     'WaitMusicOnHold', 'WaitUntil',
 
     # These are skipped from the test because they require certain

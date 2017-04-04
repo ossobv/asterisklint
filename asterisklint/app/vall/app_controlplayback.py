@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2017  Walter Doekes, OSSO B.V.
+# Copyright (C) 2017  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,43 +13,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ..base import App, AppArg, AppOptions, AppBase
+from ..base import AppBase
 
 
-class VoiceMail(App):
-    def __init__(self):
-        super().__init__(
-            # BUG: g takes an argument NUM.
-            args=[AppArg('mailboxes'), AppOptions('bdgsuUP')], min_args=1)
-
-
-class VoiceMailMain(AppBase):
-    pass
-
-
-class VoiceMailPlayMsg(AppBase):
-    pass
-
-
-class MailboxExists(AppBase):
-    pass
-
-
-class VMAuthenticate(AppBase):
-    pass
-
-
-class VMSayName(AppBase):
+class ControlPlayback(AppBase):
     pass
 
 
 def register(app_loader):
-    for app in (
-            VoiceMail,
-            VoiceMailMain,
-            VoiceMailPlayMsg,
-            MailboxExists,
-            VMAuthenticate,
-            VMSayName,
-            ):
-        app_loader.register(app())
+    app_loader.register(ControlPlayback())

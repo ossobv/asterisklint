@@ -1,6 +1,3 @@
-#!/bin/sh
-filename="$1"; shift
-cat > $filename << EOF
 # AsteriskLint -- an Asterisk PBX config syntax checker
 # Copyright (C) 2017  Walter Doekes, OSSO B.V.
 #
@@ -19,25 +16,9 @@ cat > $filename << EOF
 from ..base import FuncBase
 
 
-EOF
-for cmd in "$@"; do
-cat >> $filename << EOF
-class $cmd(FuncBase):
+class MD5(FuncBase):
     pass
 
 
-EOF
-done
-cat >> $filename << EOF
 def register(func_loader):
-    for func in (
-EOF
-for cmd in "$@"; do
-cat >> $filename << EOF
-            $cmd,
-EOF
-done
-cat >> $filename << EOF
-            ):
-        func_loader.register(func())
-EOF
+    func_loader.register(MD5())

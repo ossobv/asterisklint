@@ -126,6 +126,7 @@ TODO
 ----
 
 * Fix the horrible FIXMEs in builtin Set.
+* Add EndWhile, ExitWhile, While, etc.. see #14.
 * Func_odbc parsing improvements:
   - check for missing synopsis/syntax (compare syntax to ARGn count)
   - check for correct usage of VAL (write only) and ARG and missing SQL_ESC
@@ -136,8 +137,6 @@ TODO
 * Function argument parsing.
 * Recursive #includes probably make asterisklint run out of stack.
 * Trim CALLERID match (as used in FreePBX dialplan).
-* Add functions DB, DB_EXISTS, MD5 (as used in FreePBX dialplan).
-* Add apps Authenticate, AGI (as used in FreePBX dialplan).
 * Scan for missing dialplan-includes.
 * Add checks for recursive dialplan-includes.
 * For the Goto/Gosub-visiting:
