@@ -16,8 +16,7 @@
 from unittest import expectedFailure
 
 from asterisklint.alinttest import ALintTestCase, GenerateTestCases
-from asterisklint.application import App
-from asterisklint.varfun import VarLoader
+from asterisklint.varfun import FuncLoader
 from asterisklint.where import DUMMY_WHERE
 
 RDWR_FUNCTION_LIST = (
@@ -47,12 +46,12 @@ WRONLY_FUNCTION_LIST = RDONLY_FUNCTION_LIST = ()  # FIXME: see above
 
 class FunctionListTestBase(ALintTestCase):
     def readfunc(self, function):
-        VarLoader().parse_variables(
-            '${{{}(random_argument)}}'.format(function), where=DUMMY_WHERE)
+        FuncLoader().process_read_function(
+            '{}(random_argument)'.format(function), where=DUMMY_WHERE)
 
     def writefunc(self, function):
-        App('Set({}(random_argument)=random_argument)'.format(function),
-            where=DUMMY_WHERE)
+        FuncLoader().process_write_function(
+            '{}(random_argument)'.format(function), where=DUMMY_WHERE)
 
 
 class ReadWriteFunctionListTest(

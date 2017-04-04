@@ -107,7 +107,7 @@ class FuncLoader(metaclass=Singleton):
         lower_func = func.name.lower()
         self._lower_funcs[lower_func] = func
 
-    def process_function(self, func_and_args, where):
+    def process_read_function(self, func_and_args, where):
         """
         Process read-function: <function>(<args>)
         """
@@ -281,7 +281,7 @@ class VarLoader(metaclass=Singleton):
         """
         if '(' in data:
             # Create function and return.
-            return FuncLoader().process_function(data, where)
+            return FuncLoader().process_read_function(data, where)
 
         elif ':' in data:
             # Create sliced var and return.
