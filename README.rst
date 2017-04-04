@@ -125,7 +125,6 @@ The ``dialplan-check`` comes in handy as a git commit hook, for example
 TODO
 ----
 
-* Move expectedFailure into alinttest.
 * Fix the horrible FIXMEs in builtin Set.
 * Func_odbc parsing improvements:
   - check for missing synopsis/syntax (compare syntax to ARGn count)

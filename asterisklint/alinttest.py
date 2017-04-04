@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2015-2017  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,12 +16,16 @@
 from collections import defaultdict
 from io import BytesIO
 from unittest import (
-    TestCase, TextTestResult, TextTestRunner, main as orig_main)
+    TestCase, TextTestResult, TextTestRunner,
+    expectedFailure, main as orig_main)
 
 from .defines import MessageDefManager
 
 
-__all__ = ('ALintTestCase', 'NamedBytesIO', 'ignoreLinted')
+__all__ = (
+    'ALintTestCase', 'GenerateTestCases', 'NamedBytesIO',
+    'expectedFailure', 'ignoreLinted',
+)
 
 
 class ALintTestCase(TestCase):

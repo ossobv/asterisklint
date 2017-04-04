@@ -13,9 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from unittest import expectedFailure
-
-from asterisklint.alinttest import ALintTestCase, GenerateTestCases
+from asterisklint.alinttest import (
+    ALintTestCase, GenerateTestCases, expectedFailure)
 from asterisklint.varfun import FuncLoader
 from asterisklint.where import DUMMY_WHERE
 
