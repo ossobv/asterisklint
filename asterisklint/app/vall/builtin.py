@@ -137,6 +137,9 @@ class SetGlobalVar(BuiltinAppBase):
 
 class Set(BuiltinAppBase):
     def __call__(self, data, where, jump_destinations):
+        # FIXME: all of stuff below
+        return
+
         # FIXME: replace ValueErrors with ALint-errors
         if not data:
             raise ValueError('Set requires one variable name/value pair.')
