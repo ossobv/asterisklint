@@ -21,8 +21,9 @@ APPLICATION_LIST = (
     'AGI', 'AddQueueMember', 'Answer', 'Authenticate', 'Background',
     'Busy', 'CELGenUserEvent', 'ChanIsAvail',
     'ChanSpy', 'ChannelRedirect', 'ConfBridge', 'Congestion',
-    'ControlPlayback',
-    'DateTime', 'Dial', 'DumpChan', 'Echo', 'Exec',
+    'ContinueWhile', 'ControlPlayback',
+    'DateTime', 'Dial', 'DumpChan',
+    'Echo', 'EndWhile', 'Exec', 'ExitWhile',
     'ExtenSpy', 'ForkCDR', 'Gosub', 'Goto',
     'Hangup', 'ImportVar', 'Log', 'Macro',
     'MacroExclusive', 'MacroExit', 'MacroIf', 'MailboxExists', 'MeetMe',
@@ -40,7 +41,7 @@ APPLICATION_LIST = (
     'UnpauseQueueMember', 'UserEvent', 'VMAuthenticate', 'Verbose',
     'VMSayName', 'VoiceMail', 'VoiceMailMain', 'VoiceMailPlayMsg',
     'Wait', 'WaitExten',
-    'WaitMusicOnHold', 'WaitUntil',
+    'WaitMusicOnHold', 'WaitUntil', 'While',
 
     # These are skipped from the test because they require certain
     # syntax for the arguments.

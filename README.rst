@@ -126,7 +126,6 @@ TODO
 ----
 
 * Fix the horrible FIXMEs in builtin Set.
-* Add EndWhile, ExitWhile, While, etc.. see #14.
 * Func_odbc parsing improvements:
   - check for missing synopsis/syntax (compare syntax to ARGn count)
   - check for correct usage of VAL (write only) and ARG and missing SQL_ESC

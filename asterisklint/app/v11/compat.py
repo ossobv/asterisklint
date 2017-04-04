@@ -46,6 +46,7 @@ from ..vall.app_userevent import register as app_userevent_register
 from ..vall.app_verbose import register as app_verbose_register
 from ..vall.app_voicemail import register as app_voicemail_register
 from ..vall.app_waituntil import register as app_waituntil_register
+from ..vall.app_while import register as app_while_register
 from ..vall.chan_sip import register as chan_sip_register
 from ..vall.res_agi import register as res_agi_register
 from ..vall.res_fax import register as res_fax_register
@@ -87,6 +88,7 @@ def register(app_loader):
             app_verbose_register,
             app_voicemail_register,
             app_waituntil_register,
+            app_while_register,
             chan_sip_register,
             res_agi_register,
             res_fax_register,
