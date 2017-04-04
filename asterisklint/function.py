@@ -41,3 +41,16 @@ class ReadFunc(Var):
 
 class ReadFuncSlice(SliceMixin, ReadFunc):
     pass
+
+
+class WriteFunc(object):
+    """
+    A really simple object with function name and arguments.
+
+    This does nothing at the moment.
+    """
+    def __init__(self, func=None, args=None):
+        assert func is not None and args is not None
+
+        self.func = func
+        self.args = args

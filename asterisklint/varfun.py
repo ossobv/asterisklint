@@ -20,7 +20,7 @@ from importlib import import_module
 from .cls import Singleton
 from .defines import ErrorDef, WarningDef
 from .expression import Expr
-from .function import ReadFunc, ReadFuncSlice
+from .function import ReadFunc, ReadFuncSlice, WriteFunc
 from .variable import Var, VarSlice, VarDynSlice
 from .version import AsteriskVersion
 
@@ -109,7 +109,7 @@ class FuncLoader(metaclass=Singleton):
 
     def process_function(self, func_and_args, where):
         """
-        Process: <function>(<args>)
+        Process read-function: <function>(<args>)
         """
         # SOURCE: main/pbx.c -- ast_func_read2, func_args
         for i, char in enumerate(func_and_args):
@@ -154,6 +154,36 @@ class FuncLoader(metaclass=Singleton):
             return ReadFunc(func, args)
 
         # Okay, so we have a string function. Look it up.
+        loaded = FuncLoader()._get_and_check_availability(func, where)
+        # TODO: do more with loaded?
+        del loaded
+
+        if start is not None:
+            return ReadFuncSlice(func, args, start=start, length=length)
+        return ReadFunc(func, args)
+
+    def process_write_function(self, func_and_args, where):
+        """
+        Process write-function: <function>(<args>)
+        """
+        if '(' in func_and_args:
+            func, args = func_and_args.split('(', 1)
+            assert args[-1] == ')'  # FIXME: warn, don't raise
+            args = args[0:-1]
+        else:
+            # FIXME: warn:
+            # "Function '%s' doesn't contain parentheses.  Assuming null
+            # argument."
+            args = ''
+
+        # Okay, so we have a string function. Look it up.
+        loaded = FuncLoader()._get_and_check_availability(func, where)
+        # TODO: do more with loaded?
+        del loaded
+
+        return WriteFunc(func, args)
+
+    def _get_and_check_availability(self, func, where):
         loaded = FuncLoader().get(func.lower())
 
         # Check function availability.
@@ -163,11 +193,7 @@ class FuncLoader(metaclass=Singleton):
             else:
                 E_FUNC_BAD_CASE(where, func=func, proper=loaded.name)
 
-        # TODO: do more stuff with this..?
-
-        if start is not None:
-            return ReadFuncSlice(func, args, start=start, length=length)
-        return ReadFunc(func, args)
+        return loaded
 
 
 class VarLoader(metaclass=Singleton):

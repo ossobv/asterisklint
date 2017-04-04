@@ -140,6 +140,52 @@ class ALintTestRunner(TextTestRunner):
         return ALintTestResult(self.stream, self.descriptions, self.verbosity)
 
 
+# Do not call this TestCaseGenerator; nose would consider it a test.
+def GenerateTestCases(function_name, argslist):
+    """
+    Meta class to generate multiple test cases inside a TestCase.
+
+    Usage example::
+
+        class ExampleTest(TestCase, metaclass=GenerateTestCases(
+                '_test_func', ((1, 4), (2, 3)))):
+
+            def _test_func(self, arg1, arg2):
+                "Test that {} + {} = 5"
+                self.assertEqual(arg1 + arg2, 5)
+
+            # Creates:
+            # def test_1_4(self): self.assertEqual(1 + 4, 5)
+            # def test_2_3(self): self.assertEqual(2 + 3, 5)
+    """
+    class Meta(type):
+        def __new__(cls, name, bases, dct):
+            def new_func(name, doc, args):
+                def _closure(self):
+                    return getattr(self, function_name)(*args)
+
+                _closure.__name__ = name
+                _closure.__doc__ = doc
+                return _closure
+
+            newdct = dct.copy()
+
+            for args in argslist:
+                joined_args = '_'.join(str(i) for i in args)
+                docstring_template = dct[function_name].__doc__
+
+                func = new_func(
+                    name='test_{}'.format(joined_args),
+                    doc=docstring_template.format(*args),
+                    args=args)
+
+                newdct[func.__name__] = func
+
+            return super(Meta, cls).__new__(cls, name, bases, newdct)
+
+    return Meta
+
+
 class NamedBytesIO(BytesIO):
     def __init__(self, name, data):
         super().__init__(data)

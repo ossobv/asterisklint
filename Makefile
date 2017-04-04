@@ -24,7 +24,7 @@ install: Makefile.version
 
 test:
 	find . -name '*.py' | xargs -d\\n $(FLAKE8) || true; echo
-	$(PYTHON) -m asterisklint.alinttest discover --pattern='test_*.py'
+	$(PYTHON) -m asterisklint.alinttest discover -v --pattern='test_*.py'
 
 license_turds:
 	find . -name '*.py' -print0 | xargs -0 grep -L '^# Copyright (C)' | \

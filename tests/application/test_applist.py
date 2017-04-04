@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from asterisklint.alinttest import ALintTestCase
+from asterisklint.alinttest import ALintTestCase, GenerateTestCases
 from asterisklint.application import App
 from asterisklint.where import DUMMY_WHERE
 
@@ -32,44 +32,18 @@ APPLICATION_LIST = (
     'Record', 'RemoveQueueMember', 'ResetCDR', 'RetryDial', 'Return',
     'Ringing', 'SIPAddHeader', 'SIPDtmfMode', 'SIPRemoveHeader',
     'SLAStation', 'SLATrunk', 'SayAlpha', 'SayDigits', 'SayNumber',
-    'SayPhonetic', 'SayUnixTime', 'SendFAX', 'Set', 'SetAMAFlags',
+    'SayPhonetic', 'SayUnixTime', 'SendFAX', 'SetAMAFlags',
     'SetCallerID', 'SetCallerPres', 'SetGlobalVar', 'SetMusicOnHold',
     'StackPop', 'StartMusicOnHold', 'StopMixMonitor', 'StopMusicOnHold',
     'StopPlayTones', 'System', 'TryExec', 'TrySystem', 'Unknown',
     'UnpauseQueueMember', 'UserEvent', 'VMAuthenticate', 'Verbose',
     'VoiceMail', 'VoiceMailMain', 'Wait', 'WaitExten',
     'WaitMusicOnHold', 'WaitUntil',
+
+    # These are skipped from the test because they require certain
+    # syntax for the arguments.
+    # 'ExecIfTime', 'GosubIfTime', 'GotoIfTime', 'Set',
 )
-
-
-# Do not call this TestCaseGenerator; nose would consider it a test.
-def GenerateTestCases(function_name, argslist):
-    class Meta(type):
-        def __new__(cls, name, bases, dct):
-            def new_func(name, doc, args):
-                def _closure(self):
-                    return getattr(self, function_name)(*args)
-
-                _closure.__name__ = name
-                _closure.__doc__ = doc
-                return _closure
-
-            newdct = dct.copy()
-
-            for args in argslist:
-                joined_args = '_'.join(str(i) for i in args)
-                docstring_template = dct[function_name].__doc__
-
-                func = new_func(
-                    name='test_{}'.format(joined_args),
-                    doc=docstring_template.format(*args),
-                    args=args)
-
-                newdct[func.__name__] = func
-
-            return super(Meta, cls).__new__(cls, name, bases, newdct)
-
-    return Meta
 
 
 class ApplicationListTest(ALintTestCase, metaclass=GenerateTestCases(
