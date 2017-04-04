@@ -1,0 +1,85 @@
+# AsteriskLint -- an Asterisk PBX config syntax checker
+# Copyright (C) 2017  Walter Doekes, OSSO B.V.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from asterisklint.alinttest import ALintTestCase
+from asterisklint.application import App
+from asterisklint.where import DUMMY_WHERE
+
+APPLICATION_LIST = (
+    'AddQueueMember', 'Answer', 'Background',
+    'Busy', 'CELGenUserEvent', 'ChanIsAvail',
+    'ChanSpy', 'ChannelRedirect', 'ConfBridge', 'Congestion',
+    'DateTime', 'Dial', 'DumpChan', 'Echo', 'Exec',
+    'ExtenSpy', 'ForkCDR', 'Gosub', 'Goto',
+    'Hangup', 'ImportVar', 'Log', 'Macro',
+    'MacroExclusive', 'MacroExit', 'MacroIf', 'MailboxExists', 'MeetMe',
+    'MeetMeAdmin', 'MeetMeChannelAdmin', 'MeetMeCount', 'MixMonitor',
+    'MusicOnHold', 'NoCDR', 'NoOp', 'Page', 'PauseQueueMember',
+    'Pickup', 'PickupChan', 'PickupOld1v4', 'PlayTones', 'Playback',
+    'Proceeding', 'Progress', 'Queue', 'QueueLog', 'Read', 'ReceiveFAX',
+    'Record', 'RemoveQueueMember', 'ResetCDR', 'RetryDial', 'Return',
+    'Ringing', 'SIPAddHeader', 'SIPDtmfMode', 'SIPRemoveHeader',
+    'SLAStation', 'SLATrunk', 'SayAlpha', 'SayDigits', 'SayNumber',
+    'SayPhonetic', 'SayUnixTime', 'SendFAX', 'Set', 'SetAMAFlags',
+    'SetCallerID', 'SetCallerPres', 'SetGlobalVar', 'SetMusicOnHold',
+    'StackPop', 'StartMusicOnHold', 'StopMixMonitor', 'StopMusicOnHold',
+    'StopPlayTones', 'System', 'TryExec', 'TrySystem', 'Unknown',
+    'UnpauseQueueMember', 'UserEvent', 'VMAuthenticate', 'Verbose',
+    'VoiceMail', 'VoiceMailMain', 'Wait', 'WaitExten',
+    'WaitMusicOnHold', 'WaitUntil',
+)
+
+
+# Do not call this TestCaseGenerator; nose would consider it a test.
+def GenerateTestCases(function_name, argslist):
+    class Meta(type):
+        def __new__(cls, name, bases, dct):
+            def new_func(name, doc, args):
+                def _closure(self):
+                    return getattr(self, function_name)(*args)
+
+                _closure.__name__ = name
+                _closure.__doc__ = doc
+                return _closure
+
+            newdct = dct.copy()
+
+            for args in argslist:
+                joined_args = '_'.join(str(i) for i in args)
+                docstring_template = dct[function_name].__doc__
+
+                func = new_func(
+                    name='test_{}'.format(joined_args),
+                    doc=docstring_template.format(*args),
+                    args=args)
+
+                newdct[func.__name__] = func
+
+            return super(Meta, cls).__new__(cls, name, bases, newdct)
+
+    return Meta
+
+
+class ApplicationListTest(ALintTestCase, metaclass=GenerateTestCases(
+        '_test_template', [(i,) for i in APPLICATION_LIST])):
+    "Test that a bunch of applications exist."
+
+    def test_Goto(self):
+        "Test that Application 'Goto' exists."
+        App('Goto(random_argument)', where=DUMMY_WHERE)
+
+    def _test_template(self, application):
+        "Test that Application '{}' exists (generated test)."
+        App('{}(random_argument)'.format(application), where=DUMMY_WHERE)
