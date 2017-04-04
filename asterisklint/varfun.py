@@ -39,6 +39,9 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_FUNC_TAIL(ErrorDef):
         message = "excess tokens at the end of the function call '{data}'"
 
+    class E_VAR_BAD_TOKENS(ErrorDef):
+        message = "bad tokens in variable name '{data}'"
+
     class E_VAR_SUBSTR_ARGS(ErrorDef):
         message = "bad substring syntax of variable '{data}'"
 
@@ -50,6 +53,10 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 
     class W_FUNC_DYNAMIC(WarningDef):
         message = "calling functions dynamically is not good practise '{data}'"
+
+
+# [A-Za-z0-9_]
+LEGAL_VAR_TOKENS = set(string.ascii_letters + string.digits + '_')
 
 
 class VarParseError(ValueError):
@@ -325,10 +332,10 @@ class VarLoader(metaclass=Singleton):
 
     def count_var(self, varname, where):
         assert isinstance(varname, str), varname
-        assert all((i in string.ascii_letters or
-                    i in string.digits or
-                    i == '_')
-                   for i in varname), varname
+
+        if not all(i in LEGAL_VAR_TOKENS for i in varname):
+            E_VAR_BAD_TOKENS(where, data=varname)
+
         self._variables[varname].append(where)
 
     @staticmethod
