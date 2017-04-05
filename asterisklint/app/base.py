@@ -13,8 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ..application import W_APP_BALANCE
-from ..defines import ErrorDef
+from ..application import E_APP_MISSING, W_APP_BALANCE
+from ..defines import ErrorDef, WarningDef
 from ..variable import Var, strjoin
 
 
@@ -56,6 +56,9 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_APP_ARG_SYNTAX(ErrorDef):
         message = ('generic application syntax error; app {app!r} and '
                    'data {data!r}')
+
+    class W_APP_BAD_CASE(WarningDef):
+        message = 'app {app!r} does not have the proper Case {proper!r}'
 
 
 class AppArg(object):
@@ -103,6 +106,14 @@ class AppBase(object):
             self.check_balance(data)
         except ValueError:
             W_APP_BALANCE(where, data=str(data))
+
+    def check_availability(self, supplied_name, where):
+        if self.name == supplied_name:
+            pass
+        elif self.name == 'Unknown':
+            E_APP_MISSING(where, app=supplied_name)
+        else:
+            W_APP_BAD_CASE(where, app=supplied_name, proper=self.name)
 
     @staticmethod
     def check_balance(data):

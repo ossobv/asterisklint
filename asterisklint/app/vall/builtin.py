@@ -34,8 +34,21 @@ class Answer(BuiltinAppBase):
 
 class Background(BuiltinAppBase):
     # NOTE: It is called "BackGround" in Asterisk, but that makes my
-    # eyes sore.
-    pass
+    # eyes sore. But, especially for those that prefer the "official"
+    # syntax, we allow the first occurrence of the app to define the
+    # future spelling.
+    chosen_spelling = None
+
+    @property
+    def name(self):
+        return self.chosen_spelling or super().name
+
+    def check_availability(self, supplied_name, where):
+        if not self.chosen_spelling and supplied_name in (
+                'Background', 'BackGround'):
+            self.chosen_spelling = supplied_name
+
+        return super().check_availability(supplied_name, where)
 
 
 class Busy(BuiltinAppBase):

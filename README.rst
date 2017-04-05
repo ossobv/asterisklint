@@ -125,8 +125,6 @@ The ``dialplan-check`` comes in handy as a git commit hook, for example
 TODO
 ----
 
-* Make application Case a warning (not error).
-* Allow "official" Case for BackGround.
 * Set()-parsing; see fixme's in builtin Set.
 * Expression parsing.
 * Function argument parsing.

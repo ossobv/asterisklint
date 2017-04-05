@@ -35,9 +35,6 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
         message = ('app data {data!r} looks like unbalanced '
                    'parentheses/quotes/curlies')
 
-    class W_APP_BAD_CASE(WarningDef):
-        message = 'app {app!r} does not have the proper Case {proper!r}'
-
     class W_APP_NEED_PARENS(WarningDef):
         message = 'app {app!r} should have parentheses (only NoOp is exempt)'
 
@@ -136,17 +133,11 @@ class App(object):
         # Find the handler from the registered handlers. If there is no
         # custom handler, we may already raise a message here.
         app = AppLoader().get(self.app_lower)
+        app.check_availability(self.app, where=self.where)
 
         # Pass the data through a handler -- which also handles
         # functions -- first:
         self.data = self.parse_inner(self.data)
-
-        # Check app availability.
-        if app.name != self.app:
-            if app.name == 'Unknown':
-                E_APP_MISSING(self.where, app=self.app)
-            else:
-                W_APP_BAD_CASE(self.where, app=self.app, proper=app.name)
 
         # Run data through app.
         app(self.data, where=self.where,
@@ -162,8 +153,6 @@ class App(object):
         if '${' in data or '$[' in data:
             try:
                 data = VarLoader().parse_variables(data, self.where)
-#            except NotImplementedError:  # FIXME: remove this
-#                pass
             except VarParseError:
                 E_APP_PARSE_ERROR(self.where, app=self.app, args=data)
         return data
