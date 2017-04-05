@@ -35,6 +35,7 @@ from ..vall.func_md5 import register as func_md5_register
 from ..vall.func_rand import register as func_rand_register
 from ..vall.func_shell import register as func_shell_register
 from ..vall.func_strings import register as func_strings_register
+from ..vall.func_timeout import register as func_timeout_register
 from ..vall.func_uri import register as func_uri_register
 from ..vall.res_fax import register as res_fax_register
 
@@ -62,6 +63,7 @@ def register(func_loader):
             func_rand_register,
             func_shell_register,
             func_strings_register,
+            func_timeout_register,
             func_uri_register,
             res_fax_register):
         regfunc(func_loader)
