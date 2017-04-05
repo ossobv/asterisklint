@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2015-2017  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 license_str = """
-Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+Copyright (C) 2015-2017  Walter Doekes, OSSO B.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -29,4 +29,4 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-version_str = '0.3.0'
+version_str = '0.4.0~rc2'

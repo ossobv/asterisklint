@@ -1,10 +1,12 @@
-0.4.0~rc1 (2017-04-05)
+0.4.0~rc2 (2017-04-05)
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Bug fixes:
 
 * When doing dialplan-file mutations, operate on the symlink target
   instead of replacing the symlink.
+* Don't install README files into /usr, but in
+  /usr/share/doc/asterisklint (or with a different prefix).
 
 Improvements:
 
