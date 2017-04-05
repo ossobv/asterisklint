@@ -50,7 +50,8 @@ if __name__ == '__main__':
         version=version,
         scripts=['scripts/asterisklint'],
         packages=get_packages(),
-        data_files=[('', ['CHANGES.rst', 'LICENSE', 'README.rst'])],
+        data_files=[('share/doc/asterisklint', [
+            'CHANGES.rst', 'LICENSE', 'README.rst'])],
         description='Asterisk PBX configuration syntax checker',
         long_description=('\n\n\n'.join(long_descriptions)),
         author='Walter Doekes, OSSO B.V.',
