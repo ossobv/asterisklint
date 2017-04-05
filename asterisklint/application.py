@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from importlib import import_module
 
+from .app import E_APP_MISSING
 from .cls import Singleton
 from .defines import ErrorDef, WarningDef
 from .varfun import VarLoader, VarParseError
@@ -25,15 +26,8 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_APP_WSH(ErrorDef):
         message = 'whitespace before app {app!r} will result in unknown app'
 
-    class E_APP_MISSING(ErrorDef):
-        message = 'app {app!r} does not exist, dialplan will halt here!'
-
     class E_APP_PARSE_ERROR(ErrorDef):
         message = 'app {app!r} arguments {args!r} raise a parse error'
-
-    class W_APP_BALANCE(WarningDef):
-        message = ('app data {data!r} looks like unbalanced '
-                   'parentheses/quotes/curlies')
 
     class W_APP_NEED_PARENS(WarningDef):
         message = 'app {app!r} should have parentheses (only NoOp is exempt)'

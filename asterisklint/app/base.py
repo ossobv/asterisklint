@@ -13,8 +13,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ..application import E_APP_MISSING, W_APP_BALANCE
-from ..defines import ErrorDef, WarningDef
+from . import (
+    E_APP_ARG_BADOPT, E_APP_ARG_DUPEOPT, E_APP_MISSING,
+    E_APP_ARG_FEW, E_APP_ARG_MANY, E_APP_ARG_PIPEDELIM,
+    E_APP_ARG_IFCONST, E_APP_ARG_IFEMPTY, E_APP_ARG_IFSTYLE,
+    W_APP_BALANCE, W_APP_BAD_CASE)
 from ..variable import Var, strjoin
 
 
@@ -22,43 +25,6 @@ from ..variable import Var, strjoin
 # could include a where, and also a list of classes where we can store
 # significant info like "label" when there is a goto/gosub that jumps to
 # one.
-
-
-if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
-    class E_APP_ARG_FEW(ErrorDef):
-        message = 'too few arguments for app {app!r}, minimum is {min_args}'
-
-    class E_APP_ARG_MANY(ErrorDef):
-        message = 'too many arguments for app {app!r}, maximum is {max_args}'
-
-    class E_APP_ARG_BADOPT(ErrorDef):
-        message = ('unrecognised options {opts!r} in arg {argno} '
-                   'for app {app!r}')
-
-    class E_APP_ARG_DUPEOPT(ErrorDef):
-        message = 'duplicate options {opts!r} in arg {argno} for app {app!r}'
-
-    class E_APP_ARG_IFCONST(ErrorDef):
-        message = ("apparent constant in If-condition; app {app!r}, "
-                   "data '{data}' and cond '{cond}'")
-
-    class E_APP_ARG_IFEMPTY(ErrorDef):
-        message = "empty If-condition; app {app!r}, data '{data}'"
-
-    class E_APP_ARG_IFSTYLE(ErrorDef):
-        message = ("{app!r} takes the form <cond>?<iftrue>[:<iffalse>] "
-                   "but data is '{data}', cond '{cond}', args '''{args}'''")
-
-    class E_APP_ARG_PIPEDELIM(ErrorDef):
-        message = ('the application delimiter is now the comma, not '
-                   'the pipe; see app {app!r} and data {data!r}')
-
-    class E_APP_ARG_SYNTAX(ErrorDef):
-        message = ('generic application syntax error; app {app!r} and '
-                   'data {data!r}')
-
-    class W_APP_BAD_CASE(WarningDef):
-        message = 'app {app!r} does not have the proper Case {proper!r}'
 
 
 class AppArg(object):

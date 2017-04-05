@@ -13,8 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ...application import W_APP_BALANCE
 from ..base import (
+    W_APP_BALANCE,
     AppBase, DelimitedArgsMixin, MinMaxArgsMixin, NoPipeDelimiterMixin,
     VarCondIfStyleApp)
 

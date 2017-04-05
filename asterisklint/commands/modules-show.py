@@ -20,7 +20,8 @@ Show which modules, apps and functions are used by the dialplan. Takes
 from collections import defaultdict
 
 from asterisklint import FileDialplanParser
-from asterisklint.application import E_APP_MISSING, AppLoader
+from asterisklint.app import E_APP_MISSING
+from asterisklint.application import AppLoader
 from asterisklint.defines import MessageDefManager
 from asterisklint.mainutil import (
     MainBase, UniqueStore, load_func_odbc_functions)
