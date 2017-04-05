@@ -20,6 +20,7 @@ Improvements:
 * Add various functions:
   - DB, DB_EXISTS, DB_KEYS, DB_DELETE,
   - MD5, TIMEOUT
+  - LOCAL, LOCAL_PEEK, STACK_PEEK
 * Add initial checks of function parameters: nothing more than the
   parentheses check we already used on undefined apps.
 * Add application Set() support. Add function SET() support. This also
