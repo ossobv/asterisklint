@@ -65,67 +65,84 @@ class Main(MainBase):
             loader._variables.items(), key=(lambda x: x[0].lower())))
 
         if args.verbose:
-            print('Contexts encountered:')
-            for context in contexts_by_name:
-                print('  {}'.format(context))
-            print()
-            print('Labels encountered:')
-            for label in labels_by_name:
-                print('  {}'.format(label))
-            print()
-            print('Variables encountered:')
-            for variable, occurrences in varlist_by_name:
-                print('  {:32}  [{} times in {} files]'.format(
-                    variable, len(occurrences),
-                    len(set(i.filename for i in occurrences))))
-            print()
+            self.print_contexts(contexts_by_name)
+            self.print_labels(labels_by_name)
+            self.print_variables(varlist_by_name)
 
-        # Calculate Levenshtein distance.
+        # Calculate Levenshtein distance if available. Complain if
+        # module wasn't loaded and the user did not ask for verbose
+        # printing either.
         if editdistance:
-            identifiers = set()
-            identifiers.update(contexts_by_name)
-            identifiers.update(labels_by_name)
-            identifiers.update([i[0] for i in varlist_by_name])
-            id_by_name = sorted(
-                identifiers, key=(lambda x: x.lower()))
-            id_by_len = sorted(
-                identifiers, key=(lambda x: (len(x), x.lower())))
-
-            similar = defaultdict(set)
-            for id_list in (id_by_name, id_by_len):
-                prev = None
-                for cur in id_list:
-                    if prev:
-                        lodiff = editdistance.eval(prev.lower(), cur.lower())
-                        if (lodiff == 0 and (
-                                (prev.isupper() and cur.islower()) or
-                                (prev.islower() and cur.isupper()))):
-                            pass
-                        elif (prev.startswith('ARG') and
-                                cur.startswith('ARG') and
-                                prev[3:].isdigit() and
-                                cur[3:].isdigit()):
-                            # ARG1..n as passed to a Gosub() routine.
-                            pass
-                        elif (lodiff <= 2 and (lodiff + 1) < len(prev) and
-                                (lodiff + 1) < len(cur)):
-                            similar[prev].add(cur)
-                            similar[cur].add(prev)
-                    prev = cur
-
-            if similar:
-                print('Identifiers with similar names include:')
-                for identifier in sorted(
-                        similar.keys(), key=(lambda x: x.lower())):
-                    similar_to = ', '.join(sorted(similar[identifier]))
-                    print('  {:32}  [similar to: {}]'.format(
-                        identifier, similar_to))
-                print()
-                return 1
-
-        elif not args.verbose:
+            identifiers = (
+                set(contexts_by_name) |
+                set(labels_by_name) |
+                set([i[0] for i in varlist_by_name]))
+            ret = self.print_distance(identifiers)
+        elif args.verbose:
+            ret = 0
+        else:
             raise ImportError(
                 'Loading editdistance failed. Using this command without '
                 'the editdistance and without verbose mode is a no-op.')
+
+        return ret
+
+    def print_contexts(self, contexts_by_name):
+        print('Contexts encountered:')
+        for context in contexts_by_name:
+            print('  {}'.format(context))
+        print()
+
+    def print_labels(self, labels_by_name):
+        print('Labels encountered:')
+        for label in labels_by_name:
+            print('  {}'.format(label))
+        print()
+
+    def print_variables(self, varlist_by_name):
+        print('Variables encountered:')
+        for variable, occurrences in varlist_by_name:
+            print('  {:32}  [{} times in {} files]'.format(
+                variable, len(occurrences),
+                len(set(i.filename for i in occurrences))))
+        print()
+
+    def print_distance(self, identifiers):
+        id_by_name = sorted(
+            identifiers, key=(lambda x: x.lower()))
+        id_by_len = sorted(
+            identifiers, key=(lambda x: (len(x), x.lower())))
+
+        similar = defaultdict(set)
+        for id_list in (id_by_name, id_by_len):
+            prev = None
+            for cur in id_list:
+                if prev:
+                    lodiff = editdistance.eval(prev.lower(), cur.lower())
+                    if (lodiff == 0 and (
+                            (prev.isupper() and cur.islower()) or
+                            (prev.islower() and cur.isupper()))):
+                        pass
+                    elif (prev.startswith('ARG') and
+                            cur.startswith('ARG') and
+                            prev[3:].isdigit() and
+                            cur[3:].isdigit()):
+                        # ARG1..n as passed to a Gosub() routine.
+                        pass
+                    elif (lodiff <= 2 and (lodiff + 1) < len(prev) and
+                            (lodiff + 1) < len(cur)):
+                        similar[prev].add(cur)
+                        similar[cur].add(prev)
+                prev = cur
+
+        if similar:
+            print('Identifiers with similar names include:')
+            for identifier in sorted(
+                    similar.keys(), key=(lambda x: x.lower())):
+                similar_to = ', '.join(sorted(similar[identifier]))
+                print('  {:32}  [similar to: {}]'.format(
+                    identifier, similar_to))
+            print()
+            return 1
 
 main = Main()

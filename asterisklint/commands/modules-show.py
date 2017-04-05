@@ -82,13 +82,21 @@ class Main(MainBase):
 
         apploader = AppLoader()
         funcloader = FuncLoader()
-        all_modules = set()
 
+        self.print_modules_used(apploader, funcloader)
+        self.print_load_statements(
+            set(apploader.used_modules) |
+            set(funcloader.used_modules))
+        self.print_unknowns(aggregator)
+
+        return int(
+            bool(aggregator.unknown_apps) or
+            bool(aggregator.unknown_funcs))
+
+    def print_modules_used(self, apploader, funcloader):
         for what, used_items, used_modules in (
                 ('Application', apploader.used_apps, apploader.used_modules),
                 ('Function', funcloader.used_funcs, funcloader.used_modules)):
-            all_modules.update(used_modules)
-
             used_items_per_module = defaultdict(list)
             for item in used_items:
                 used_items_per_module[item.module].append(item)
@@ -115,11 +123,14 @@ class Main(MainBase):
                         '', item_line.strip()))
             print(';')
 
+    def print_load_statements(self, all_modules):
         print('; modules.conf')
         for module in sorted(all_modules):
             if module != '<builtin>':
                 print('load => {}.so'.format(module))
         print()
+
+    def print_unknowns(self, aggregator):
         if aggregator.unknown_apps:
             print('; WARNING: The following unknown applications were seen:')
             print(';   {}'.format(', '.join(sorted(aggregator.unknown_apps))))
@@ -128,9 +139,5 @@ class Main(MainBase):
             print('; WARNING: The following unknown functions were seen:')
             print(';   {}'.format(', '.join(sorted(aggregator.unknown_funcs))))
             print(';')
-
-        return int(
-            bool(aggregator.unknown_apps) or
-            bool(aggregator.unknown_funcs))
 
 main = Main()
