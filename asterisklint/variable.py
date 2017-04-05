@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2015-2017  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -164,34 +164,53 @@ class Var(object):
             return '${{{}}}'.format(self.name)
         return ''.join(str(i) for i in self._list)
 
-    def split(self, token):
-        if token != ':':
-            raise TypeError('expected split on colon, got {!r}'.format(token))
+    def split(self, token=':', maxsplit=-1):
+        # In case we're an atom, pretend we're a list.
+        if self.name:
+            list_ = [self.name]  # [name]  # (start, length)
+        else:
+            list_ = self._list   # [contents...]  # (start, length)
 
-        assert not self.name, self.name
-        assert len(self._list) >= 2, self._list
-        ret = self._list[0].split(token)
-        assert len(ret) > 1, ret
+        assert (
+            (token == ':' and maxsplit == -1) or    # ${var:start:len}
+            (token == '=' and maxsplit == 1) or     # Set(X=Y)
+            (token == '(' and maxsplit == 1)        # FUNC(x)
+        ), (token, maxsplit)  # unexpected split token..
 
+        ret = self._split(list_, token, maxsplit)
+        return ret
+
+    def _split(self, source, token, maxsplit):
         # Split it up by token, so we group the values into subgroups.
         split_up = [[]]
-        for item in self._list:
-            if isinstance(item, str):
-                subitems = item.split(token)
+        maxsplit_done = 0
+
+        for item in source:
+            if not isinstance(item, str):
+                split_up[-1].append(item)
+            elif token not in item or (maxsplit == maxsplit_done):
+                split_up[-1].append(item)
+            else:
+                if maxsplit == -1:
+                    subitems = item.split(token, maxsplit)
+                else:
+                    subitems = item.split(token, maxsplit - maxsplit_done)
+
                 while len(subitems) > 1:
                     first = subitems.pop(0)
                     if first:
                         split_up[-1].append(first)
                     split_up.append([])
+                    maxsplit_done += 1
+
                 if subitems[0]:
                     split_up[-1].append(subitems[0])
-            else:
-                split_up[-1].append(item)
 
         # Join the subgroups back into variables.
         for i, list_ in enumerate(split_up):
-            assert len(list_)
-            if len(list_) > 1:
+            if len(list_) == 0:
+                split_up[i] = ''
+            elif len(list_) > 1:
                 split_up[i] = Var.join(split_up[i])
             else:
                 split_up[i] = split_up[i][0]
