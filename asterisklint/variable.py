@@ -306,3 +306,61 @@ def strjoin(list_of_items_and_strings):
             yield ch
     if cache:
         yield ''.join(cache)
+
+
+def variable_check_balance(data):
+    """
+    This function is a simple check that looks sane, but is not
+    implemented like this in Asterisk. It may warn you of badly
+    placed delimiters, but you shouldn't use this to interpret
+    variables.
+
+    For that, see separate_args which is modeled after the function
+    as implemented in Asterisk.
+    """
+    arr = ['X']
+
+    for char in data:
+        if isinstance(char, Var):
+            # It's possible that we're looping over a Var variable.
+            # In that case we'll have to assume the Var itself
+            # contains no separators that we might be interested in.
+            # E.g. we expect you do *not* do this:
+            # ``Set(var=mailbox@context,s)``
+            # ``VoiceMail(${var})``
+            # But we expect you to do this:
+            # ``Set(mailbox=mailbox@context)``
+            # ``VoiceMail(${mailbox},s)``
+            # Same goes for functions.
+            pass  # skip char
+        elif char == '"':
+            if arr[-1] == '"':
+                arr.pop()
+            elif arr[-1] == "'":
+                pass
+            else:
+                arr.append('"')
+        elif char == "'":
+            if arr[-1] == "'":
+                arr.pop()
+            elif arr[-1] == '"':
+                pass
+            else:
+                arr.append("'")
+        elif char in '({[':
+            if arr[-1] in '\'"':
+                pass
+            else:
+                arr.append(char)
+        elif char in ')}]':
+            left = '({['[')}]'.index(char)]
+            if arr[-1] in '\'"':
+                pass
+            else:
+                if arr[-1] == left:
+                    arr.pop()
+                else:
+                    raise ValueError(''.join(arr[1:]))
+
+    if arr != ['X']:
+        raise ValueError(''.join(arr[1:]))

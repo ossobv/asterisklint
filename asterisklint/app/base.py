@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2015-2017  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ from . import (
     E_APP_ARG_FEW, E_APP_ARG_MANY, E_APP_ARG_PIPEDELIM,
     E_APP_ARG_IFCONST, E_APP_ARG_IFEMPTY, E_APP_ARG_IFSTYLE,
     W_APP_BALANCE, W_APP_BAD_CASE)
-from ..variable import Var, strjoin
+from ..variable import Var, strjoin, variable_check_balance
 
 
 # TODO: instead of where, we should pass a context object that context
@@ -83,58 +83,7 @@ class AppBase(object):
 
     @staticmethod
     def check_balance(data):
-        """
-        This function is a simple check that looks sane, but is not
-        implemented like this in Asterisk. It may warn you of badly
-        placed delimiters, but you shouldn't use this to interpret
-        variables.
-
-        For that, see separate_args which is modeled after the function
-        as implemented in Asterisk.
-        """
-        arr = ['X']
-        for char in data:
-            if isinstance(char, Var):
-                # It's possible that we're looping over a Var variable.
-                # In that case we'll have to assume the Var itself
-                # contains no separators that we might be interested in.
-                # E.g. we expect you do *not* do this:
-                # ``Set(var=mailbox@context,s)``
-                # ``VoiceMail(${var})``
-                # But we expect you to do this:
-                # ``Set(mailbox=mailbox@context)``
-                # ``VoiceMail(${mailbox},s)``
-                pass  # skip char
-            elif char == '"':
-                if arr[-1] == '"':
-                    arr.pop()
-                elif arr[-1] == "'":
-                    pass
-                else:
-                    arr.append('"')
-            elif char == "'":
-                if arr[-1] == "'":
-                    arr.pop()
-                elif arr[-1] == '"':
-                    pass
-                else:
-                    arr.append("'")
-            elif char in '({[':
-                if arr[-1] in '\'"':
-                    pass
-                else:
-                    arr.append(char)
-            elif char in ')}]':
-                left = '({['[')}]'.index(char)]
-                if arr[-1] in '\'"':
-                    pass
-                else:
-                    if arr[-1] == left:
-                        arr.pop()
-                    else:
-                        raise ValueError(''.join(arr[1:]))
-        if arr != ['X']:
-            raise ValueError(''.join(arr[1:]))
+        variable_check_balance(data)
 
     @staticmethod
     def separate_args(data, delimiter=',', remove_quotes_backslashes=True):

@@ -125,9 +125,7 @@ The ``dialplan-check`` comes in handy as a git commit hook, for example
 TODO
 ----
 
-* Set()-parsing; see fixme's in builtin Set.
 * Expression parsing.
-* Function argument parsing.
 * Func_odbc parsing improvements:
   - check for missing synopsis/syntax (compare syntax to ARGn count)
   - check for correct usage of VAL (write only) and ARG and missing SQL_ESC

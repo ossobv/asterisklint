@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2015-2017  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from . import W_FUNC_BALANCE
+from ..variable import variable_check_balance
 
 
 class FuncBase(object):
@@ -25,4 +27,11 @@ class FuncBase(object):
         return self.__module__.rsplit('.', 1)[-1]
 
     def __call__(self, data, where):
-        pass
+        try:
+            self.check_balance(data)
+        except ValueError:
+            W_FUNC_BALANCE(where, data=str(data))
+
+    @staticmethod
+    def check_balance(data):
+        variable_check_balance(data)
