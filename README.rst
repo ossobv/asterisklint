@@ -125,26 +125,29 @@ The ``dialplan-check`` comes in handy as a git commit hook, for example
 TODO
 ----
 
-* Fix the horrible FIXMEs in builtin Set.
+* Make application Case a warning (not error).
+* Allow "official" Case for BackGround.
+* Set()-parsing; see fixme's in builtin Set.
+* Expression parsing.
+* Function argument parsing.
 * Func_odbc parsing improvements:
   - check for missing synopsis/syntax (compare syntax to ARGn count)
   - check for correct usage of VAL (write only) and ARG and missing SQL_ESC
   - yield the odbc functions instead of contexts like it does now
   (See more in func_odbc.py.)
-* Improve documentation as needed.
-* Expression parsing.
-* Function argument parsing.
-* Recursive #includes probably make asterisklint run out of stack.
+* Fix various includes issues:
+  - Recursive #includes probably make asterisklint run out of stack.
+  - Add checks for recursive dialplan-includes.
+  - Scan for missing dialplan-includes.
 * Trim CALLERID match (as used in FreePBX dialplan).
-* Scan for missing dialplan-includes.
-* Add checks for recursive dialplan-includes.
-* For the Goto/Gosub-visiting:
-  - Attempt to match contexts by regex if there are $VARs involved?
-  - Allow a "noqa" style exceptions to be placed in a comment?
 * Add ``app-check`` command to do dialplan checks of individual lines.
 * Add ``expr-check`` command to do expression (``$[...]``) checks.
 * Allow multiline variables using += (key=val; key+=more-val).
 * Investigate whether exten=>s,n(label)... exten=>s,label+10... is valid.
+* For the Goto/Gosub-visiting:
+  - Attempt to match contexts by regex if there are $VARs involved?
+  - Allow a "noqa" style exceptions to be placed in a comment?
+* Improve documentation as needed.
 * Before 1.0, start adding versioning -- including semver -- so users can
   depend on a stable API from their custom scripts. Also version the scripts
   (commands) so they won't talk to older/newer libs if that poses a problem.
@@ -166,4 +169,4 @@ BUGS
 Author
 ------
 
-Walter Doekes, OSSO B.V. 2015,2016
+Walter Doekes, OSSO B.V. 2015-2017
