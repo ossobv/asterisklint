@@ -1,3 +1,33 @@
+0.4.0~rc1 (2017-04-05)
+~~~~~~~~~~~~~~~~~~~~~~
+
+Bug fixes:
+
+* When doing dialplan-file mutations, operate on the symlink target
+  instead of replacing the symlink.
+
+Improvements:
+
+* Add various apps:
+  - Authenticate, ControlPlayback, PickupChan
+  - PickupOld1v4 (a workaround, see ASTERISK-26464)
+  - VoiceMailPlayMsg, VMSayName,
+  - ContinueWhile, EndWhile, ExitWhile, While,
+  - AGI, DeadAGI, EAGI,
+  - StopMusicOnHold
+* Add various functions:
+  - DB, DB_EXISTS, DB_KEYS, DB_DELETE,
+  - MD5, TIMEOUT
+* Add initial checks of function parameters: nothing more than the
+  parentheses check we already used on undefined apps.
+* Add application Set() support. Add function SET() support. This also
+  enables checking calls to writable functions.
+* Allow both the "BackGround" and "Background" spelling, as long as
+  you choose one consistently.
+* A bunch of refactoring to make BetterCodeHub happy. If you've made
+  custom subcommands, look at the MainBase class.
+* Add web frontend into repository.
+
 0.3.0 (2016-06-08)
 ~~~~~~~~~~~~~~~~~~
 
