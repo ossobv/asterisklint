@@ -174,9 +174,8 @@ class FuncLoader(metaclass=Singleton):
             return ReadFunc(func, args)
 
         # Okay, so we have a string function. Look it up.
-        loaded = FuncLoader()._get_and_check_availability(func, where)
-        # TODO: do more with loaded?
-        del loaded
+        loaded_func = FuncLoader()._get_and_check_availability(func, where)
+        loaded_func(args, where=where)
 
         if start is not None:
             return ReadFuncSlice(func, args, start=start, length=length)
@@ -197,9 +196,8 @@ class FuncLoader(metaclass=Singleton):
             args = ''
 
         # Okay, so we have a string function. Look it up.
-        loaded = FuncLoader()._get_and_check_availability(func, where)
-        # TODO: do more with loaded?
-        del loaded
+        loaded_func = FuncLoader()._get_and_check_availability(func, where)
+        loaded_func(args, where=where)
 
         return WriteFunc(func, args)
 

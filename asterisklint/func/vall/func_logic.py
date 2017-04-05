@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from ..base import FuncBase
 
+from asterisklint.varfun import VarLoader
+
 
 class EXISTS(FuncBase):
     pass
@@ -37,7 +39,9 @@ class ISNULL(FuncBase):
 
 
 class SET(FuncBase):
-    pass
+    def __call__(self, data, where):
+        VarLoader().parse_assignment(data, where)
+        super().__call__(data, where)
 
 
 def register(func_loader):
