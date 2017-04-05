@@ -17,6 +17,8 @@ from ..base import (
     AppBase, DelimitedArgsMixin, IfStyleApp, MinMaxArgsMixin,
     NoPipeDelimiterMixin, VarCondIfStyleApp)
 
+from asterisklint.varfun import VarLoader
+
 
 class _Builtin(object):
     @property
@@ -150,36 +152,9 @@ class SetGlobalVar(BuiltinAppBase):
 
 class Set(BuiltinAppBase):
     def __call__(self, data, where, jump_destinations):
-        # FIXME: all of stuff below
-        return
-
-        # FIXME: replace ValueErrors with ALint-errors
-        if not data:
-            raise ValueError('Set requires one variable name/value pair.')
-
-        try:
-            dest, value = data.split('=', 1)
-        except ValueError:  # not enough values to unpack
-            raise ValueError('Set requires an "=" to be a valid assignment.')
-
-        if ' ' in dest:
-            # FIXME: warn:
-            # "Please avoid unnecessary spaces on variables as it may
-            # lead to unexpected results."
-            pass
-
-        self.set_helper(dest, value, where)
-
-    def set_helper(self, dest, data, where):
-        from asterisklint.varfun import FuncLoader  # YUCK
-
-        if dest and dest[-1] == ')':
-            dest = FuncLoader().process_write_function(dest, where)
-        return self.var_set_helper(dest, data, where)
-
-    def var_set_helper(self, variable, data, where):
-        # FIXME: do something? record variable as used?
-        pass
+        ret = VarLoader().parse_assignment(data, where)
+        super().__call__(data, where, jump_destinations)
+        return ret
 
 
 class ImportVar(BuiltinAppBase):

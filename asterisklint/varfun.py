@@ -26,6 +26,14 @@ from .version import AsteriskVersion
 
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
+    class E_ASSIGN_EMPTY(ErrorDef):
+        message = 'Set/SET requires one variable name/value pair'
+
+    class E_ASSIGN_NO_EQUALS(ErrorDef):
+        message = (
+            "Set/SET requires an '=' to be a valid assignment, not "
+            "just '{data}'")
+
     class E_FUNC_BAD_CASE(ErrorDef):
         message = 'function {func!r} does not have the proper Case {proper!r}'
 
@@ -50,6 +58,11 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 
     class E_VAR_SUBSTR_LENGTH(ErrorDef):
         message = "bad substring length value '{length}'"
+
+    class W_ASSIGN_SPACES(WarningDef):
+        message = (
+            "space in variable name '{name}' found; "
+            "produces unexpected results")
 
     class W_FUNC_DYNAMIC(WarningDef):
         message = "calling functions dynamically is not good practise '{data}'"
@@ -211,6 +224,33 @@ class VarLoader(metaclass=Singleton):
     """
     def __init__(self):
         self._variables = defaultdict(list)
+
+    def parse_assignment(self, data, where):
+        """
+        Parse FOO(bar)=baz style syntax.
+        """
+        # SOURCE: main/pbx_variables.c -- pbx_builtin_setvar
+        if not data:
+            E_ASSIGN_EMPTY(where)
+            return ''
+
+        try:
+            dest, value = data.split('=', 1)
+        except ValueError:  # not enough values to unpack
+            E_ASSIGN_NO_EQUALS(where, data=data)
+            return data
+
+        if ' ' in dest:
+            # "Please avoid unnecessary spaces on variables as it may
+            # lead to unexpected results."
+            W_ASSIGN_SPACES(where, name=dest)
+
+        # Are we writing to a function?
+        if dest and dest[-1] == ')':
+            dest = FuncLoader().process_write_function(dest, where)
+
+        # FIXME: record variable as used?
+        del value
 
     def parse_variables(self, data, where):
         """
