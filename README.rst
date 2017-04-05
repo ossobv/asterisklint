@@ -126,16 +126,18 @@ TODO
 ----
 
 * Expression parsing.
-* Func_odbc parsing improvements:
-  - check for missing synopsis/syntax (compare syntax to ARGn count)
-  - check for correct usage of VAL (write only) and ARG and missing SQL_ESC
-  - yield the odbc functions instead of contexts like it does now
-  (See more in func_odbc.py.)
+* Log/store Set'd variables and compare against Read variables. Also log
+  variables Set through the ARRAY() function. (And HASH?)
 * Fix various includes issues:
   - Recursive #includes probably make asterisklint run out of stack.
   - Add checks for recursive dialplan-includes.
   - Scan for missing dialplan-includes.
 * Trim CALLERID match (as used in FreePBX dialplan).
+* Func_odbc parsing improvements:
+  - check for missing synopsis/syntax (compare syntax to ARGn count)
+  - check for correct usage of VAL (write only) and ARG and missing SQL_ESC
+  - yield the odbc functions instead of contexts like it does now
+  (See more in func_odbc.py.)
 * Add ``app-check`` command to do dialplan checks of individual lines.
 * Add ``expr-check`` command to do expression (``$[...]``) checks.
 * Allow multiline variables using += (key=val; key+=more-val).
