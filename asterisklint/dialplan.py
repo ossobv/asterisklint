@@ -297,19 +297,18 @@ class DialplanContext(Context):
                             priority.could_match(exten.label)):
                         return exten
 
-        # Nothing? Try our includes, but only for integral priorities.
-        if isinstance(priority, int):
-            for include in self.includes:
-                try:
-                    context = self.dialplan.get_context(include.context_name)
-                except KeyError:
-                    # TODO: An include that does not exist. We should
-                    # warn about that somewhere else.
-                    pass
-                else:
-                    ret = context.match_pattern(extension, priority)
-                    if ret:
-                        return ret
+        # Nothing? Try our includes.
+        for include in self.includes:
+            try:
+                context = self.dialplan.get_context(include.context_name)
+            except KeyError:
+                # TODO: An include that does not exist. We should
+                # warn about that somewhere else.
+                pass
+            else:
+                ret = context.match_pattern(extension, priority)
+                if ret:
+                    return ret
 
         # > If the location that is put into the channel
         # > information is bogus, and asterisk cannot find that

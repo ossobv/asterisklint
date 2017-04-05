@@ -7,6 +7,7 @@ Bug fixes:
   instead of replacing the symlink.
 * Don't install README files into /usr, but in
   /usr/share/doc/asterisklint (or with a different prefix).
+* Also search in included contexts for priority labels.
 
 Improvements:
 
@@ -29,6 +30,7 @@ Improvements:
   you choose one consistently.
 * A bunch of refactoring to make BetterCodeHub happy. If you've made
   custom subcommands, look at the MainBase class.
+* Add test with Asterisk 13 sample dialplan as input.
 * Add web frontend into repository.
 
 0.3.0 (2016-06-08)
