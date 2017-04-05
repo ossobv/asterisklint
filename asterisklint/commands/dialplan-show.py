@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2015-2017  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,30 +17,34 @@
 Show dialplan like Asterisk does with CLI command "dialplan show". Takes
 'extensions.conf' as argument.
 """
-import argparse
-
 from asterisklint import FileDialplanParser
 from asterisklint.defines import MessageDefManager
+from asterisklint.mainutil import MainBase
 
 
-def main(args, envs):
-    parser = argparse.ArgumentParser(
-        description=(
-            'Shows the dialplan like Asterisk does with the CLI command '
-            '"dialplan show". Useful for testing whether asterisklint '
-            'parser the input properly.'))
-    parser.add_argument(
-        'dialplan', metavar='EXTENSIONS_CONF', nargs='?',
-        default='./extensions.conf',
-        help='path to extensions.conf')
-    parser.add_argument(
-        '--reverse', action='store_true',
-        help="some versions of Asterisk output the dialplan file in reverse")
-    args = parser.parse_args(args)
+class Main(MainBase):
+    def create_argparser(self, argparser_class):
+        parser = argparser_class(
+            description=(
+                'Shows the dialplan like Asterisk does with the CLI command '
+                '"dialplan show". Useful for testing whether asterisklint '
+                'parser the input properly.'))
+        parser.add_argument(
+            'dialplan', metavar='EXTENSIONS_CONF', nargs='?',
+            default='./extensions.conf',
+            help='path to extensions.conf')
+        parser.add_argument(
+            '--reverse', action='store_true',
+            help="some versions of Asterisk output the dialplan file "
+                 "in reverse")
+        return parser
 
-    MessageDefManager.muted = True  # no messages to stderr
-    parser = FileDialplanParser()
-    parser.include(args.dialplan)
-    dialplan = next(iter(parser))
-    print(dialplan.format_as_dialplan_show(
-        reverse=args.reverse))
+    def handle_args(self, args):
+        MessageDefManager.muted = True  # no messages to stderr
+        parser = FileDialplanParser()
+        parser.include(args.dialplan)
+        dialplan = next(iter(parser))
+        print(dialplan.format_as_dialplan_show(
+            reverse=args.reverse))
+
+main = Main()

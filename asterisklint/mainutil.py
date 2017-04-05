@@ -19,6 +19,22 @@ import os
 from . import FileFuncOdbcParser
 
 
+class MainBase(object):
+    def create_argparser(self, argparser_class):
+        raise NotImplementedError()
+
+    def handle_args(self, args):
+        raise NotImplementedError()
+
+    def parse_args(self, args):
+        parser = self.create_argparser(argparse.ArgumentParser)
+        return parser.parse_args(args)
+
+    def __call__(self, args, envs):
+        args = self.parse_args(args)
+        return self.handle_args(args)
+
+
 class UniqueStore(argparse.Action):
     "Make sure an --argument is only used at most once."
     def __call__(self, parser, namespace, values, option_string):
