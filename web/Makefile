@@ -153,6 +153,16 @@ kubectl-create.yml:
 '        image: $(D4R_IMAGE):$(DTAG)' \
 '        ports:' \
 '        - containerPort: 80' \
+'        livenessProbe:' \
+'          httpGet:' \
+'            path: /healthz' \
+'            port: 80' \
+'            scheme: HTTP' \
+'        readinessProbe:' \
+'          httpGet:' \
+'            path: /healthz' \
+'            port: 80' \
+'            scheme: HTTP' \
 '      imagePullSecrets:' \
 '      - name: $(K8S_NAME)-dpull' \
 '---' \

@@ -112,6 +112,22 @@ class Index:
         resp.body = self.index_html
 
 
+class Healthz:
+    """
+    Readiness/liveness probes for Kubernetes.
+
+    livenessProbe/readinessProbe:
+      httpGet:
+        path: /healthz
+        port: 80
+      initialDelaySeconds: 10
+      timeoutSeconds: 5
+    """
+    def on_get(self, req, resp):
+        resp.content_type = 'text/plain; charset=utf-8'
+        resp.body = 'OK\nasterisklint = {}\n'.format(version_str)
+
+
 class DialplanCheck:
     def on_post(self, req, resp):
         # Reading POSTed FILEs: https://github.com/falconry/falcon/issues/825
@@ -150,6 +166,7 @@ middleware = [EnvironmentCheckMiddleware(), JsonTranslator()]
 
 application = falcon.API(middleware=middleware)
 application.add_route('/', Index())
+application.add_route('/healthz', Healthz())
 application.add_route('/dialplan-check/', DialplanCheck())
 
 
