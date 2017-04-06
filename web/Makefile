@@ -43,7 +43,9 @@ dpush: has_dtag
 	docker login $(D4R_HOST)
 	docker push $(D4R_IMAGE):$(DTAG)
 
-kdeploy: has_ktoken
+kdeploy: has_dtag has_ktoken
+	# Note that the "name" (K8S_NAME) here is the container name,
+	# not necessarily the same as the the deployment name.
 	curl -s -XPATCH -H "Content-Type: application/strategic-merge-patch+json" \
 		-H "Authorization: Bearer $(KTOKEN)" \
 		-d '{"spec":{"template":{"spec":{'\
@@ -87,3 +89,105 @@ index.html:
 wsgi.py:
 	@test -n "$(GTAG)" || (echo 'Please specify GTAG=nnn on the cmd line' >&2; false)
 	curl '$(G4B_RAW_BASE)/$(GTAG)/web/wsgi.py' >wsgi.py || $(RM) wsgi.py
+
+
+.PHONY: kcreate
+
+kcreate: kubectl-create.yml
+	# Step 1: fix kubectl alias:
+	#   alias kubectl="kubectl --server=https://K8S_HOST/ \
+	#     --certificate-authority=... --client-certificate=... \
+	#     --client-key=..."
+	# Step 2: make get/create namespace, don't forget --namespace=...
+	#   in the next calls to kubectl.
+	# Step 3: create kubectl-create.yaml with "---"-joined:
+	#   service.yaml, deployment.yaml, ingress.yaml, tls.yaml
+	# Step 4: kubectl --namespace=K8S_NS create -f kubectl-create.yml
+	#   (and delete -f if not okay yet)
+	# At this point you should hopefully have a k8s instance running.
+	#   kubectl --namespace=K8S_NS get/describe pods
+	#
+	# For deployment-updates, you do only need a token for the
+	# deployments permission.
+	# Step 1: Kubernetes clusters: add K8S_NS/deployments/K8S_NAME perm.
+	# Step 2: Access tokens: add access token for the new permission.
+	false
+
+kubectl-create.yml:
+	for x in "$(D4R_NAME)" "$(D4R_NS)" "$(D4R_HOST)" \
+	  "$(K8S_NAME)" "$(K8S_NS)" "$(K8S_HOST)" "$(DTAG)"; do \
+	  test -n "$$x"; done || \
+	  (echo '*** missing vars in Makefile.defs ***' >&2; false)
+	@printf '%s\n' \
+'# kubectl get namespaces' \
+'# kubectl create namespace $(K8S_NS)' \
+'# kubectl --namespace=$(K8S_NS) create -f $@' \
+'# #kubectl --namespace=$(K8S_NS) delete -f $@' \
+'# kubectl --namespace=$(K8S_NS) get pods' \
+'---' \
+'apiVersion: v1' \
+'kind: Service' \
+'metadata:' \
+'  namespace: $(K8S_NS)' \
+'  name: $(K8S_NAME)' \
+'spec:' \
+'  ports:' \
+'    - port: 80' \
+'  selector:' \
+'    app: $(K8S_NAME)-app' \
+'---' \
+'apiVersion: extensions/v1beta1' \
+'kind: Deployment' \
+'metadata:' \
+'  namespace: $(K8S_NS)' \
+'  name: $(K8S_NAME)' \
+'spec:' \
+'  replicas: 2' \
+'  template:' \
+'    metadata:' \
+'      labels:' \
+'        app: $(K8S_NAME)-app' \
+'    spec:' \
+'      containers:' \
+'      - name: $(K8S_NAME)' \
+'        image: $(D4R_IMAGE):$(DTAG)' \
+'        ports:' \
+'        - containerPort: 80' \
+'      imagePullSecrets:' \
+'      - name: $(K8S_NAME)-dpull' \
+'---' \
+'apiVersion: extensions/v1beta1' \
+'kind: Ingress' \
+'metadata:' \
+'  namespace: $(K8S_NS)' \
+'  name: $(K8S_NAME)' \
+'  annotations:' \
+'    ingress.kubernetes.io/ssl-redirect: "true"' \
+'spec:' \
+'  tls:' \
+'  - hosts:' \
+'    - asterisklint.FIXME.com' \
+'    secretName: $(K8S_NAME)-tls' \
+'  rules:' \
+'  - host: asterisklint.FIXME.com' \
+'    http:' \
+'      paths:' \
+'      - path: /' \
+'        backend:' \
+'          serviceName: $(K8S_NAME)' \
+'          servicePort: 80' \
+'---' \
+'apiVersion: v1' \
+'kind: Secret' \
+'metadata:' \
+'  namespace: $(K8S_NS)' \
+'  name: $(K8S_NAME)-tls' \
+'type: Opaque' \
+'data:' \
+'  tls.crt: |' \
+'    <<FIXME; base64 encoded cert chain (bottom up, as usual) here>>' \
+'  tls.key: |' \
+'    <<FIXME; base64 encoded key file here>>' \
+	  >$@
+	@echo
+	@echo 'Created $@. Please tweak it and remove FIXMEs.'
