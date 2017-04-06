@@ -129,7 +129,7 @@ exten =&gt; _8[2-9]x,1,NoOp
 exten =&gt; s,1,Wait(1)
 exten =&gt; s,n,Answer()
 exten =&gt; s,n(menu),Playback(acme/vm-brief-menu)
-exten =&gt; s,n(exten),Background(vm-enter-num-to-call)
+exten =&gt; s,n(exten),BackGround(vm-enter-num-to-call)
 exten =&gt; s,n,WaitExten(5)
 exten =&gt; s,n(goodbye),Playback(vm-goodbye)
 exten =&gt; s,n(end),Hangup()</textarea>
@@ -144,7 +144,7 @@ exten =&gt; s,n(end),Hangup()</textarea>
 
     <footer class="footer">
       <div class="container">
-        <span class="text-muted">OSSO B.V. 2016, Walter Doekes &mdash;
+        <span class="text-muted">OSSO B.V. 2016-2017, Walter Doekes &mdash;
           <a href="https://github.com/ossobv/asterisklint">Asterisklint</a></span>
       </div>
     </footer>

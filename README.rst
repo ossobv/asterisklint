@@ -126,6 +126,11 @@ TODO
 ----
 
 * Expression parsing.
+* Web: add current alintver somewhere prominently? (Read through JS?)
+* Web: state is kept between requests:
+  - on 500-error, the next user may get older errors (because of the
+    messagedef singleton)
+  - the BackGround/Background hack is stored between requests
 * Log/store Set'd variables and compare against Read variables. Also log
   variables Set through the ARRAY() function. (And HASH?)
 * Fix various includes issues:
