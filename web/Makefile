@@ -40,7 +40,7 @@ dbuild: has_dtag prerequisites
 	docker build -t $(D4R_IMAGE):$(DTAG) .
 
 dpush: has_dtag
-	docker login $(D4R_HOST)
+	#docker login $(D4R_HOST)
 	docker push $(D4R_IMAGE):$(DTAG)
 
 kdeploy: has_dtag has_ktoken
