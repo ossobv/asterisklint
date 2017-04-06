@@ -126,7 +126,6 @@ TODO
 ----
 
 * Expression parsing.
-* Web: add current alintver somewhere prominently? (Read through JS?)
 * Web: state is kept between requests:
   - on 500-error, the next user may get older errors (because of the
     messagedef singleton)

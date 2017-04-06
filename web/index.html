@@ -184,10 +184,10 @@ exten =&gt; s,n(end),Hangup()</textarea>
         output.push('</ol>');
         $('#results').append('<div class="code">' + output.join('') + '</div>');
       }
-      function logJoy() {
-        $('#results').html('<h2>Results</h2><div class="alert alert-success" role="alert">The dialplan looks good!</strong></div>');
+      function logJoy(version) {
+        $('#results').html('<h2>Results</h2><div class="alert alert-success" role="alert">The dialplan looks good according to Asterisklint ' + version + '!</strong></div>');
       }
-      function logSadness(results) {
+      function logSadness(version, results) {
         var output = [];
         var lineZero = [];
         var count = results.length;
@@ -196,7 +196,7 @@ exten =&gt; s,n(end),Hangup()</textarea>
           results.splice(0, 1);
         }
         output.push('<h2>Results</h2>');
-        output.push('<div class="alert alert-info" role="alert"><strong>' + count + ' issues</strong> found in dialplan!</div>');
+        output.push('<div class="alert alert-info" role="alert"><strong>' + count + ' issues</strong> found in dialplan according to Asterisklint ' + version + '!</div>');
         output.push('<div class="code">');
         for (var i = 0; i < lineZero.length; ++i) {
           output.push(newMessage(lineZero[i]));
@@ -222,11 +222,12 @@ exten =&gt; s,n(end),Hangup()</textarea>
                 .replace(/>/g, '&gt;'));
       }
       function onSuccess(data) {
-        var res = data['results']['extensions.conf'];
+        var res = data.results['extensions.conf'];
+        var version = data.asterisklint.version;
         if (res.length) {
-          logSadness(res);
+          logSadness(version, res);
         } else {
-          logJoy();
+          logJoy(version);
         }
         logInput(res);
         // Scroll to top

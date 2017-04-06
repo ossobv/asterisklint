@@ -6,6 +6,7 @@ from wsgiref.handlers import SimpleHandler
 from wsgiref.simple_server import WSGIRequestHandler, make_server
 
 from asterisklint import FileDialplanParser
+from asterisklint.alintver import version_str
 from asterisklint.defines import MessageDefManager
 
 
@@ -137,7 +138,10 @@ class DialplanCheck:
                 'desc': formatted,
             })
 
-        req.context['result'] = {'results': issues}
+        req.context['result'] = {
+            'results': issues,
+            'asterisklint': {'version': version_str},
+        }
 
 
 MessageDefManager.muted = True  # no messages to stderr
