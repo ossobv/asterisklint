@@ -34,8 +34,8 @@ license_turds:
 pypi_upload: update_version
 	# Call `make pypi_upload` to ensure that the version is correctly set.
 	echo -n 'Continue uploading to PyPI? ' && read x && test "$$x" = y
-	#python setup.py register # only needed once
-	python setup.py sdist upload
+	#$(PYTHON) setup.py register # only needed once
+	$(PYTHON) setup.py sdist upload
 
 update_version:
 	echo '$(GIT_VERSION)' | grep -Fq '$(FILE_VERSION)'  # startswith..
