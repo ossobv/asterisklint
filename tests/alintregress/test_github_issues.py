@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2016-2017  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Subject: walk_jump_destinations: UnboundLocalError: local variable 'i'
-  referenced before assignment #7
-Source: https://github.com/ossobv/asterisklint/issues/7
 """
 from tempfile import NamedTemporaryFile
 from importlib import import_module
@@ -24,17 +21,37 @@ from importlib import import_module
 from asterisklint.alinttest import ALintTestCase, ignoreLinted
 
 
-class Github7TestCase(ALintTestCase):
+class GithubIssuesTestCase(ALintTestCase):
+    def check_dialplan(self, dialplan):
+        dp = NamedTemporaryFile()  # auto-deleted, works in testcase
+        dp.write(dialplan.encode('utf-8'))
+        dp.flush()
+
+        mainmod = import_module('asterisklint.commands.dialplan-check')
+        mainmod.main([dp.name], {})
+
     @ignoreLinted('*')  # ignore validity, we just don't want crashes
-    def test_bug(self):
-        dialplan = NamedTemporaryFile()  # auto-deleted, works in testcase
-        dialplan.write(b'''\
+    def test_issue_7(self):
+        """
+        Subject: walk_jump_destinations: UnboundLocalError: local variable 'i'
+          referenced before assignment
+        Source: https://github.com/ossobv/asterisklint/issues/7
+        """
+        return self.check_dialplan('''\
 [context]
 ; The EXTEN:1 tries to slice "s", which returns "". We don't want
 ; crashes because of that.
 exten => s,1,GotoIf($["${CALLERID(num):0:1}"="+"]?${EXTEN:1},1)
 ''')
-        dialplan.flush()
 
-        mainmod = import_module('asterisklint.commands.dialplan-check')
-        mainmod.main([dialplan.name], {'ALINT_IGNORE': '*'})
+    @ignoreLinted('H_*')
+    def test_issue_17(self):
+        """
+        Subject: varfun: AttributeError: 'list' object has no attribute 'split'
+        Source: https://github.com/ossobv/asterisklint/issues/17
+        """
+        return self.check_dialplan('''\
+[context]
+; The argument to SET() should be a Var-list, not a regular list.
+exten => s,1,While($["${SET(languagenumber=${SHIFT(languages)})}" != ""])
+''')

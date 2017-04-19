@@ -45,7 +45,15 @@ class Var(object):
                 raise TypeError(
                     'Variables can only consist of strings and other '
                     'variables, got {!r}'.format(var))
-            if var:
+
+            if not var:
+                # Skip empty vars.
+                pass
+            elif copy and isinstance(var, str) and isinstance(copy[-1], str):
+                # Join consecutive strings together.
+                copy[-1] = copy[-1] + var
+            else:
+                # Append.
                 copy.append(var)
 
         if len(copy) == 0:

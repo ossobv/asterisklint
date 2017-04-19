@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2015-2017  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -142,13 +142,13 @@ class FuncLoader(metaclass=Singleton):
         tail = ''
         for n in range(len(func_and_args) - 1, i, -1):
             if func_and_args[n] == ')':
-                args = func_and_args[(i + 1):n]
-                tail = func_and_args[n + 1:]
+                args = Var.join(func_and_args[(i + 1):n])
+                tail = Var.join(func_and_args[n + 1:])
                 break
         else:
             # "Can't find trailing parenthesis for function"
             E_FUNC_PARENS(where, data=func_and_args)
-            args = func_and_args[(i + 1):]
+            args = Var.join(func_and_args[(i + 1):])
 
         # Do we have a tail of ":<offset>:<length>"? Process it:
         if tail:
@@ -402,7 +402,7 @@ class VarLoader(metaclass=Singleton):
                 start = int(start)
             else:
                 start = length = None
-                E_VAR_SUBSTR_START(where, start=start)
+                E_VAR_SUBSTR_START(where, start=None)
 
         if length is not None:
             if isinstance(length, Var):
@@ -424,6 +424,6 @@ class VarLoader(metaclass=Singleton):
         # If start is 0 and there is no length, it makes no sense.
         if start == 0 and not length:
             start = None
-            E_VAR_SUBSTR_START(where, start=start)
+            E_VAR_SUBSTR_START(where, start=None)
 
         return varname, start, length
