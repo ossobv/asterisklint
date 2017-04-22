@@ -42,5 +42,4 @@ class AsteriskDpTest(ALintTestCase):
         self.assertLinted(
             {'I_NOTIMPL_IGNOREPAT': 3,
              'I_NOTIMPL_SWITCH': 1,
-             'W_DP_GOTO_CONTEXT_NOEXTEN': 1,
              'W_DP_PRIO_BADORDER': 4})
