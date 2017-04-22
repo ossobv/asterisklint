@@ -185,8 +185,28 @@ class AsteriskCommentReader(object):
     TODO: look at: main/config.c: process_text_line()
     TODO: also parse multiline asterisk comments
     """
-    @staticmethod
-    def simple_comment_split(data, where):
+    @classmethod
+    def asterisk_comment_split(cls, data, where):
+        """
+        Splits comments from lines:
+
+        * 'abc ; def' => ('abc', ' ; def')
+        * 'abc\\;def;ghi' => ('abc;def', ';ghi')
+
+        Note that there is no way to have a backslash before a
+        non-escaped ';'.
+        """
+        if '\\' not in data:
+            data, comment = cls._simple_comment_split(data, where)
+        else:
+            data, comment = cls._lookback_comment_split(data, where)
+        return data, comment
+
+    @classmethod
+    def _simple_comment_split(cls, data, where):
+        """
+        If there is no backslash in the line, we can do this.
+        """
         try:
             i = data.index(';')
         except ValueError:
@@ -197,52 +217,60 @@ class AsteriskCommentReader(object):
             i -= 1
         return data[0:i], data[i:]
 
+    @classmethod
+    def _lookback_comment_split(cls, data, where):
+        """
+        Asterisk does really poor backslash escaping in the config decoder.
+
+        What it does amounts to a lookback only:
+        - is it a semi? check previous char for backslash
+        - if no backslash, break here
+        - if backslash, replace both with single semi and continue
+        """
+        i = 0
+        parts = []
+        while True:
+            try:
+                i = data.index(';')
+            except ValueError:
+                parts.append(data)
+                comment = ''
+                break
+            else:
+                if i and data[i - 1] == '\\':
+                    parts.append(data[0:i - 1] + ';')
+                    data = data[i + 1:]
+                else:
+                    parts.append(data[0:i])
+                    comment = data[i:]
+                    break
+        data = ''.join(parts)
+        return cls._move_middle_space_to_comment(data, comment, where)
+
+    @classmethod
+    def _move_middle_space_to_comment(cls, data, comment, where):
+        """
+        Move all the whitespace at the end of data to comment.
+        """
+        i = len(data)
+        if comment and i > 0 and data[i - 1] not in ' \t':
+            W_WSH_COMMENT(where)
+        while i > 0 and data[i - 1] in ' \t':
+            i -= 1
+        comment = data[i:] + comment
+        data = data[0:i]
+        return data, comment
+
     def __iter__(self):
         for where, data in super().__iter__():
-            # We cannot escape whitespace, so no need to keep this
+            # We cannot escape whitespace, so no need to keep these
             # around.
             if data.endswith(tuple(' \t')):
                 W_WSH_EOL(where)
                 data = data.rstrip(' \t')
 
-            # Shortcut if we don't do any escaping.
-            if '\\' not in data:
-                data, comment = self.simple_comment_split(data, where)
-                yield where, data, comment
-                continue
-
-            # Asterisk does really poor backslash escaping in the config
-            # decoder. What it does amounts to a lookback only:
-            # - is it a semi? check previous char for backslash
-            # - if no backslash, break here
-            # - if backslash, replace both with single semi and continue
-            i = 0
-            parts = []
-            while True:
-                try:
-                    i = data.index(';')
-                except ValueError:
-                    parts.append(data)
-                    comment = ''
-                    break
-                else:
-                    if i and data[i - 1] == '\\':
-                        parts.append(data[0:i - 1] + ';')
-                        data = data[i + 1:]
-                    else:
-                        parts.append(data[0:i])
-                        comment = data[i:]
-                        break
-            data = ''.join(parts)
-
-            # Move all the whitespace at the end of data to comment.
-            i = len(data)
-            if comment and i > 0 and data[i - 1] not in ' \t':
-                W_WSH_COMMENT(where)
-            while i > 0 and data[i - 1] in ' \t':
-                i -= 1
-            comment = data[i:] + comment
-            data = data[0:i]
+            # Split line into data and comment.
+            data, comment = self.asterisk_comment_split(data, where)
 
             yield where, data, comment
 
