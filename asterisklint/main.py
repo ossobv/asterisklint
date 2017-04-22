@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import argparse
 import importlib
+import importlib.util
 import os
 import re
 import sys
@@ -45,6 +46,13 @@ def wrap(text, skip, maxlen):
     return '\n{}'.format(' ' * skip).join(lines)
 
 
+def list_command_dirs():
+    for path in sys.path:
+        commands_path = os.path.join(path, 'asterisklint', 'commands')
+        if os.path.isdir(commands_path):
+            yield commands_path
+
+
 def list_commands(args, envs):
     """
     List the available commands by browsing through your pythonpath and
@@ -52,9 +60,9 @@ def list_commands(args, envs):
     """
     commands_used = set()
     commands = []
-    for path in sys.path:
+    for command_dir in list_command_dirs():
         try:
-            files = os.listdir(os.path.join(path, 'asterisklint', 'commands'))
+            files = os.listdir(command_dir)
         except OSError:
             pass
         else:
@@ -63,7 +71,8 @@ def list_commands(args, envs):
                     command_name = file_[0:-3]
                     if command_name not in commands_used:
                         try:
-                            command = load_command(command_name)
+                            command = load_command(
+                                command_name, os.path.join(command_dir, file_))
                         except NoSuchCommand as e:
                             command_desc = '(error: {})'.format(e)
                         else:
@@ -73,7 +82,8 @@ def list_commands(args, envs):
                                 command_desc = '(help text missing)'
 
                         commands_used.add(command_name)
-                        commands.append((path, command_name, command_desc))
+                        commands.append(
+                            (command_dir, command_name, command_desc))
     commands.sort()
 
     fmt = '  {name:21} {desc}'
@@ -90,7 +100,7 @@ def list_commands(args, envs):
     print('Place custom commands in ~/.asterisklint/asterisklint/commands.')
 
 
-def load_command(command):
+def load_command(command, command_path=None):
     """
     Load ``command`` from the asterisklint.command namespace and return it.
 
@@ -100,12 +110,33 @@ def load_command(command):
     if not COMMAND_RE.match(command):
         raise NoSuchCommand('Invalid tokens in command {!r}'.format(command))
 
+    if not command_path:
+        for command_dir in list_command_dirs():
+            command_path = os.path.join(command_dir, command + '.py')
+            if os.path.isfile(command_path):
+                break
+        else:
+            raise ImportError('No dir found for command {!r}'.format(command))
+
+    command_mod_name = 'asterisklint.commands.{}'.format(command)
+
+    # Python3.5+
     try:
-        command_module = importlib.import_module(
-            'asterisklint.commands.{}'.format(command))
-    except ImportError as exception:
-        raise NoSuchCommand('Could not load {!r}: {}'.format(
-            command, exception))
+        importlib.util.spec_from_file_location
+    except AttributeError:
+        # Python3.4-
+        try:
+            command_module = importlib.import_module(
+                'asterisklint.commands.{}'.format(command))
+        except ImportError as exception:
+            raise NoSuchCommand('Could not load {!r}: {}'.format(
+                command, exception))
+    else:
+        # Python3.5+
+        spec = importlib.util.spec_from_file_location(
+            command_mod_name, command_path)
+        command_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(command_module)
 
     try:
         command_module.main
