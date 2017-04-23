@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2017  Walter Doekes, OSSO B.V.
+# Copyright (C) 2017  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,13 +13,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ..defines import ErrorDef, WarningDef
+from .. import E_FUNC_BAD_ARGS
+from ..base import FuncBase
 
 
-if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
-    class E_FUNC_BAD_ARGS(ErrorDef):
-        message = "function {func!r} does not take these arguments '{data}'"
+class AUDIOHOOK_INHERIT(FuncBase):
+    def __call__(self, data, where):
+        if isinstance(data, str) and data not in (
+                'MixMonitor', 'Chanspy', 'Volume', 'Speex',
+                'pitch_shift', 'JACK_HOOK', 'Mute'):
+            E_FUNC_BAD_ARGS(where, func=self.name, data=data)
 
-    class W_FUNC_BALANCE(WarningDef):
-        message = ('function data {data!r} looks like unbalanced '
-                   'parentheses/quotes/curlies')
+        super().__call__(data, where)
+
+
+def register(func_loader):
+    func_loader.register(AUDIOHOOK_INHERIT())

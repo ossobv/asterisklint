@@ -38,7 +38,8 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
         message = 'function {func!r} does not have the proper Case {proper!r}'
 
     class E_FUNC_MISSING(ErrorDef):
-        # BUG: this is also called for func_odbc created functions..
+        # BUG: if we did parse func_odbc, we should perhaps drop the
+        # "or func_odbc created?" reservation.
         message = 'function {func!r} does not exist (or func_odbc created?)'
 
     class E_FUNC_PARENS(ErrorDef):

@@ -20,6 +20,8 @@ from ..vall.app_confbridge import register as app_confbridge_register
 from ..vall.app_queue import register as app_queue_register
 from ..vall.app_stack import register as app_stack_register
 from ..vall.chan_sip import register as chan_sip_register
+from ..vall.func_audiohookinherit import (
+    register as func_audiohookinherit_register)
 from ..vall.func_callerid import register as func_callerid_register
 from ..vall.func_cdr import register as func_cdr_register
 from ..vall.func_channel import register as func_channel_register
@@ -49,6 +51,7 @@ def register(func_loader):
             app_queue_register,
             app_stack_register,
             chan_sip_register,
+            func_audiohookinherit_register,
             func_callerid_register,
             func_cdr_register,
             func_channel_register,
