@@ -152,7 +152,7 @@ class Dialplan(object):
 
         for context, extension, priority, where in self.jump_destinations:
             if isinstance(context, Var):
-                # We won't look up the context if it's build up from a
+                # We won't look up the context if it's built up from a
                 # variable. We can however proceed and check whether
                 # the label exists.
                 if isinstance(priority, str):
@@ -250,22 +250,32 @@ class DialplanContext(Context):
         self.includes = []
         self.context_last_prio = None
         self.pattern_cache = {}
+        self._sorted_patterns = None
 
     def update(self, othercontext):
         assert not othercontext.includes
         assert othercontext.context_last_prio is None
         self.context_last_prio = None
+        self._sorted_patterns = None
         super().update(othercontext)
 
     def by_pattern(self):
         """
         Used by format_as_dialplan_show().
         """
-        patterns = sorted(list(set(i.pattern for i in self)))
         ret = []
-        for pattern in patterns:
+        for pattern in self.get_sorted_patterns():
             ret.extend(i for i in self if i.pattern == pattern)
         return ret
+
+    def get_sorted_patterns(self):
+        """
+        Sort the patterns and return.
+        """
+        if self._sorted_patterns is None:
+            self._sorted_patterns = list(
+                sorted(list(set(i.pattern for i in self))))
+        return self._sorted_patterns
 
     def has_label(self, label):
         """
@@ -277,11 +287,8 @@ class DialplanContext(Context):
         """
         Find the best matching extension for the priority.
         """
-        # FIXME: We should sort once, not always...
-        # Sorted patterns.
-        patterns = sorted(list(set(i.pattern for i in self)))
         # Matching patterns only.
-        for pattern in patterns:
+        for pattern in self.get_sorted_patterns():
             if pattern.matches_extension(extension):
                 extens = [i for i in self if i.pattern == pattern]
                 for exten in extens:
@@ -333,6 +340,8 @@ class DialplanContext(Context):
         return None
 
     def add(self, extension):
+        self._sorted_patterns = None
+
         # - If extension.pattern is None ("same") then take previous.
         #   Error if there is none.
         # - If prio is N then assert there is a previous prio with same
