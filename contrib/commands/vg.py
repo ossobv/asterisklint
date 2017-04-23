@@ -145,25 +145,63 @@ class VoipgridFileReader(
 asterisklint.file.FileReader = VoipgridFileReader
 
 
-##############################################
-# Then proceed to monkey patch all the users #
-##############################################
+######################################################################
+# Then proceed to monkey patch all the users with the new FileReader #
+# and add a context-resetting method because new contexts in VG wipe #
+# existing contexts instead of appending to them.                    #
+######################################################################
 
 class VoipgridFileConfigParser(
         asterisklint.ConfigAggregator, VoipgridFileReader):
-    pass
+
+    def on_context(self, context):
+        # Wipe any previous contexts with the same name.
+        try:
+            self._contexts.remove(context)
+        except ValueError:
+            pass
+
+        return super().on_context(context)
+
 asterisklint.FileConfigParser = VoipgridFileConfigParser
 
 
 class VoipgridFileDialplanParser(
         asterisklint.DialplanAggregator, VoipgridFileReader):
-    pass
+
+    def on_context(self, context):
+        # Wipe any previous contexts with the same name.
+        if context.name == 'general' and self._dialplan._general:
+            assert False, '[general] overridden?'
+            self._dialplan._general = None
+        elif context.name == 'globals' and self._dialplan._globals:
+            assert False, '[globals] overridden?'
+            self._dialplan._globals = None
+        elif context.name in self._prevcontexts:
+            # Nasty. This is rather fragile, and doesn't even clean up
+            # everything (like label references that were added).
+            oldcontext = self._prevcontexts[context.name]
+            del self._prevcontexts[context.name]
+            self._dialplan.contexts.remove(oldcontext)
+            del self._dialplan.contexts_by_name[context.name]
+
+        return super().on_context(context)
+
 asterisklint.FileDialplanParser = VoipgridFileDialplanParser
 
 
 class VoipgridFileFuncOdbcParser(
         asterisklint.FuncOdbcAggregator, VoipgridFileReader):
-    pass
+
+    def on_context(self, context):
+        # Wipe any previous contexts with the same name.
+        try:
+            self._contexts.remove(context)
+        except ValueError:
+            pass
+
+        return super().on_context(context)
+
 asterisklint.FileFuncOdbcParser = VoipgridFileFuncOdbcParser
 asterisklint.mainutil.FileFuncOdbcParser = VoipgridFileFuncOdbcParser
 
