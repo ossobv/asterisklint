@@ -22,6 +22,11 @@ from .defines import ErrorDef, WarningDef
 from .func.base import FuncBase
 from .varfun import FuncLoader
 
+try:
+    import sqlparse
+except ImportError:
+    sqlparse = None  # optional
+
 
 if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
     class E_ODBC_NOSQL(ErrorDef):
@@ -48,6 +53,51 @@ class FuncOdbcFunc(FuncBase):
         return 'func_odbc'
 
 
+class OdbcQuery(object):
+    @classmethod
+    def from_query(cls, query):
+        return cls(query.strip())
+
+    def __init__(self, query):
+        self._query = query
+
+    def _require_sqlparse(self):
+        if not sqlparse:
+            raise ImportError('sqlparse not found; this code path requires it')
+
+    def format_sql(self):
+        self._require_sqlparse()
+        return sqlparse.format(
+            self._query, keyword_case='upper', identifier_case=None,
+            reindent=True, indent_tabs=False, indent_width=4,
+            wrap_after=72)
+
+    def select_columns(self):
+        self._require_sqlparse()
+        parsed = sqlparse.parse(self._query)
+        assert len(parsed) == 1, parsed  # expected 1 statement
+        parsed = parsed[0]
+
+        if not parsed.tokens[0].match(sqlparse.tokens.Keyword.DML, 'SELECT'):
+            return None
+
+        assert len(parsed.tokens) >= 3, len(parsed.tokens)
+        assert parsed.tokens[1].match(
+            sqlparse.tokens.Whitespace, '\s+', regex=True)
+
+        if isinstance(parsed.tokens[2], (
+                sqlparse.sql.Function, sqlparse.sql.Identifier)):
+            identifiers = [parsed.tokens[2]]
+        else:
+            assert isinstance(parsed.tokens[2], sqlparse.sql.IdentifierList)
+            identifiers = parsed.tokens[2].get_identifiers()
+        return self._identifiers_to_columns(identifiers)
+
+    def _identifiers_to_columns(self, identifiers):
+        return [token.get_alias() or str(token)
+                for token in identifiers]
+
+
 class OdbcFunction(Context):
     ORDER = ('prefix', 'synopsis', 'dsn', 'escapecommas', 'mode', 'rowlimit',
              # 'insertsql' is used when the writesql update returned 0
@@ -69,6 +119,19 @@ class OdbcFunction(Context):
             if var.variable == variable:
                 return var.value
         return None
+
+    def get_queries(self):
+        rquery = self.get_variable('readsql') or self.get_variable('read')
+        wquery = self.get_variable('writesql') or self.get_variable('write')
+        iquery = self.get_variable('insertsql')
+        queries = {}
+        if rquery:  # x=${FUNC()}
+            queries['read'] = OdbcQuery.from_query(rquery)
+        if wquery:  # FUNC()=x
+            queries['write'] = OdbcQuery.from_query(wquery)
+        if iquery:  # FUNC()=x if 'write' query updated 0 rows
+            queries['insert'] = OdbcQuery.from_query(iquery)
+        return queries
 
     def has_variable(self, variable):
         return self.get_variable(variable) is not None

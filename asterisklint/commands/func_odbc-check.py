@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 Do sanity checks on func_odbc.conf. Takes 'func_odbc.conf' as argument.
-Suppress error classes using ALINT_IGNORE.
+Suppress errors using ALINT_IGNORE env.
 """
 from asterisklint import FileFuncOdbcParser
 from asterisklint.defines import MessageDefManager
@@ -26,7 +26,7 @@ class Main(MainBase):
     def create_argparser(self, argparser_class):
         parser = argparser_class(
             description=(
-                'Do sanity checks on dialplan. Suppress comma separated '
+                'Do sanity checks on func_odbc.conf. Suppress comma separated '
                 'error classes through the ALINT_IGNORE environment variable. '
                 'Returns 1 if any issue was reported.'))
         parser.add_argument(

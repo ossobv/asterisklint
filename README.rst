@@ -144,6 +144,11 @@ TODO
   (See more in func_odbc.py.)
 * Add ``app-check`` command to do dialplan checks of individual lines.
 * Add ``expr-check`` command to do expression (``$[...]``) checks.
+  E.g. add:
+  exten => X!,1,Set(boolean=$["" <555> = 1234])
+    ; Set(boolean=$[${CALLERID(all)} = 1234])
+    ; incorrectly using 'all', should use 'num'
+  ==> syntax error, unexpected '=', expecting '-' or '!' or '(' or '<token>'
 * Allow multiline variables using += (key=val; key+=more-val).
 * Investigate whether exten=>s,n(label)... exten=>s,label+10... is valid.
 * For the Goto/Gosub-visiting:

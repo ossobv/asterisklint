@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 Do sanity checks on dialplan. Takes 'extensions.conf' as argument.
-Suppress error classes using ALINT_IGNORE.
+Suppress errors using ALINT_IGNORE env.
 """
 from asterisklint import FileDialplanParser
 from asterisklint.defines import MessageDefManager
