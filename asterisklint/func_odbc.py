@@ -79,19 +79,52 @@ class OdbcQuery(object):
         parsed = parsed[0]
 
         if not parsed.tokens[0].match(sqlparse.tokens.Keyword.DML, 'SELECT'):
+            # TODO: warn that we're not doing a SELECT?
             return None
 
-        assert len(parsed.tokens) >= 3, len(parsed.tokens)
-        assert parsed.tokens[1].match(
+        identifiers = self._tokens_to_identifiers(parsed.tokens)
+        return self._identifiers_to_columns(identifiers)
+
+    def _tokens_to_identifiers(self, tokens):
+        # SELECT <ws>
+        assert len(tokens) >= 3, len(tokens)
+        assert tokens[1].match(
             sqlparse.tokens.Whitespace, '\s+', regex=True)
 
-        if isinstance(parsed.tokens[2], (
+        # SELECT <ws> <identifier[list]> [<ws> FROM]
+        if len(tokens) == 3 or (
+                len(tokens) >= 5 and
+                tokens[4].match(sqlparse.tokens.Keyword, 'FROM')):
+            return self._token_to_identifiers(tokens[2])
+
+        # SELECT <ws> <keyword> <identifier[list]> [<ws> FROM] ?
+        raise NotImplementedError(
+            'Unparenthesized leading keyword in SQL SELECT columns.\n'
+            '\n'
+            'sqlparse 0.1.18-1 parses e.g.:\n'
+            '  SELECT NOT column FROM table\n'
+            'into:\n'
+            '  <SELECT> <NOT> <IDENTIFIER[LIST]> <FROM> ..\n'
+            'Please add parentheses like this:\n'
+            '  SELECT (NOT column) AS ncol FROM table\n'
+            'so it will parse like this:\n'
+            '  <SELECT> <IDENTIFIER[LIST]> <FROM> ..\n'
+            '\n'
+            'Problematic query:\n'
+            '  {}'.format(self._query))
+
+    def _token_to_identifiers(self, token):
+        # token is an identifier/function
+        if isinstance(token, (
                 sqlparse.sql.Function, sqlparse.sql.Identifier)):
-            identifiers = [parsed.tokens[2]]
-        else:
-            assert isinstance(parsed.tokens[2], sqlparse.sql.IdentifierList)
-            identifiers = parsed.tokens[2].get_identifiers()
-        return self._identifiers_to_columns(identifiers)
+            return [token]
+
+        # token is an identifierlist
+        if isinstance(token, sqlparse.sql.IdentifierList):
+            return token.get_identifiers()
+
+        raise TypeError('Unexpected {!r}: {!r} in query ({!r})'.format(
+            type(token).__name__, token, self._query))
 
     def _identifiers_to_columns(self, identifiers):
         return [token.get_alias() or str(token)
