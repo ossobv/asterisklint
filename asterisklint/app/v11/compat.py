@@ -52,7 +52,7 @@ from ..vall.res_agi import register as res_agi_register
 from ..vall.res_fax import register as res_fax_register
 from ..vall.res_indications import register as res_indications_register
 from ..vall.res_musiconhold import register as res_musiconhold_register
-
+from ..vall.app_mysql import register as add_mysql_register
 
 def register(app_loader):
     for regfunc in (
@@ -93,5 +93,6 @@ def register(app_loader):
             res_agi_register,
             res_fax_register,
             res_indications_register,
-            res_musiconhold_register):
+            res_musiconhold_register,
+            add_mysql_register):
         regfunc(app_loader)
