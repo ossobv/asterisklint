@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fossobv%2Fasterisklint.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fossobv%2Fasterisklint?ref=badge_shield)
+
 Asterisk PBX configuration syntax checker
 =========================================
 
@@ -177,3 +179,7 @@ Author
 ------
 
 Walter Doekes, OSSO B.V. 2015-2017
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fossobv%2Fasterisklint.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fossobv%2Fasterisklint?ref=badge_large)
