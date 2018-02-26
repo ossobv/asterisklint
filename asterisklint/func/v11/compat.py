@@ -40,6 +40,7 @@ from ..vall.func_shell import register as func_shell_register
 from ..vall.func_strings import register as func_strings_register
 from ..vall.func_timeout import register as func_timeout_register
 from ..vall.func_uri import register as func_uri_register
+from ..vall.func_volume import register as func_volume_register
 from ..vall.res_fax import register as res_fax_register
 
 
@@ -70,5 +71,6 @@ def register(func_loader):
             func_strings_register,
             func_timeout_register,
             func_uri_register,
+            func_volume_register,
             res_fax_register):
         regfunc(func_loader)
