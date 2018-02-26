@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2015-2018  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -164,7 +164,7 @@ class App(object):
                 W_APP_NEED_PARENS(self.where, app=app)
             data = '()'
         else:
-            data = '(' + data
+            data = '(' + str(data)  # data could be a Var; collapse for now
 
         # SOURCE: pbx/pbx_config.c: pbx_load_config()
         if data.startswith('(') and data.endswith(')'):

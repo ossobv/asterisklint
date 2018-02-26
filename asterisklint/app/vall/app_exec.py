@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2015-2018  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,17 @@ class Exec(AppBase):
 
 
 class ExecIf(VarCondIfStyleApp):
-    pass
+    def __call__(self, data, where, jump_destinations):
+        from asterisklint.application import App
+
+        cond, iftrue, iffalse = super().__call__(
+            data, where, jump_destinations)
+        if iftrue:
+            App(iftrue, where=where)
+        if iffalse:
+            App(iffalse, where=where)
+
+        return cond, iftrue, iffalse
 
 
 class TryExec(AppBase):
