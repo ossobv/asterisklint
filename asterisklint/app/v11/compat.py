@@ -32,6 +32,7 @@ from ..vall.app_exec import register as app_exec_register
 from ..vall.app_forkcdr import register as app_forkcdr_register
 from ..vall.app_macro import register as app_macro_register
 from ..vall.app_meetme import register as app_meetme_register
+from ..vall.app_milliwatt import register as app_milliwatt_register
 from ..vall.app_mixmonitor import register as app_mixmonitor_register
 from ..vall.app_mysql import register as add_mysql_register
 from ..vall.app_originate import register as app_originate
@@ -76,6 +77,7 @@ def register(app_loader):
             app_forkcdr_register,
             app_macro_register,
             app_meetme_register,
+            app_milliwatt_register,
             app_mixmonitor_register,
             add_mysql_register,
             app_originate,
