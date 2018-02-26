@@ -27,8 +27,9 @@ APPLICATION_LIST = (
     'ExtenSpy', 'ForkCDR', 'Gosub', 'Goto',
     'Hangup', 'ImportVar', 'Log', 'Macro',
     'MacroExclusive', 'MacroExit', 'MacroIf', 'MailboxExists', 'MeetMe',
-    'MeetMeAdmin', 'MeetMeChannelAdmin', 'MeetMeCount', 'MixMonitor',
-    'MusicOnHold', 'NoCDR', 'NoOp', 'Page', 'PauseQueueMember',
+    'MeetMeAdmin', 'MeetMeChannelAdmin', 'MeetMeCount',
+    'MixMonitor', 'MusicOnHold', 'MYSQL',
+    'NoCDR', 'NoOp', 'Page', 'PauseQueueMember',
     'Pickup', 'PickupChan', 'PickupOld1v4', 'PlayTones', 'Playback',
     'Proceeding', 'Progress', 'Queue', 'QueueLog', 'Read', 'ReceiveFAX',
     'Record', 'RemoveQueueMember', 'ResetCDR', 'RetryDial', 'Return',
@@ -45,7 +46,8 @@ APPLICATION_LIST = (
 
     # These are skipped from the test because they require certain
     # syntax for the arguments.
-    # 'ExecIfTime', 'GosubIfTime', 'GotoIfTime', 'Set',
+    # 'ExecIfTime', 'GosubIfTime', 'GotoIfTime', 'Milliwatt',
+    # 'Originate', 'Set',
 )
 
 

@@ -44,7 +44,7 @@ RDWR_FUNCTION_LIST = (
     # )
     #
     # WRONLY_FUNCTION_LIST = (
-    'PUSH', 'UNSHIFT',
+    'PUSH', 'UNSHIFT', 'VOLUME',
     # Disabled from WRONLY_FUNCTION_LIST because of alt-syntax.
     # 'AUDIOHOOK_INHERIT',
 )
