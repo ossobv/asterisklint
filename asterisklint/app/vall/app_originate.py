@@ -1,6 +1,3 @@
-#!/bin/sh
-filename="$1"; shift
-cat > $filename << EOF
 # AsteriskLint -- an Asterisk PBX config syntax checker
 # Copyright (C) 2018  Walter Doekes, OSSO B.V.
 #
@@ -16,28 +13,24 @@ cat > $filename << EOF
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ..base import AppBase
+from ..base import E_APP_ARG_BADOPT, App, AppArg
 
 
-EOF
-for cmd in "$@"; do
-cat >> $filename << EOF
-class $cmd(AppBase):
-    pass
+class AppOrExten(AppArg):
+    def validate(self, arg, where):
+        if arg not in ('app', 'exten'):
+            E_APP_ARG_BADOPT(
+                where, argno=self.argno, app=self.app, opts=arg)
 
 
-EOF
-done
-cat >> $filename << EOF
+class Originate(App):
+    def __init__(self):
+        super().__init__(
+            # arg1 means Application-name or Context
+            args=[AppArg('tech_data'), AppOrExten('type'), AppArg('arg1'),
+                  AppArg('arg2'), AppArg('arg3'), AppArg('timeout')],
+            min_args=3)
+
+
 def register(app_loader):
-    for app in (
-EOF
-for cmd in "$@"; do
-cat >> $filename << EOF
-            $cmd,
-EOF
-done
-cat >> $filename << EOF
-            ):
-        app_loader.register(app())
-EOF
+    app_loader.register(Originate())

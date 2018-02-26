@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2015-2018  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ from ..vall.app_forkcdr import register as app_forkcdr_register
 from ..vall.app_macro import register as app_macro_register
 from ..vall.app_meetme import register as app_meetme_register
 from ..vall.app_mixmonitor import register as app_mixmonitor_register
+from ..vall.app_originate import register as app_originate
 from ..vall.app_page import register as app_page_register
 from ..vall.app_playback import register as app_playback_register
 from ..vall.app_queue import register as app_queue_register
@@ -75,6 +76,7 @@ def register(app_loader):
             app_macro_register,
             app_meetme_register,
             app_mixmonitor_register,
+            app_originate,
             app_page_register,
             app_playback_register,
             app_queue_register,
