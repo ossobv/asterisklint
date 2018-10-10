@@ -1,3 +1,22 @@
+0.4.1 (2018-10-10)
+~~~~~~~~~~~~~~~~~~
+
+Bug fixes:
+
+* Cope with ${vars} in FUNC() arguments.
+* Fix typo's in func_odbc-check.
+* Speedup in dialplan goto-parsing.
+* Unbreak custom command support.
+
+Improvements:
+
+* Add missing app_milliwatt, app_mysql, app_originate,
+  func_audiohookinherit, func_volume_register.
+* Add preliminary func_odbc-annotate command; not feature complete.
+* Add the (now obsolete) vg.py contrib command which alters certain file
+  reading functions so a slightly different syntax is accepted.
+* Check applications called in ExecIf().
+
 0.4.0 (2017-04-05)
 ~~~~~~~~~~~~~~~~~~
 

@@ -7,11 +7,11 @@ Makefile.version: FORCE
 	# DEB/FILE version:     0.3.0~rc2 <-- canonical
 	# GIT tag version:      v0.3.0_rc2
 	# PyPI/PEP440 version:  0.3.0rc2
-	@echo "FILE_VERSION = `sed -e 's/ .*//;1q' CHANGES.rst`" \
+	@echo "FILE_VERSION = $$(sed -e 's/ .*//;1q' CHANGES.rst)" \
 	  > Makefile.version.tmp
-	@echo "GIT_VERSION = `git describe --tags --match \
+	@echo "GIT_VERSION = $$(git describe --tags --match \
 	  'v[0-9]*' --abbrev=4 HEAD 2>/dev/null | \
-	  sed -e 's/^v//;s/_/~/;s/-/+/'`" \
+	  sed -e 's/^v//;s/_/~/;s/-/+/')" \
 	  >> Makefile.version.tmp
 	@cmp Makefile.version Makefile.version.tmp >/dev/null || \
 	  mv Makefile.version.tmp Makefile.version
@@ -34,8 +34,9 @@ license_turds:
 pypi_upload: update_version
 	# Call `make pypi_upload` to ensure that the version is correctly set.
 	echo -n 'Continue uploading to PyPI? ' && read x && test "$$x" = y
-	#$(PYTHON) setup.py register # only needed once
-	$(PYTHON) setup.py sdist upload
+	$(PYTHON) setup.py sdist
+	twine upload dist/$(shell ./scripts/asterisklint --version | \
+			    head -n1 | sed -e 's/ /-/;s/$$/.tar.gz/')
 
 update_version:
 	echo '$(GIT_VERSION)' | grep -Fq '$(FILE_VERSION)'  # startswith..
