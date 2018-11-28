@@ -1,5 +1,7 @@
-Asterisk PBX configuration syntax checker
-=========================================
+|AsteriskLint|
+==============
+
+*Asterisk PBX configuration syntax checker*
 
 .. image:: https://bettercodehub.com/edge/badge/ossobv/asterisklint
 
@@ -93,8 +95,8 @@ All commands show help if asked:
 Installation
 ------------
 
-Installation is a matter of ``python3 setup.py install``. Or, for more convenience,
-install a PyPI uploaded version through ``pip3(1)``:
+Installation is a matter of ``python3 setup.py install``. Or, for more
+convenience, install a PyPI uploaded version through ``pip3(1)``:
 
 .. code-block:: console
 
@@ -176,4 +178,8 @@ BUGS
 Author
 ------
 
-Walter Doekes, OSSO B.V. 2015-2017
+Walter Doekes, OSSO B.V. 2015-2018
+
+
+.. |AsteriskLint| image:: assets/asterisklint_head.png
+    :alt: AsteriskLint
