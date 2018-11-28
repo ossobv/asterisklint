@@ -4,6 +4,3 @@ __pycache__
 
 /Makefile.version
 /build
-
-/web/Makefile.defs
-/web/kubectl-create.yml
