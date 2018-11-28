@@ -1,41 +1,18 @@
-FROM ossobv/ubuntu:xenial
+FROM ossobv/uwsgi-python:3
 
-ENV DEBIAN_FRONTEND noninteractive
+RUN \
+    # Falcon is a prerequisite for wsgi.py.
+    pip3 install --no-cache-dir falcon && \
+    # Fetch asterisklint, the --pre-release if available.
+    pip3 install --no-cache-dir --pre asterisklint
 
-RUN apt-get -qq update \
- && apt-get dist-upgrade \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+COPY asterisklint.ini index.html wsgi.py /app/
+RUN python3 -m compileall /app/
 
-RUN apt-get -qq update \
- && apt-get install --no-install-recommends -y \
-      python3 python3-pip python3-setuptools \
- && apt-get clean \
- # Update pip3 and fetch setuptools/distribute to match it.
- && pip3 install --index https://pypi.osso.nl/simple --no-cache-dir \
-      --upgrade pip \
- && hash -r \
- && pip install --index https://pypi.osso.nl/simple --no-cache-dir \
-      --upgrade distribute \
- && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Drop write perms from all added files again, as umask is not 022:
+# https://gitlab.com/gitlab-org/gitlab-runner/issues/1736
+RUN chmod -R go-w /app
 
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BD6901E2 \
- && echo 'deb http://ppa.launchpad.net/osso/uwsgi/ubuntu xenial main' \
-      >/etc/apt/sources.list.d/osso-ubuntu-uwsgi-xenial.list \
- && apt-get -qq update \
- && apt-get install --no-install-recommends -y \
-      uwsgi-core uwsgi-plugin-python3 \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Falcon is a prerequisite for wsgi.py.
-RUN pip install --index https://pypi.osso.nl/simple --no-cache-dir \
-      falcon
-
-# Fetch asterisklint, the --pre-release if available.
-RUN pip install --index https://pypi.osso.nl/simple --no-cache-dir \
-      --pre asterisklint
-
-COPY ["uwsgi.ini", "wsgi.py", "index.html", "/"]
-
-CMD ["uwsgi", "uwsgi.ini"]
+USER www-data
+WORKDIR /app
+CMD ["uwsgi", "asterisklint.ini"]

@@ -3,7 +3,7 @@ Web frontend
 
 ::
 
-    $ mkvirtualenv --python=`which python3` asterisklint-web
+    $ mkvirtualenv --python=$(which python3) asterisklint-web
     $ pip install falcon
     $ pip install asterisklint
 
@@ -24,4 +24,3 @@ TODO
   - 18S = 3d
   - 21S = 24d
   - 24S = 6m
-* Dockerize for k8s?
