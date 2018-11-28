@@ -7,6 +7,7 @@ RUN \
     pip3 install --no-cache-dir --pre asterisklint
 
 COPY asterisklint.ini index.html wsgi.py /app/
+COPY static /app/static
 RUN python3 -m compileall /app/
 
 # Drop write perms from all added files again, as umask is not 022:

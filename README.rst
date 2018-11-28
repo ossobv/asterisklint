@@ -5,10 +5,13 @@
 
 .. image:: https://bettercodehub.com/edge/badge/ossobv/asterisklint
 
-Asterisklint is a suite of tools to check syntax of your Asterisk PBX
+AsteriskLint is a suite of tools to check syntax of your Asterisk PBX
 configuration files.
 
-Alright, enough talking. Some examples please.
+Alright, enough talking. Some examples please!
+
+For an online example see `<https://asterisklint.osso.pub/>`_. For CLI
+examples, keep reading:
 
 
 Invocation

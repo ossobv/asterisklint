@@ -9,7 +9,7 @@
     <meta name="author" content="">
     <!--<link rel="icon" href="../../favicon.ico">-->
 
-    <title>Asterisklint Example</title>
+    <title>AsteriskLint Example</title>
 
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/css/bootstrap.min.css" integrity="sha384-AysaV+vQoT3kOAXZkl02PThvDr8HYKPZhNT5h/CXfBThSRXQ6jW5DO2ekP5ViFdi" crossorigin="anonymous">
@@ -57,13 +57,20 @@
         padding: 0.2em 1em;
         margin: 0.2em 4em;
       }
+      .navbar {
+        height: 67px;
+        overflow: none;
+      }
+      .lead {
+        margin-top: 100px;
+      }
     </style>
   </head>
 
   <body>
 
     <nav class="navbar navbar-fixed-top navbar-dark bg-inverse">
-      <a class="navbar-brand" href="#">Asterisklint Example</a>
+      <a class="navbar-brand" href="#"><img src="static/asterisklint_head.png" alt="AsteriskLint" width="400" height="85"/> Example</a>
       <!--
       <ul class="nav navbar-nav">
         <li class="nav-item active">
@@ -82,8 +89,7 @@
     <div class="container-fluid">
 
       <div class="starter-template">
-        <h1>Asterisklint Example</h1>
-        <p class="lead">Quickly check your Asterisk dialplan.</p>
+        <p class="lead">Quickly check your Asterisk dialplan, using AsteriskLint</p>
       </div>
 
       <p>
@@ -145,7 +151,7 @@ exten =&gt; s,n(end),Hangup()</textarea>
     <footer class="footer">
       <div class="container">
         <span class="text-muted">OSSO B.V. 2016-2018, Walter Doekes &mdash;
-          <a href="https://github.com/ossobv/asterisklint">Asterisklint</a></span>
+          <a href="https://github.com/ossobv/asterisklint">AsteriskLint</a></span>
       </div>
     </footer>
 
@@ -159,7 +165,7 @@ exten =&gt; s,n(end),Hangup()</textarea>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="https://maxcdn.bootstrapcdn.com/js/ie10-viewport-bug-workaround.js" integrity="sha384-EZKKO3vHj6CHKQPIi5+Ubzvx7GjCAfgb/28vGjgly8qKb2DMq7V5D2o//Bjp9z03" crossorigin="anonymous"></script>
 
-    <!-- Asterisklint -->
+    <!-- AsteriskLint -->
     <script>
       function getTextarea() {
         return $('textarea').val().replace(/\r/g, '').replace(/\s*$/, '\n');
@@ -184,7 +190,7 @@ exten =&gt; s,n(end),Hangup()</textarea>
         $('#results').append('<div class="code">' + output.join('') + '</div>');
       }
       function logJoy(version) {
-        $('#results').html('<h2>Results</h2><div class="alert alert-success" role="alert">The dialplan looks good according to Asterisklint ' + version + '!</strong></div>');
+        $('#results').html('<h2>Results</h2><div class="alert alert-success" role="alert">The dialplan looks good according to AsteriskLint ' + version + '!</strong></div>');
       }
       function logSadness(version, results) {
         var output = [];
@@ -195,7 +201,7 @@ exten =&gt; s,n(end),Hangup()</textarea>
           results.splice(0, 1);
         }
         output.push('<h2>Results</h2>');
-        output.push('<div class="alert alert-info" role="alert"><strong>' + count + ' issues</strong> found in dialplan according to Asterisklint ' + version + '!</div>');
+        output.push('<div class="alert alert-info" role="alert"><strong>' + count + ' issues</strong> found in dialplan according to AsteriskLint ' + version + '!</div>');
         output.push('<div class="code">');
         for (var i = 0; i < lineZero.length; ++i) {
           output.push(newMessage(lineZero[i]));

@@ -50,7 +50,7 @@ class EnvironmentCheckMiddleware:
     def process_request(self, req, resp):
         if req.env['wsgi.multithread']:
             raise HttpNotImplementedError(
-                'Asterisklint is single-threaded; '
+                'AsteriskLint is single-threaded; '
                 'make sure your wsgi daemon is too.')
 
 
