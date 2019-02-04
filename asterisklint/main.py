@@ -122,7 +122,7 @@ def load_command(command, command_path=None):
 
     # Python3.5+
     try:
-        importlib.util.spec_from_file_location
+        importlib.util.module_from_spec
     except AttributeError:
         # Python3.4-
         try:
