@@ -43,6 +43,7 @@ APPLICATION_LIST = (
     'VMSayName', 'VoiceMail', 'VoiceMailMain', 'VoiceMailPlayMsg',
     'Wait', 'WaitExten',
     'WaitMusicOnHold', 'WaitUntil', 'While',
+    'SoftHangup', 'SendDTMF', 'Stasis',
 
     # These are skipped from the test because they require certain
     # syntax for the arguments.

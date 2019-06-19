@@ -41,6 +41,9 @@ from ..vall.app_playback import register as app_playback_register
 from ..vall.app_queue import register as app_queue_register
 from ..vall.app_read import register as app_read_register
 from ..vall.app_record import register as app_record_register
+from ..vall.app_softhangup import register as app_softhangup_register
+from ..vall.app_senddtmf import register as app_senddtmf_register
+from ..vall.app_stasis import register as app_stasis_register
 from ..vall.app_sayunixtime import register as app_sayunixtime_register
 from ..vall.app_setcallerid import register as app_setcallerid_register
 from ..vall.app_stack import register as app_stack_register
@@ -87,8 +90,11 @@ def register(app_loader):
             app_read_register,
             app_record_register,
             app_sayunixtime_register,
+            app_senddtmf_register,
             app_setcallerid_register,
+            app_softhangup_register,
             app_stack_register,
+            app_stasis_register,
             app_system_register,
             app_userevent_register,
             app_verbose_register,
