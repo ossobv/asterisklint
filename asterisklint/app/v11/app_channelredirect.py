@@ -1,0 +1,1 @@
+../vall/app_channelredirect.py
