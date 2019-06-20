@@ -46,6 +46,7 @@ from ..vall.app_senddtmf import register as app_senddtmf_register
 from ..vall.app_setcallerid import register as app_setcallerid_register
 from ..vall.app_softhangup import register as app_softhangup_register
 from ..vall.app_stack import register as app_stack_register
+from ..vall.app_stasis import register as app_stasis_register
 from ..vall.app_system import register as app_system_register
 from ..vall.app_userevent import register as app_userevent_register
 from ..vall.app_verbose import register as app_verbose_register
@@ -93,6 +94,7 @@ def register(app_loader):
             app_setcallerid_register,
             app_softhangup_register,
             app_stack_register,
+            app_stasis_register,
             app_system_register,
             app_userevent_register,
             app_verbose_register,

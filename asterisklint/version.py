@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2015-2016  Walter Doekes, OSSO B.V.
+# Copyright (C) 2015-2019  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,9 +27,9 @@ class AsteriskVersion(metaclass=Singleton):
 
         from asterisklint.version import AsteriskVersion
 
-        AsteriskVersion('v11')  # set version 11 throughout the run
+        AsteriskVersion('v13')  # set version 13 throughout the run
     """
-    DEFAULT = 'v11'
+    DEFAULT = 'v13'
 
     def __init__(self, version=None):
         self.version = version or self.DEFAULT
