@@ -147,5 +147,5 @@ class CommentWithoutWhitespaceTest(ALintTestCase):
     def test_missing_space_after_escaped_semi(self):
         # We don't want a semi inside the value. Complain about the lack
         # of space before it.
-        self.string_test('x=y\;z;')
+        self.string_test('x=y\\;z;')
         self.assertLinted({'W_WSH_COMMENT': 1})

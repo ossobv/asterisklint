@@ -57,4 +57,5 @@ class Main(MainBase):
         if any(not i[0].muted for i in MessageDefManager.raised.values()):
             return 1
 
+
 main = Main()

@@ -47,4 +47,5 @@ class Main(MainBase):
         print(dialplan.format_as_dialplan_show(
             reverse=args.reverse))
 
+
 main = Main()

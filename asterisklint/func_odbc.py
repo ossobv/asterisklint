@@ -89,7 +89,7 @@ class OdbcQuery(object):
         # SELECT <ws>
         assert len(tokens) >= 3, len(tokens)
         assert tokens[1].match(
-            sqlparse.tokens.Whitespace, '\s+', regex=True)
+            sqlparse.tokens.Whitespace, r'\s+', regex=True)
 
         # SELECT <ws> <identifier[list]> [<ws> FROM]
         if len(tokens) == 3 or (

@@ -141,8 +141,7 @@ class VoipgridFileReader(
         VoipgridCommentReader, FileformatReader, NoCtrlReader,
         EncodingReader, BinFileReader):
     pass
-
-asterisklint.file.FileReader = VoipgridFileReader
+asterisklint.file.FileReader = VoipgridFileReader  # noqa
 
 
 ######################################################################
@@ -162,8 +161,7 @@ class VoipgridFileConfigParser(
             pass
 
         return super().on_context(context)
-
-asterisklint.FileConfigParser = VoipgridFileConfigParser
+asterisklint.FileConfigParser = VoipgridFileConfigParser  # noqa
 
 
 class VoipgridFileDialplanParser(
@@ -186,8 +184,7 @@ class VoipgridFileDialplanParser(
             del self._dialplan.contexts_by_name[context.name]
 
         return super().on_context(context)
-
-asterisklint.FileDialplanParser = VoipgridFileDialplanParser
+asterisklint.FileDialplanParser = VoipgridFileDialplanParser  # noqa
 
 
 class VoipgridFileFuncOdbcParser(
@@ -201,8 +198,7 @@ class VoipgridFileFuncOdbcParser(
             pass
 
         return super().on_context(context)
-
-asterisklint.FileFuncOdbcParser = VoipgridFileFuncOdbcParser
+asterisklint.FileFuncOdbcParser = VoipgridFileFuncOdbcParser  # noqa
 asterisklint.mainutil.FileFuncOdbcParser = VoipgridFileFuncOdbcParser
 
 
@@ -230,5 +226,6 @@ class Main(MainBase):
             return 1
 
         return command_module.main(args.args, envs={'FIXME': 'issue/18'})
+
 
 main = Main()

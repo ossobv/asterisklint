@@ -93,13 +93,11 @@ class FileMutatorBase(object):
                     else:
                         tempout.write(line)
             tempout.flush()
-        except:
-            tempout.close()
+        except Exception:
             os.unlink(tempout.name)
             raise
-
-        # Awesome, we've succeeded. Atomic move time!
-        tempout.close()
+        finally:
+            tempout.close()
 
         # Update file permissions.
         srcstat = os.stat(tempout.name)
