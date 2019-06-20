@@ -1,5 +1,5 @@
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) 2017  Walter Doekes, OSSO B.V.
+# Copyright (C) 2017-2019  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,15 +35,16 @@ APPLICATION_LIST = (
     'Record', 'RemoveQueueMember', 'ResetCDR', 'RetryDial', 'Return',
     'Ringing', 'SIPAddHeader', 'SIPDtmfMode', 'SIPRemoveHeader',
     'SLAStation', 'SLATrunk', 'SayAlpha', 'SayDigits', 'SayNumber',
-    'SayPhonetic', 'SayUnixTime', 'SendFAX', 'SetAMAFlags',
+    'SayPhonetic', 'SayUnixTime', 'SendDTMF', 'SendFAX', 'SetAMAFlags',
     'SetCallerID', 'SetCallerPres', 'SetGlobalVar', 'SetMusicOnHold',
-    'StackPop', 'StartMusicOnHold', 'StopMixMonitor', 'StopMusicOnHold',
+    'SoftHangup', 'StackPop',
+    'StartMusicOnHold', 'Stasis',
+    'StopMixMonitor', 'StopMusicOnHold',
     'StopPlayTones', 'System', 'TryExec', 'TrySystem', 'Unknown',
     'UnpauseQueueMember', 'UserEvent', 'VMAuthenticate', 'Verbose',
     'VMSayName', 'VoiceMail', 'VoiceMailMain', 'VoiceMailPlayMsg',
     'Wait', 'WaitExten',
     'WaitMusicOnHold', 'WaitUntil', 'While',
-    'SoftHangup', 'SendDTMF', 'Stasis',
 
     # These are skipped from the test because they require certain
     # syntax for the arguments.
