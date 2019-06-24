@@ -18,13 +18,14 @@ from asterisklint.application import App
 from asterisklint.where import DUMMY_WHERE
 
 APPLICATION_LIST = (
-    'AGI', 'AddQueueMember', 'Answer', 'Authenticate', 'Background',
+    'AgentLogin', 'AgentRequest', 'AGI', 'AddQueueMember', 'Answer',
+    'Authenticate', 'Background',
     'Busy', 'CELGenUserEvent', 'ChanIsAvail',
     'ChanSpy', 'ChannelRedirect', 'ConfBridge', 'Congestion',
     'ContinueWhile', 'ControlPlayback',
     'DateTime', 'Dial', 'Directory', 'DumpChan',
     'Echo', 'EndWhile', 'Exec', 'ExitWhile',
-    'ExtenSpy', 'ForkCDR', 'Gosub', 'Goto',
+    'ExtenSpy', 'FollowMe', 'ForkCDR', 'Gosub', 'Goto',
     'Hangup', 'ImportVar', 'Log', 'Macro',
     'MacroExclusive', 'MacroExit', 'MacroIf', 'MailboxExists', 'MeetMe',
     'MeetMeAdmin', 'MeetMeChannelAdmin', 'MeetMeCount',
