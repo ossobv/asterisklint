@@ -22,7 +22,7 @@ APPLICATION_LIST = (
     'Busy', 'CELGenUserEvent', 'ChanIsAvail',
     'ChanSpy', 'ChannelRedirect', 'ConfBridge', 'Congestion',
     'ContinueWhile', 'ControlPlayback',
-    'DateTime', 'Dial', 'DumpChan',
+    'DateTime', 'Dial', 'Directory', 'DumpChan',
     'Echo', 'EndWhile', 'Exec', 'ExitWhile',
     'ExtenSpy', 'ForkCDR', 'Gosub', 'Goto',
     'Hangup', 'ImportVar', 'Log', 'Macro',
