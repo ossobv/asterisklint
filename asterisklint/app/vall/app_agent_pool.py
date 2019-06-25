@@ -20,8 +20,13 @@ class AgentLogin(AppBase):
     pass
 
 
+class AgentRequest(AppBase):
+    pass
+
+
 def register(app_loader):
     for app in (
             AgentLogin,
+            AgentRequest,
             ):
         app_loader.register(app())
