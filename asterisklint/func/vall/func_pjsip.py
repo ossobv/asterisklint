@@ -1,9 +1,5 @@
-#!/bin/sh
-filename="$1"; shift
-year=`date +%Y`
-cat > $filename << EOF
 # AsteriskLint -- an Asterisk PBX config syntax checker
-# Copyright (C) $year  Walter Doekes, OSSO B.V.
+# Copyright (C) 2020  Walter Doekes, OSSO B.V.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,26 +16,25 @@ cat > $filename << EOF
 from ..base import FuncBase
 
 
-EOF
-for cmd in "$@"; do
-cat >> $filename << EOF
-class $cmd(FuncBase):
+class PJSIP_AOR(FuncBase):
+    # func_pjsip_aor.so
     pass
 
 
-EOF
-done
+class PJSIP_CONTACT(FuncBase):
+    # func_pjsip_contact.so
+    pass
 
-cat >> $filename << EOF
+
+class PJSIP_ENDPOINT(FuncBase):
+    # func_pjsip_endpoint.so
+    pass
+
+
 def register(func_loader):
     for func in (
-EOF
-for cmd in "$@"; do
-cat >> $filename << EOF
-            $cmd,
-EOF
-done
-cat >> $filename << EOF
+            PJSIP_AOR,
+            PJSIP_CONTACT,
+            PJSIP_ENDPOINT,
             ):
         func_loader.register(func())
-EOF
