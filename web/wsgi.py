@@ -1,5 +1,4 @@
 import falcon  # >=2.0.0
-import json
 from io import BufferedWriter, BytesIO
 from os import path
 from wsgiref.handlers import SimpleHandler
@@ -46,6 +45,17 @@ def collect_messages():
     return ret
 
 
+def max_body(limit):
+    def hook(req, resp, resource, params):
+        length = req.content_length
+        if length is not None and length > limit:
+            msg = (
+                'The size of the request is too large. The body must not '
+                'exceed {limit} bytes in length.'.format(limit=limit))
+            raise falcon.HTTPPayloadTooLarge('Request body is too large', msg)
+    return hook
+
+
 class EnvironmentCheckMiddleware:
     def process_request(self, req, resp):
         if req.env['wsgi.multithread']:
@@ -68,46 +78,12 @@ class EnvironmentCheckMiddleware:
 #                 bytes=bytes_))
 
 
-class JsonTranslator:
-    def process_request(self, req, resp):
-        # req.stream corresponds to the WSGI wsgi.input environ variable,
-        # and allows you to read bytes from the request body.
-        #
-        # See also: PEP 3333
-        if req.content_length in (None, 0):
-            # Nothing to do
-            return
-
-        body = req.stream.read()
-        if not body:
-            raise falcon.HTTPBadRequest(
-                'Empty request body',
-                'A valid JSON document is required.')
-
-        try:
-            # print(repr(body))
-            req.context['doc'] = json.loads(body.decode('utf-8'))
-        except (ValueError, UnicodeDecodeError):
-            raise falcon.HTTPError(
-                '500 Invalid Data',  # falcon.HTTP_753,
-                'Malformed JSON',
-                ('Could not decode the request body. The JSON was incorrect '
-                 'or not encoded as UTF-8.'))
-
-    def process_response(self, req, resp, resource, req_succeeded):
-        if 'result' not in req.context or not req_succeeded:
-            return
-
-        resp.body = json.dumps(req.context['result']) + '\n'
-
-
 class Index:
     index_html = open(
         path.join(path.dirname(__file__), 'index.html'), 'r').read()
 
     def on_get(self, req, resp):
         # print(req.env['REMOTE_ADDR'])
-
         resp.content_type = 'text/html; charset=utf-8'
         resp.body = self.index_html
 
@@ -129,13 +105,21 @@ class Healthz:
 
 
 class DialplanCheck:
+    @falcon.before(max_body(64 * 1024))
     def on_post(self, req, resp):
-        # Reading POSTed FILEs: https://github.com/falconry/falcon/issues/825
+        # Reading POSTed FILEs:
+        #   https://falcon.readthedocs.io/en/stable/user/faq.html
+        #     #how-can-i-access-posted-files
+        # Reading JSON:
+        #   https://falcon.readthedocs.io/en/stable/api/api.html
+        #     #falcon.RequestOptions
+        # > A dict-like object that allows you to configure the
+        # > media-types that you would like to handle. By default, a
+        # > handler is provided for the application/json media type.
         filename = 'extensions.conf'
 
         # {"files": {"FILENAME": "FILEDATA"}}
-        doc = req.context['doc']
-        filedata = doc['files'][filename].encode('utf-8')
+        filedata = req.media['files'][filename].encode('utf-8')
         opener = UploadedFileOpener(filename, filedata)
 
         parser = FileDialplanParser(opener=opener)
@@ -154,7 +138,7 @@ class DialplanCheck:
                 'desc': formatted,
             })
 
-        req.context['result'] = {
+        resp.media = {
             'results': issues,
             'asterisklint': {'version': version_str},
         }
@@ -162,12 +146,13 @@ class DialplanCheck:
 
 MessageDefManager.muted = True  # no messages to stderr
 
-middleware = [EnvironmentCheckMiddleware(), JsonTranslator()]
+middleware = [EnvironmentCheckMiddleware()]
 
 application = falcon.API(middleware=middleware)
+application.req_options.strip_url_path_trailing_slash = True  # allow /healthz/
 application.add_route('/', Index())
 application.add_route('/healthz', Healthz())
-application.add_route('/dialplan-check/', DialplanCheck())
+application.add_route('/dialplan-check', DialplanCheck())
 
 
 if __name__ == '__main__':
@@ -212,5 +197,5 @@ if __name__ == '__main__':
 
     # Spawn server.
     httpd = make_server(
-        '0.0.0.0', 8000, application, handler_class=MyWSGIRequestHandler)
+        '127.0.0.1', 8080, application, handler_class=MyWSGIRequestHandler)
     httpd.serve_forever()

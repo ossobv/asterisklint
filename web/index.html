@@ -248,7 +248,13 @@ exten =&gt; s,n(end),Hangup()</textarea>
       }
       $('form').on('submit', function() {
         data = JSON.stringify({'files': {'extensions.conf': getTextarea()}});
-        jQuery.post('/dialplan-check/', data, onSuccess).fail(onFail);
+        jQuery.ajax({
+          type: 'POST',
+          url: '/dialplan-check',
+          contentType: 'application/json; charset=utf-8',
+          data: data,
+          success: onSuccess
+        }).fail(onFail);
         return false;
       });
     </script>
