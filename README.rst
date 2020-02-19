@@ -132,33 +132,43 @@ TODO
 
 * Expression parsing.
 * Web: state is kept between requests:
+
   - on 500-error, the next user may get older errors (because of the
     messagedef singleton)
   - the BackGround/Background hack is stored between requests
+
 * Log/store Set'd variables and compare against Read variables. Also log
   variables Set through the ARRAY() function. (And HASH?)
 * Fix various includes issues:
+
   - Recursive #includes probably make asterisklint run out of stack.
   - Add checks for recursive dialplan-includes.
   - Scan for missing dialplan-includes.
+
 * Trim CALLERID match (as used in FreePBX dialplan).
 * Func_odbc parsing improvements:
+
   - check for missing synopsis/syntax (compare syntax to ARGn count)
   - check for correct usage of VAL (write only) and ARG and missing SQL_ESC
   - yield the odbc functions instead of contexts like it does now
+
   (See more in func_odbc.py.)
 * Add ``app-check`` command to do dialplan checks of individual lines.
 * Add ``expr-check`` command to do expression (``$[...]``) checks.
-  E.g. add:
-  exten => X!,1,Set(boolean=$["" <555> = 1234])
+  E.g. add::
+
+    exten => X!,1,Set(boolean=$["" <555> = 1234])
     ; Set(boolean=$[${CALLERID(all)} = 1234])
     ; incorrectly using 'all', should use 'num'
-  ==> syntax error, unexpected '=', expecting '-' or '!' or '(' or '<token>'
+    ==> syntax error, unexpected '=', expecting '-' or '!' or '(' or '<token>'
+
 * Allow multiline variables using += (key=val; key+=more-val).
 * Investigate whether exten=>s,n(label)... exten=>s,label+10... is valid.
 * For the Goto/Gosub-visiting:
+
   - Attempt to match contexts by regex if there are $VARs involved?
   - Allow a "noqa" style exceptions to be placed in a comment?
+
 * Improve documentation as needed.
 * Before 1.0, start adding versioning -- including semver -- so users can
   depend on a stable API from their custom scripts. Also version the scripts

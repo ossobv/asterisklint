@@ -1,3 +1,15 @@
+0.4.2 (2020-02-19)
+~~~~~~~~~~~~~~~~~~
+
+Bug fixes:
+
+* Don't choke on too many Gosub arguments.
+* Fixes for various python 3 versions.
+
+Improvements:
+
+* Added PJSIP_HEADER, PJSIP_AOR, PJSIP_CONTACT, PJSIP_ENDPOINT.
+
 0.4.1 (2018-10-10)
 ~~~~~~~~~~~~~~~~~~
 

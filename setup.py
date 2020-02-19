@@ -54,6 +54,7 @@ if __name__ == '__main__':
             'CHANGES.rst', 'LICENSE', 'README.rst'])],
         description='Asterisk PBX configuration syntax checker',
         long_description=('\n\n\n'.join(long_descriptions)),
+        long_description_content_type='text/x-rst',  # twine check complains..
         author='Walter Doekes, OSSO B.V.',
         author_email='wjdoekes+asterisklint@osso.nl',
         url='https://github.com/ossobv/asterisklint',
