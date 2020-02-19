@@ -191,7 +191,7 @@ BUGS
 Author
 ------
 
-Walter Doekes, OSSO B.V. 2015-2018
+Walter Doekes, OSSO B.V. 2015-2020
 
 
 .. |AsteriskLint| image:: assets/asterisklint_head.png
