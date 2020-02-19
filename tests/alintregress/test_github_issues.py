@@ -55,3 +55,19 @@ exten => s,1,GotoIf($["${CALLERID(num):0:1}"="+"]?${EXTEN:1},1)
 ; The argument to SET() should be a Var-list, not a regular list.
 exten => s,1,While($["${SET(languagenumber=${SHIFT(languages)})}" != ""])
 ''')
+
+    @ignoreLinted('H_*')
+    def test_issue_41(self):
+        """
+        Subject: E_APP_ARG_MANY gosub freeze endless check with 100% cpu
+        Source: https://github.com/ossobv/asterisklint/issues/41
+        """
+        self.check_dialplan('''\
+[context]
+; Don't choke on the excess comma after prio 1.
+exten => _7495XXXXXXX,1,GosubIf(${Q}?\
+sub-dial,${EXTEN},1,(${SOME_VARIABLE}):\
+sub-dial,${EXTEN},1,(${SOME_VARIABLE}))
+exten => _7495XXXXXXX,n(x),Gosub(sub-dial,${EXTEN},1,(${SOME_VARIABLE}))
+''')
+        self.assertLinted({'E_APP_ARG_MANY': 3, 'E_DP_GOTO_NOCONTEXT': 3})

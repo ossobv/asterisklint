@@ -14,15 +14,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from ..base import (
-    W_APP_BALANCE,
+    E_APP_ARG_MANY, W_APP_BALANCE,
     AppBase, DelimitedArgsMixin, MinMaxArgsMixin, NoPipeDelimiterMixin,
     VarCondIfStyleApp)
+from ...variable import Var
 
 
-class Gosub(NoPipeDelimiterMixin, MinMaxArgsMixin, DelimitedArgsMixin,
-            AppBase):
-    @classmethod
-    def split_gosub_prio_args(self, prio, where):
+class _GosubMixin:
+    def _add_jump_destination_from_gosub_args(self, args, destinations, where):
+        # jumpdest = [[context,]exten,]prio(args)
+        jumpdest = args[:]  # don't touch caller args
+
+        if len(jumpdest) > 3:
+            # See: ast_parseable_goto()
+            # Priority '%s' must be a number > 0, or valid label.
+            if not isinstance(self, MinMaxArgsMixin):
+                # The MinMaxArgsMixin would already have warned.
+                E_APP_ARG_MANY(where, app=self.name, max_args=3)
+
+            # This should also raise a W_DP_GOTO_CONTEXT_NOEXTEN later on,
+            # unless it contains vars and the warning is suppressed.
+            # (Join the excess arguments with a comma separator.)
+            excess = [jumpdest[2]]
+            [excess.extend((',', i)) for i in jumpdest[3:]]
+            jumpdest[2:] = [Var.join(excess)]
+        else:
+            while len(jumpdest) < 3:
+                jumpdest.insert(0, None)
+        assert len(jumpdest) == 3, jumpdest
+
+        # Quickly drop the Gosub-args for now.
+        # Only use the label (context+exten+prio).
+        # (Technically, the args-split (parenthessis) is done in
+        # app_stack.c before the label-split (comma). But that's of no
+        # concern at the moment.)
+        jumpdest[2] = self._split_gosub_prio_args(jumpdest[2], where)[0]
+        destinations.append(tuple(jumpdest))
+
+    def _split_gosub_prio_args(self, prio, where):
         """
         Split off the (<args>) from from <prio>(<args>).
         """
@@ -40,24 +69,22 @@ class Gosub(NoPipeDelimiterMixin, MinMaxArgsMixin, DelimitedArgsMixin,
         # FYI: The args are parsed by Asterisk using AST_STANDARD_RAW_ARGS.
         return prio, args
 
+
+class Gosub(NoPipeDelimiterMixin, MinMaxArgsMixin, DelimitedArgsMixin,
+            AppBase, _GosubMixin):
+
     def __init__(self, **kwargs):
         super().__init__(min_args=1, max_args=3, **kwargs)
 
     def __call__(self, data, where, jump_destinations):
         args = super().__call__(data, where, jump_destinations)
-
-        jumpdest = args[:]
-        while len(jumpdest) != 3:
-            jumpdest.insert(0, None)
-        assert len(jumpdest) == 3
-        # Quickly drop the Gosub-ARGn for now.
-        jumpdest[2] = Gosub.split_gosub_prio_args(jumpdest[2], where)[0]
-        jump_destinations.append(tuple(jumpdest))
+        self._add_jump_destination_from_gosub_args(
+            args, jump_destinations, where)
 
         return args
 
 
-class GosubIf(VarCondIfStyleApp):
+class GosubIf(VarCondIfStyleApp, _GosubMixin):
     def __call__(self, data, where, jump_destinations):
         cond, iftrue, iffalse = super().__call__(
             data, where, jump_destinations)
@@ -65,13 +92,8 @@ class GosubIf(VarCondIfStyleApp):
         for args in (iftrue, iffalse):
             if args:
                 jumpdest = self.separate_args(args)
-                while len(jumpdest) != 3:
-                    jumpdest.insert(0, None)
-                assert len(jumpdest) == 3
-                # Quickly drop the Gosub-ARGn for now.
-                jumpdest[2] = Gosub.split_gosub_prio_args(
-                    jumpdest[2], where)[0]
-                jump_destinations.append(tuple(jumpdest))
+                self._add_jump_destination_from_gosub_args(
+                    jumpdest, jump_destinations, where)
 
         return cond, iftrue, iffalse
 
