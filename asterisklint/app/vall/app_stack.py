@@ -21,7 +21,7 @@ from ...variable import Var
 
 
 class _GosubMixin:
-    def _add_jump_destination_from_gosub_args(self, args, destinations, where):
+    def _gosub_args_to_destination(self, args, where):
         # jumpdest = [[context,]exten,]prio(args)
         jumpdest = args[:]  # don't touch caller args
 
@@ -38,9 +38,8 @@ class _GosubMixin:
             excess = [jumpdest[2]]
             [excess.extend((',', i)) for i in jumpdest[3:]]
             jumpdest[2:] = [Var.join(excess)]
-        else:
-            while len(jumpdest) < 3:
-                jumpdest.insert(0, None)
+        while len(jumpdest) < 3:
+            jumpdest.insert(0, None)
         assert len(jumpdest) == 3, jumpdest
 
         # Quickly drop the Gosub-args for now.
@@ -49,7 +48,7 @@ class _GosubMixin:
         # app_stack.c before the label-split (comma). But that's of no
         # concern at the moment.)
         jumpdest[2] = self._split_gosub_prio_args(jumpdest[2], where)[0]
-        destinations.append(tuple(jumpdest))
+        return tuple(jumpdest)
 
     def _split_gosub_prio_args(self, prio, where):
         """
@@ -78,8 +77,8 @@ class Gosub(NoPipeDelimiterMixin, MinMaxArgsMixin, DelimitedArgsMixin,
 
     def __call__(self, data, where, jump_destinations):
         args = super().__call__(data, where, jump_destinations)
-        self._add_jump_destination_from_gosub_args(
-            args, jump_destinations, where)
+        jump_destinations.append(
+            self._gosub_args_to_destination(args, where))
 
         return args
 
@@ -92,8 +91,8 @@ class GosubIf(VarCondIfStyleApp, _GosubMixin):
         for args in (iftrue, iffalse):
             if args:
                 jumpdest = self.separate_args(args)
-                self._add_jump_destination_from_gosub_args(
-                    jumpdest, jump_destinations, where)
+                jump_destinations.append(
+                    self._gosub_args_to_destination(jumpdest, where))
 
         return cond, iftrue, iffalse
 
