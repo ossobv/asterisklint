@@ -1,4 +1,4 @@
-import falcon
+import falcon  # >=2.0.0
 import json
 from io import BufferedWriter, BytesIO
 from os import path
@@ -94,8 +94,8 @@ class JsonTranslator:
                 ('Could not decode the request body. The JSON was incorrect '
                  'or not encoded as UTF-8.'))
 
-    def process_response(self, req, resp, resource):
-        if 'result' not in req.context:
+    def process_response(self, req, resp, resource, req_succeeded):
+        if 'result' not in req.context or not req_succeeded:
             return
 
         resp.body = json.dumps(req.context['result']) + '\n'
