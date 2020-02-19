@@ -1,10 +1,13 @@
 FROM ossobv/uwsgi-python:3
 
+ARG CACHEBUST
+ARG VERSION
+
 RUN \
     # Falcon is a prerequisite for wsgi.py.
     pip3 install --no-cache-dir 'falcon>=2' && \
     # Fetch asterisklint, the --pre-release if available.
-    pip3 install --no-cache-dir --pre asterisklint
+    pip3 install --no-cache-dir --pre asterisklint${VERSION:+==}${VERSION}
 
 COPY asterisklint.ini index.html wsgi.py /app/
 COPY static /app/static
