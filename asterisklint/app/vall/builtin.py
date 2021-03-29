@@ -53,6 +53,10 @@ class Background(BuiltinAppBase):
         return super().check_availability(supplied_name, where)
 
 
+class Bridge(BuiltinAppBase):
+    pass
+
+
 class Busy(BuiltinAppBase):
     pass
 
@@ -171,7 +175,7 @@ class WaitExten(BuiltinAppBase):
 
 def register(app_loader):
     for app in (
-            Answer, Background, Busy,
+            Answer, Background, Bridge, Busy,
             Congestion, Goto, GotoIf,
             GotoIfTime, ExecIfTime,
             Hangup, NoOp, Proceeding,
