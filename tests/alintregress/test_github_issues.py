@@ -71,3 +71,16 @@ sub-dial,${EXTEN},1,(${SOME_VARIABLE}))
 exten => _7495XXXXXXX,n(x),Gosub(sub-dial,${EXTEN},1,(${SOME_VARIABLE}))
 ''')
         self.assertLinted({'E_APP_ARG_MANY': 3, 'E_DP_GOTO_NOCONTEXT': 3})
+
+    @ignoreLinted('H_*')
+    def test_issue_via_gamma_20221019(self):
+        self.check_dialplan('''\
+[context]
+exten => _3112345!,1,ExecIf(\
+$["${preferred_number}"!=""]?\
+Set(CDR(userfield)=\
+${CDR(userfield):0:${userfield_skip}}${preferred_number}\
+${CDR(userfield):${MATH(${userfield_skip}+${LEN(${preferred_number})},int)}}\
+)\
+)
+''')

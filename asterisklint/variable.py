@@ -252,7 +252,7 @@ class SliceMixin(object):
         super().__init__(*args, **kwargs)
         self.start = start
         self.length = length
-        if length is not None:
+        if length is not None and isinstance(length, int):
             assert length != 0
             if length < 0:
                 self._endpos = length
