@@ -1,3 +1,18 @@
+0.4.3 (2022-10-24)
+~~~~~~~~~~~~~~~~~~
+
+Bug fixes:
+
+* Don't choke on slices with variable start/length.
+
+Improvements:
+
+* Added BridgeAdd, BridgeWait, DBdeltree, Bridge, ODBCFinish,
+  PJSIP_DIAL_CONTACTS, PJSIP_DTMF_MODE, PJSIP_MEDIA_OFFER,
+  PJSIP_MOH_PASSTHROUGH, PJSIP_PARSE_URI, PJSIP_SEND_SESSION_REFRESH,
+  BASE64_ENCODE, BASE64_DECODE, DEVICE_STATE, HINT, DIALGROUP,
+  DIALPLAN_EXISTS, VALID_EXTEN, ODBC_FETCH, SQL_ESC, TALK_DETECT.
+
 0.4.2 (2020-02-19)
 ~~~~~~~~~~~~~~~~~~
 
