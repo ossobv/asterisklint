@@ -16,7 +16,7 @@
 import re
 
 from .config import (
-    E_CONF_KEY_DUPE, E_CONF_KEY_INVALID, W_CONF_KEY_LATE,
+    E_CONF_KEY_DUPE, E_CONF_KEY_INVALID, H_CONF_HAS_ARROW, W_CONF_KEY_LATE,
     ConfigAggregator, Context)
 from .defines import ErrorDef, WarningDef
 from .func.base import FuncBase
@@ -135,7 +135,7 @@ class OdbcFunction(Context):
     ORDER = ('prefix', 'synopsis', 'dsn', 'escapecommas', 'mode', 'rowlimit',
              # 'insertsql' is used when the writesql update returned 0
              # updated rows.
-             'readhandle', 'readsql', 'writehandle', 'writesql', 'insertsql',
+             'readhandle', 'writehandle', 'readsql', 'writesql', 'insertsql',
              'read', 'write')  # legacy
 
     def get_name(self):
@@ -267,5 +267,10 @@ class FuncOdbcAggregator(ConfigAggregator):
         return super().on_context(context)
 
     def on_varset(self, varset):
-        assert not varset.arrow  # W_ARROW
+        expect_varset_equals(varset)
         return super().on_varset(varset)
+
+
+def expect_varset_equals(varset):
+    if varset.arrow:
+        H_CONF_HAS_ARROW(varset.where)

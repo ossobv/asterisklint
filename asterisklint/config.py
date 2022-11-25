@@ -18,7 +18,7 @@ import os
 
 from .configobj import EmptyLine, Context, Varset
 from .configws import VerticalSpaceWarner
-from .defines import ErrorDef, WarningDef, DupeDefMixin
+from .defines import DupeDefMixin, ErrorDef, HintDef, WarningDef
 from .file import W_WSH_BOL
 
 
@@ -56,6 +56,12 @@ if 'we_dont_want_two_linefeeds_between_classdefs':  # for flake8
 
     class W_WSH_CTRL(WarningDef):
         message = 'unexpected non-space/tab whitespace or a mix'
+
+    class H_CONF_HAS_ARROW(HintDef):
+        message = 'expected an equals sign instead of arrow here'
+
+    class H_CONF_NO_ARROW(HintDef):
+        message = 'expected an arrow sign instead of equals here'
 
 
 class ProgrammingError(RuntimeError):

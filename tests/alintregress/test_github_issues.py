@@ -30,6 +30,14 @@ class GithubIssuesTestCase(ALintTestCase):
         mainmod = import_module('asterisklint.commands.dialplan-check')
         mainmod.main([dp.name], {})
 
+    def check_func_odbc_conf(self, func_odbc_conf):
+        dp = NamedTemporaryFile()  # auto-deleted, works in testcase
+        dp.write(func_odbc_conf.encode('utf-8'))
+        dp.flush()
+
+        mainmod = import_module('asterisklint.commands.func_odbc-check')
+        mainmod.main([dp.name], {})
+
     @ignoreLinted('*')  # ignore validity, we just don't want crashes
     def test_issue_7(self):
         """
@@ -71,6 +79,38 @@ sub-dial,${EXTEN},1,(${SOME_VARIABLE}))
 exten => _7495XXXXXXX,n(x),Gosub(sub-dial,${EXTEN},1,(${SOME_VARIABLE}))
 ''')
         self.assertLinted({'E_APP_ARG_MANY': 3, 'E_DP_GOTO_NOCONTEXT': 3})
+
+    @ignoreLinted(
+        'H_DP_GENERAL_MISPLACED', 'H_DP_GLOBALS_MISPLACED', 'I_NOTIMPL_HINT')
+    def test_issue_54(self):
+        """
+        Subject: W_ARROW wasn't implemented and basic-pbx samples used it
+        Source: https://github.com/ossobv/asterisklint/issues/54
+        """
+        self.check_dialplan('''\
+[Hints]
+; Don't die even though there is no arrow. Source: asterisk/asterisk
+; 2cfb3df35df7930541177eb32d71afa52cd38899 configs/basic-pbx/extensions.conf
+exten => _10XX,hint,PJSIP/${EXTEN}
+exten = _11XX,hint,PJSIP/${EXTEN}
+''')
+        self.assertLinted({
+            'H_CONF_NO_ARROW': 1,   # expected " => ", got " = "
+            'W_WSH_VARSET': 1,      # expected "=", got " = "
+        })
+
+    def test_issue_54_func_odbc(self):
+        """
+        Subject: W_ARROW wasn't implemented (here we expect equals, not arrow)
+        """
+        self.check_func_odbc_conf('''\
+[PRESENCE]
+writehandle=mysql1
+readsql => SELECT location FROM presence WHERE id='${SQL_ESC(${ARG1})}'
+writesql => UPDATE presence SET location='${SQL_ESC(${VAL1})}'\
+ WHERE id='${SQL_ESC(${ARG1})}'
+''')
+        self.assertLinted({'H_CONF_HAS_ARROW': 2})
 
     @ignoreLinted('H_*')
     def test_issue_via_gamma_20221019(self):

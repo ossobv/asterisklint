@@ -15,7 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .application import App
 from .config import ConfigAggregator, Context, Varset
-from .config import E_CONF_CTX_MISSING, E_CONF_KEY_INVALID, W_CONF_CTX_DUPE
+from .config import (
+    E_CONF_CTX_MISSING, E_CONF_KEY_INVALID, H_CONF_NO_ARROW, W_CONF_CTX_DUPE)
 from .defines import ErrorDef, WarningDef, HintDef, DupeDefMixin
 from .pattern import H_PAT_NON_CANONICAL, Pattern
 from .varfun import Var
@@ -470,7 +471,7 @@ class DialplanVarset(object):
         Use this on subclasses of Varset.
         """
         if varset.variable in ('exten', 'same'):
-            assert varset.arrow  # W_ARROW
+            expect_varset_arrow(varset)
             if varset.variable == 'exten':
                 pattern, rest = varset.value.split(',', 1)
             else:
@@ -510,15 +511,15 @@ class DialplanVarset(object):
                              varset.where)
 
         elif varset.variable == 'include':
-            assert varset.arrow  # W_ARROW
+            expect_varset_arrow(varset)
             return Include(varset.value, varset.where)
 
         elif varset.variable == 'switch':
-            assert varset.arrow  # W_ARROW
+            expect_varset_arrow(varset)
             I_NOTIMPL_SWITCH(varset.where)
 
         elif varset.variable == 'ignorepat':
-            assert varset.arrow  # W_ARROW
+            expect_varset_arrow(varset)
             I_NOTIMPL_IGNOREPAT(varset.where)
 
         else:
@@ -628,3 +629,8 @@ class DialplanAggregator(ConfigAggregator):
             self._curcontext.add_include(dialplanvarset)
         else:
             raise NotImplementedError()
+
+
+def expect_varset_arrow(varset):
+    if not varset.arrow:
+        H_CONF_NO_ARROW(varset.where)
