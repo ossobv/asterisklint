@@ -66,7 +66,7 @@ class EnvironmentCheckMiddleware:
 
 # class DebugLogMiddleware:
 #     def process_response(self, req, resp, resource):
-#         bytes_ = resp.body and len(resp.body) or 0
+#         bytes_ = resp.text and len(resp.text) or 0
 #         print(
 #             '{ip} - - [{time}] "{method} {path} HTTP/x.x" '
 #             '{code} {bytes}'.format(
@@ -85,7 +85,7 @@ class Index:
     def on_get(self, req, resp):
         # print(req.env['REMOTE_ADDR'])
         resp.content_type = 'text/html; charset=utf-8'
-        resp.body = self.index_html
+        resp.text = self.index_html
 
 
 class Healthz:
@@ -101,7 +101,7 @@ class Healthz:
     """
     def on_get(self, req, resp):
         resp.content_type = 'text/plain; charset=utf-8'
-        resp.body = 'OK\nasterisklint = {}\n'.format(version_str)
+        resp.text = 'OK\nasterisklint = {}\n'.format(version_str)
 
 
 class DialplanCheck:
